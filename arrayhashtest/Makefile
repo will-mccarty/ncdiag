@@ -17,7 +17,10 @@ netcdf_layer.mod: kinds.mod fnv32mod.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
 fnv32mod.mod: kinds.mod fnv32mod.f90
 	ifort $(F90FLAGS) -c fnv32mod.f90
 
-arrayhashtest.x: fnv32mod.mod arrayhashtest.f90
+minidict.mod: kinds.mod fnv32mod.mod minidict.f90
+	ifort $(F90FLAGS) -c minidict.f90
+
+arrayhashtest.x: fnv32mod.mod minidict.mod arrayhashtest.f90
 	ifort $(F90FLAGS) -o arrayhashtest.x arrayhashtest.f90 fnv32mod.o
 
 hashingtest.x: fnv32mod.mod hashingtest.f90
