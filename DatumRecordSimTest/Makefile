@@ -1,7 +1,7 @@
-all: test
+all: test.x
 
-test: test.c
-	icc -O2 test.c -o test
+test.x: test.c
+	icc -O2 test.c -o test.x
 
 clean:
-	rm -f test
+	rm -f test.x

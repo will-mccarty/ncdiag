@@ -1,7 +1,7 @@
-all: test
+all: test.x
 
-test: test.f90
-	ifort -O2 test.f90 -o test
+test.x: test.f90
+	ifort -O2 test.f90 -o test.x
 
 clean:
-	rm -f test
+	rm -f test.x
