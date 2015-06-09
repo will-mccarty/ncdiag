@@ -1,0 +1,357 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 12.68     23.83    23.83       21     1.13     1.13  netcdf_layer_mp_nc_diag_realloc_long_
+ 12.12     46.60    22.77                             utf8proc_decompose_char
+  8.79     63.12    16.52                             nf_put_att_int_
+  7.70     77.58    14.46                             utf8proc_decompose
+  7.45     91.58    14.00                             utf8proc_get_property
+  5.86    102.59    11.01 100000000     0.00     0.00  netcdf_layer_mp_nc_diag_header_long_v_
+  5.74    113.37    10.78                             utf8proc_iterate
+  4.71    122.22     8.85                             nc4_put_att
+  3.70    129.17     6.95       18     0.39     0.39  netcdf_layer_mp_nc_diag_realloc_string_
+  3.61    135.96     6.79        1     6.79     7.22  netcdf_layer_mp_nc_diag_header_write_
+  3.27    142.10     6.14                             utf8proc_reencode
+  3.08    147.88     5.78       18     0.32     0.32  netcdf_layer_mp_nc_diag_realloc_logical_
+  2.56    152.68     4.80       18     0.27     0.27  netcdf_layer_mp_nc_diag_realloc_byte_
+  1.97    156.39     3.71 100000000     0.00     0.00  netcdf_layer_mp_nc_diag_header_long_
+  1.75    159.67     3.28 200000000     0.00     0.00  netcdf_layer_mp_nc_diag_header_resize_long_
+  1.56    162.61     2.94                             __intel_memset
+  1.45    165.34     2.73                             NC_check_name
+  1.42    168.00     2.67 200000000     0.00     0.00  netcdf_layer_mp_nc_diag_header_expand_
+  1.24    170.34     2.33                             for_cpystr
+  1.17    172.53     2.19                             nc4_put_att_tc
+  0.83    174.09     1.56                             nc_put_att_int
+  0.79    175.57     1.49                             __intel_sse2_strlen
+  0.79    177.06     1.48                             nc4_check_name
+  0.75    178.46     1.40                             __intel_sse2_strcpy
+  0.73    179.84     1.38                             utf8proc_map
+  0.64    181.03     1.20                             nc4_convert_type
+  0.46    181.91     0.87                             utf8proc_encode_char
+  0.42    182.69     0.79                             find_in_NCList
+  0.40    183.44     0.75                             netcdf_mp_nf90_put_att_fourbyteint_
+  0.31    184.03     0.58                             NC4_put_att
+  0.28    184.56     0.53                             __intel_ssse3_rep_memcpy
+  0.27    185.06     0.51        1     0.51    69.75  MAIN__
+  0.23    185.50     0.43 200000002     0.00     0.00  netcdf_layer_mp_check_
+  0.22    185.91     0.42                             utf8proc_NFC
+  0.20    186.29     0.38                             nc4_get_typelen_mem
+  0.17    186.60     0.31                             nc4_find_type
+  0.15    186.90     0.29                             netcdf_mp_nf90_put_att_one_fourbyteint_
+  0.12    187.12     0.22                             NC_check_id
+  0.12    187.34     0.22                             utf8proc_check
+  0.09    187.50     0.16                             _intel_fast_memcpy
+  0.06    187.62     0.12                             nc4_rec_find_grp
+  0.05    187.72     0.10                             _intel_fast_memset.J
+  0.03    187.76     0.05                             nc4_find_nc_file
+  0.02    187.81     0.04                             _intel_fast_memcpy.P
+  0.02    187.84     0.04                             netcdf_layer_mp_nc_diag_header_resize_string_
+  0.01    187.86     0.02                             netcdf_layer_mp_nc_diag_header_resize_short_
+  0.00    187.86     0.00        1     0.00     0.00  netcdf_layer_mp_nc_diag_init_
+  0.00    187.86     0.00        1     0.00     7.22  netcdf_layer_mp_nc_diag_write_
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.01% of 187.86 seconds
+
+index % time    self  children    called     name
+                0.51   69.25       1/1           main [2]
+[1]     37.1    0.51   69.25       1         MAIN__ [1]
+               11.01   23.65 100000000/100000000     netcdf_layer_mp_nc_diag_header_long_v_ [3]
+                3.71   23.65 100000000/100000000     netcdf_layer_mp_nc_diag_header_long_ [4]
+                0.00    7.22       1/1           netcdf_layer_mp_nc_diag_write_ [14]
+                0.00    0.00       1/1           netcdf_layer_mp_nc_diag_init_ [49]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     37.1    0.00   69.75                 main [2]
+                0.51   69.25       1/1           MAIN__ [1]
+-----------------------------------------------
+               11.01   23.65 100000000/100000000     MAIN__ [1]
+[3]     18.5   11.01   23.65 100000000         netcdf_layer_mp_nc_diag_header_long_v_ [3]
+                1.64   11.91 100000000/200000000     netcdf_layer_mp_nc_diag_header_resize_long_ [5]
+                1.33    8.77 100000000/200000000     netcdf_layer_mp_nc_diag_header_expand_ [8]
+-----------------------------------------------
+                3.71   23.65 100000000/100000000     MAIN__ [1]
+[4]     14.6    3.71   23.65 100000000         netcdf_layer_mp_nc_diag_header_long_ [4]
+                1.64   11.91 100000000/200000000     netcdf_layer_mp_nc_diag_header_resize_long_ [5]
+                1.33    8.77 100000000/200000000     netcdf_layer_mp_nc_diag_header_expand_ [8]
+-----------------------------------------------
+                1.64   11.91 100000000/200000000     netcdf_layer_mp_nc_diag_header_long_ [4]
+                1.64   11.91 100000000/200000000     netcdf_layer_mp_nc_diag_header_long_v_ [3]
+[5]     14.4    3.28   23.83 200000000         netcdf_layer_mp_nc_diag_header_resize_long_ [5]
+               23.83    0.00      21/21          netcdf_layer_mp_nc_diag_realloc_long_ [6]
+-----------------------------------------------
+               23.83    0.00      21/21          netcdf_layer_mp_nc_diag_header_resize_long_ [5]
+[6]     12.7   23.83    0.00      21         netcdf_layer_mp_nc_diag_realloc_long_ [6]
+-----------------------------------------------
+                                                 <spontaneous>
+[7]     12.1   22.77    0.00                 utf8proc_decompose_char [7]
+-----------------------------------------------
+                1.33    8.77 100000000/200000000     netcdf_layer_mp_nc_diag_header_long_ [4]
+                1.33    8.77 100000000/200000000     netcdf_layer_mp_nc_diag_header_long_v_ [3]
+[8]     10.8    2.67   17.53 200000000         netcdf_layer_mp_nc_diag_header_expand_ [8]
+                6.95    0.00      18/18          netcdf_layer_mp_nc_diag_realloc_string_ [16]
+                5.78    0.00      18/18          netcdf_layer_mp_nc_diag_realloc_logical_ [18]
+                4.80    0.00      18/18          netcdf_layer_mp_nc_diag_realloc_byte_ [19]
+-----------------------------------------------
+                                                 <spontaneous>
+[9]      8.8   16.52    0.00                 nf_put_att_int_ [9]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]     7.7   14.46    0.00                 utf8proc_decompose [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[11]     7.5   14.00    0.00                 utf8proc_get_property [11]
+-----------------------------------------------
+                                                 <spontaneous>
+[12]     5.7   10.78    0.00                 utf8proc_iterate [12]
+-----------------------------------------------
+                                                 <spontaneous>
+[13]     4.7    8.85    0.00                 nc4_put_att [13]
+-----------------------------------------------
+                0.00    7.22       1/1           MAIN__ [1]
+[14]     3.8    0.00    7.22       1         netcdf_layer_mp_nc_diag_write_ [14]
+                6.79    0.43       1/1           netcdf_layer_mp_nc_diag_header_write_ [15]
+                0.00    0.00       1/200000002     netcdf_layer_mp_check_ [35]
+-----------------------------------------------
+                6.79    0.43       1/1           netcdf_layer_mp_nc_diag_write_ [14]
+[15]     3.8    6.79    0.43       1         netcdf_layer_mp_nc_diag_header_write_ [15]
+                0.43    0.00 200000000/200000002     netcdf_layer_mp_check_ [35]
+-----------------------------------------------
+                6.95    0.00      18/18          netcdf_layer_mp_nc_diag_header_expand_ [8]
+[16]     3.7    6.95    0.00      18         netcdf_layer_mp_nc_diag_realloc_string_ [16]
+-----------------------------------------------
+                                                 <spontaneous>
+[17]     3.3    6.14    0.00                 utf8proc_reencode [17]
+-----------------------------------------------
+                5.78    0.00      18/18          netcdf_layer_mp_nc_diag_header_expand_ [8]
+[18]     3.1    5.78    0.00      18         netcdf_layer_mp_nc_diag_realloc_logical_ [18]
+-----------------------------------------------
+                4.80    0.00      18/18          netcdf_layer_mp_nc_diag_header_expand_ [8]
+[19]     2.6    4.80    0.00      18         netcdf_layer_mp_nc_diag_realloc_byte_ [19]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     1.6    2.94    0.00                 __intel_memset [20]
+-----------------------------------------------
+                                                 <spontaneous>
+[21]     1.5    2.73    0.00                 NC_check_name [21]
+-----------------------------------------------
+                                                 <spontaneous>
+[22]     1.2    2.33    0.00                 for_cpystr [22]
+-----------------------------------------------
+                                                 <spontaneous>
+[23]     1.2    2.19    0.00                 nc4_put_att_tc [23]
+-----------------------------------------------
+                                                 <spontaneous>
+[24]     0.8    1.56    0.00                 nc_put_att_int [24]
+-----------------------------------------------
+                                                 <spontaneous>
+[25]     0.8    1.49    0.00                 __intel_sse2_strlen [25]
+-----------------------------------------------
+                                                 <spontaneous>
+[26]     0.8    1.48    0.00                 nc4_check_name [26]
+-----------------------------------------------
+                                                 <spontaneous>
+[27]     0.7    1.40    0.00                 __intel_sse2_strcpy [27]
+-----------------------------------------------
+                                                 <spontaneous>
+[28]     0.7    1.38    0.00                 utf8proc_map [28]
+-----------------------------------------------
+                                                 <spontaneous>
+[29]     0.6    1.20    0.00                 nc4_convert_type [29]
+-----------------------------------------------
+                                                 <spontaneous>
+[30]     0.5    0.87    0.00                 utf8proc_encode_char [30]
+-----------------------------------------------
+                                                 <spontaneous>
+[31]     0.4    0.79    0.00                 find_in_NCList [31]
+-----------------------------------------------
+                                                 <spontaneous>
+[32]     0.4    0.75    0.00                 netcdf_mp_nf90_put_att_fourbyteint_ [32]
+-----------------------------------------------
+                                                 <spontaneous>
+[33]     0.3    0.58    0.00                 NC4_put_att [33]
+-----------------------------------------------
+                                                 <spontaneous>
+[34]     0.3    0.53    0.00                 __intel_ssse3_rep_memcpy [34]
+-----------------------------------------------
+                0.00    0.00       1/200000002     netcdf_layer_mp_nc_diag_init_ [49]
+                0.00    0.00       1/200000002     netcdf_layer_mp_nc_diag_write_ [14]
+                0.43    0.00 200000000/200000002     netcdf_layer_mp_nc_diag_header_write_ [15]
+[35]     0.2    0.43    0.00 200000002         netcdf_layer_mp_check_ [35]
+-----------------------------------------------
+                                                 <spontaneous>
+[36]     0.2    0.42    0.00                 utf8proc_NFC [36]
+-----------------------------------------------
+                                                 <spontaneous>
+[37]     0.2    0.38    0.00                 nc4_get_typelen_mem [37]
+-----------------------------------------------
+                                                 <spontaneous>
+[38]     0.2    0.31    0.00                 nc4_find_type [38]
+-----------------------------------------------
+                                                 <spontaneous>
+[39]     0.2    0.29    0.00                 netcdf_mp_nf90_put_att_one_fourbyteint_ [39]
+-----------------------------------------------
+                                                 <spontaneous>
+[40]     0.1    0.22    0.00                 NC_check_id [40]
+-----------------------------------------------
+                                                 <spontaneous>
+[41]     0.1    0.22    0.00                 utf8proc_check [41]
+-----------------------------------------------
+                                                 <spontaneous>
+[42]     0.1    0.16    0.00                 _intel_fast_memcpy [42]
+-----------------------------------------------
+                                                 <spontaneous>
+[43]     0.1    0.12    0.00                 nc4_rec_find_grp [43]
+-----------------------------------------------
+                                                 <spontaneous>
+[44]     0.1    0.10    0.00                 _intel_fast_memset.J [44]
+-----------------------------------------------
+                                                 <spontaneous>
+[45]     0.0    0.05    0.00                 nc4_find_nc_file [45]
+-----------------------------------------------
+                                                 <spontaneous>
+[46]     0.0    0.04    0.00                 _intel_fast_memcpy.P [46]
+-----------------------------------------------
+                                                 <spontaneous>
+[47]     0.0    0.04    0.00                 netcdf_layer_mp_nc_diag_header_resize_string_ [47]
+-----------------------------------------------
+                                                 <spontaneous>
+[48]     0.0    0.02    0.00                 netcdf_layer_mp_nc_diag_header_resize_short_ [48]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[49]     0.0    0.00    0.00       1         netcdf_layer_mp_nc_diag_init_ [49]
+                0.00    0.00       1/200000002     netcdf_layer_mp_check_ [35]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+
+Index by function name
+
+   [1] MAIN__                 [38] nc4_find_type          [18] netcdf_layer_mp_nc_diag_realloc_logical_
+  [33] NC4_put_att            [37] nc4_get_typelen_mem     [6] netcdf_layer_mp_nc_diag_realloc_long_
+  [40] NC_check_id            [13] nc4_put_att            [16] netcdf_layer_mp_nc_diag_realloc_string_
+  [21] NC_check_name          [23] nc4_put_att_tc         [14] netcdf_layer_mp_nc_diag_write_
+  [20] __intel_memset         [43] nc4_rec_find_grp       [32] netcdf_mp_nf90_put_att_fourbyteint_
+  [27] __intel_sse2_strcpy    [24] nc_put_att_int         [39] netcdf_mp_nf90_put_att_one_fourbyteint_
+  [25] __intel_sse2_strlen    [35] netcdf_layer_mp_check_  [9] nf_put_att_int_
+  [34] __intel_ssse3_rep_memcpy [8] netcdf_layer_mp_nc_diag_header_expand_ [36] utf8proc_NFC
+  [42] _intel_fast_memcpy      [4] netcdf_layer_mp_nc_diag_header_long_ [41] utf8proc_check
+  [46] _intel_fast_memcpy.P    [3] netcdf_layer_mp_nc_diag_header_long_v_ [10] utf8proc_decompose
+  [44] _intel_fast_memset.J    [5] netcdf_layer_mp_nc_diag_header_resize_long_ [7] utf8proc_decompose_char
+  [31] find_in_NCList         [48] netcdf_layer_mp_nc_diag_header_resize_short_ [30] utf8proc_encode_char
+  [22] for_cpystr             [47] netcdf_layer_mp_nc_diag_header_resize_string_ [11] utf8proc_get_property
+  [26] nc4_check_name         [15] netcdf_layer_mp_nc_diag_header_write_ [12] utf8proc_iterate
+  [29] nc4_convert_type       [49] netcdf_layer_mp_nc_diag_init_ [28] utf8proc_map
+  [45] nc4_find_nc_file       [19] netcdf_layer_mp_nc_diag_realloc_byte_ [17] utf8proc_reencode
