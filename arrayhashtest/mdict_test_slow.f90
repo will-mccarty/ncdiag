@@ -3,40 +3,35 @@
 program mdict_test
     use kinds
     
-    character(len=100), dimension(10) :: keys
-    integer(i_kind), dimension(10) :: vals
+    integer(i_long), parameter                :: KEY_AMT = 250
+    integer(i_long), parameter                :: REPEAT = 100
+    character(len=100), dimension(KEY_AMT) :: keys
+    integer(i_kind), dimension(KEY_AMT) :: vals
     integer(i_long) :: count
     
-    integer(i_kind) :: val1, val2, val3, val4, val5, val6, val7, val8, val9, val10
+    integer(i_kind) :: val
+    integer(i_long) :: i, j
+    character(len=100) :: keyname
     
     count = 0
     
-    call add_val("key1", 123)
-    call add_val("key2", 234)
-    call add_val("key3", 567)
-    call add_val("key4", 891)
-    call add_val("key5", 234)
-    call add_val("key6", 567)
-    call add_val("key7", 890)
-    call add_val("key8", 111)
-    call add_val("key9", 222)
-    call add_val("key10", 333)
+    do i = 1, KEY_AMT
+        write (keyname, "(A3, I4)") "key", i
+        call add_val(keyname, i*2)
+    end do
     
-    val1 = fetch_val("key1")
-    val2 = fetch_val("key2")
-    val3 = fetch_val("key3")
-    val4 = fetch_val("key4")
-    val5 = fetch_val("key5")
-    val6 = fetch_val("key6")
-    val7 = fetch_val("key7")
-    val8 = fetch_val("key8")
-    val9 = fetch_val("key9")
-    val10 = fetch_val("key10")
-    
-    write (*, "(A, I4, I4, I4)") "Values of keys key1, key2, key3:", val1, val2, val3
-    write (*, "(A, I4, I4, I4)") "Values of keys key4, key5, key6:", val4, val5, val6
-    write (*, "(A, I4, I4, I4)") "Values of keys key7, key8, key9:", val7, val8, val9
-    write (*, "(A, I4, I4, I4)") "Values of keys key10:", val10
+    do j = 1, REPEAT
+        do i = 1, KEY_AMT
+            write (keyname, "(A3, I4)") "key", i
+            !if (.NOT. (mdict_find(test_dict, keyname))) then
+            !    print *, "Error in validating dictionary keys!"
+            !    stop "Dictionary validation failed."
+            !end if
+            
+            val = fetch_val(keyname)
+            write (*, "(A, A8, A, I4)") "Value of key  ", keyname, ": ", val
+        end do
+    end do
     
     contains
         subroutine add_val(key, value)

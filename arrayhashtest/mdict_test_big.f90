@@ -1,11 +1,11 @@
 ! minidict tester
 
-program mdict_test
+program mdict_test_big
     use kinds
     !use fnv32mod
     use minidict
     
-    integer(i_long), parameter                :: KEY_AMT = 250
+    integer(i_long), parameter                :: KEY_AMT = 70000
     integer(i_long), parameter                :: REPEAT = 100
     type(mdict), pointer :: test_dict
     
@@ -17,7 +17,7 @@ program mdict_test
     
     do j = 1, REPEAT
         do i = 1, KEY_AMT
-            write (keyname, "(A3, I4)") "key", i
+            write (keyname, "(A3, I8)") "key", i
             call mdict_add(test_dict, keyname, i*2)
         end do
     end do
@@ -36,4 +36,4 @@ program mdict_test
     end do
     
     call mdict_print_debug_info(test_dict)
-end program mdict_test
+end program mdict_test_big

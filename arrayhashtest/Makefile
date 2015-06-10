@@ -1,4 +1,4 @@
-all: hashingtest.x mdict_test.x mdict_test_slow.x arrayhashtest.x
+all: hashingtest.x mdict_test.x mdict_test_big.x mdict_test_slow.x arrayhashtest.x
 
 F90FLAGS=-fpp -g -pg -check bounds -fstack-protector -warn all -traceback
 #F90FLAGS=-O2
@@ -28,6 +28,9 @@ hashingtest.x: fnv32mod.mod hashingtest.f90
 
 mdict_test.x: minidict.mod mdict_test.f90
 	ifort $(F90FLAGS) -o mdict_test.x mdict_test.f90 minidict.o fnv32mod.o
+
+mdict_test_big.x: minidict.mod mdict_test_big.f90
+	ifort $(F90FLAGS) -o mdict_test_big.x mdict_test_big.f90 minidict.o fnv32mod.o
 
 mdict_test_slow.x: mdict_test_slow.f90
 	ifort $(F90FLAGS) -o mdict_test_slow.x mdict_test_slow.f90

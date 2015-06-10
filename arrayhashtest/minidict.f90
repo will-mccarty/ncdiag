@@ -109,13 +109,10 @@ module minidict
                 end if
             end do
             
-            ! Increment the count
-            dict%mdict_arr_alloc(hash_index) = dict%mdict_arr_alloc(hash_index) + 1
-            
             ! If the key doesn't already exist, create a new one!
-            ! We incremented the above first so that we can use its value to
-            ! add our new node.
             if (.NOT. exists) then
+                ! Increment the count
+                dict%mdict_arr_alloc(hash_index) = dict%mdict_arr_alloc(hash_index) + 1
                 dict%mdict_arr(hash_index)%ptr(dict%mdict_arr_alloc(hash_index)) = node
             end if
         end subroutine mdict_append
@@ -135,7 +132,7 @@ module minidict
             hash = Z'811C9DC5'
             call fnv16_str(key, hash)
             
-            call mdict_append(dict, hash, node)
+            call mdict_append(dict, hash + 1, node)
         end subroutine mdict_add
         
         function mdict_find(dict, key) result(exists)
@@ -188,4 +185,17 @@ module minidict
             end if
             
         end function mdict_get
+        
+        subroutine mdict_print_debug_info(dict)
+            type(mdict), pointer, intent(inout)   :: dict
+            integer(i_long)                       :: i, j
+            do i = 1, MDICT_MAX_KEYS
+                if (dict%mdict_arr_alloc(i) /= -1) then
+                    write (*, "(A, I5, A, I5, A)") "At key ", i, " found ", dict%mdict_arr_alloc(i), " allocated k/v pairs:"
+                    do j = 1, dict%mdict_arr_alloc(i)
+                        write (*, "(A, A, A, I5)") "  -> Found key/value pair: key '", dict%mdict_arr(i)%ptr(j)%id, "', value:", dict%mdict_arr(i)%ptr(j)%value
+                    end do
+                end if
+            end do
+        end subroutine mdict_print_debug_info
 end module minidict
