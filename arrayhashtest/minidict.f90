@@ -70,21 +70,54 @@ module minidict
             deallocate(dict)
         end subroutine mdict_destroy
         
+        subroutine mdict_realloc(ptr)
+            type(mdict_node), dimension(:), pointer :: ptr
+            
+            type(mdict_node), dimension(:), save, allocatable :: tmp
+            
+            allocate(tmp(size(ptr) + MDICT_VALS))
+            tmp(1:size(ptr)) = ptr
+            deallocate(ptr)
+            ptr = tmp
+        end subroutine mdict_realloc
+        
         subroutine mdict_append(dict, hash_index, node)
             type(mdict), pointer, intent(inout)  :: dict
             integer(i_long), intent(in)                :: hash_index
             type(mdict_node), intent(in)               :: node
             
-            type(mdict_ptr), dimension(:), allocatable :: mdict_arr
+            integer(i_long) :: i
+            logical         :: exists
             
             if (dict%mdict_arr_alloc(hash_index) == -1) then
-                mdict_arr = dict%mdict_arr(hash_index)
-                allocate(mdict_arr(MDICT_VALS))
+                allocate(dict%mdict_arr(hash_index)%ptr(MDICT_VALS))
                 dict%mdict_arr_alloc(hash_index) = 0
+            else
+                if (dict%mdict_arr_alloc(hash_index) >= size(dict%mdict_arr(hash_index)%ptr)) then
+                    call mdict_realloc(dict%mdict_arr(hash_index)%ptr)
+                endif
             end if
             
+            ! Check if the key exists. If it does, overwrite the node!
+            exists = .FALSE.
+            
+            do i = 1, dict%mdict_arr_alloc(hash_index)
+                if (dict%mdict_arr(hash_index)%ptr(i)%id == node%id) then
+                    dict%mdict_arr(hash_index)%ptr(i) = node
+                    exists = .TRUE.
+                    exit
+                end if
+            end do
+            
+            ! Increment the count
             dict%mdict_arr_alloc(hash_index) = dict%mdict_arr_alloc(hash_index) + 1
-            mdict_arr(dict%mdict_arr_alloc(hash_index))%ptr = node
+            
+            ! If the key doesn't already exist, create a new one!
+            ! We incremented the above first so that we can use its value to
+            ! add our new node.
+            if (.NOT. exists) then
+                dict%mdict_arr(hash_index)%ptr(dict%mdict_arr_alloc(hash_index)) = node
+            end if
         end subroutine mdict_append
         
         subroutine mdict_add(dict, key, assoc_value)
@@ -92,17 +125,67 @@ module minidict
             character(len=*), intent(in)          :: key
             integer(i_kind), intent(in)           :: assoc_value
             
+            type(mdict_node)                      :: node
+            integer(i_long)                       :: hash
+            
+            node%id    = key
+            node%value = assoc_value
+            
+            ! Hash with fnv_1a, truncated to 16 bit
+            hash = Z'811C9DC5'
+            call fnv16_str(key, hash)
+            
+            call mdict_append(dict, hash, node)
         end subroutine mdict_add
         
-        subroutine mdict_find(dict, key)
-            type(mdict), pointer, intent(inout)   :: dict
+        function mdict_find(dict, key) result(exists)
+            type(mdict), pointer, intent(in)      :: dict
             character(len=*), intent(in)          :: key
+            
+            logical                               :: exists
+            integer(i_long)                       :: hash, i
+            
+            ! Hash with fnv_1a, truncated to 16 bit
+            hash = Z'811C9DC5'
+            call fnv16_str(key, hash)
+            
+            ! Check if the key exists. If it does, overwrite the node!
+            exists = .FALSE.
+            
+            do i = 1, dict%mdict_arr_alloc(hash)
+                if (dict%mdict_arr(hash)%ptr(i)%id == key) then
+                    exists = .TRUE.
+                    exit
+                end if
+            end do
+        end function mdict_find
         
-        end subroutine mdict_find
-        
-        subroutine mdict_get(dict, key)
+        function mdict_get(dict, key) result(value)
             type(mdict), pointer, intent(inout)   :: dict
             character(len=*), intent(in)          :: key
             
-        end subroutine mdict_get
+            logical                               :: exists
+            integer(i_long)                       :: hash, i
+            integer(i_kind)                       :: value
+            
+            ! Hash with fnv_1a, truncated to 16 bit
+            hash = Z'811C9DC5'
+            call fnv16_str(key, hash)
+            
+            ! Check if the key exists. If it does, overwrite the node!
+            exists = .FALSE.
+            
+            do i = 1, dict%mdict_arr_alloc(hash)
+                if (dict%mdict_arr(hash)%ptr(i)%id == key) then
+                    value = dict%mdict_arr(hash)%ptr(i)%value
+                    exists = .TRUE.
+                    exit
+                end if
+            end do
+            
+            if (.NOT. exists) then
+                value = 0
+            end if
+            
+        end function mdict_get
 end module minidict
