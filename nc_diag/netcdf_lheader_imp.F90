@@ -477,16 +477,6 @@
             
             ! Now add the actual entry!
             diag_header_store%h_long(endpos - size(header_value) + 1:endpos) = header_value
-#ifdef _DEBUG_MEM_
-            print *, "====================================="
-            print *, "FROM:"
-            print *, endpos - size(header_value) + 1
-            print *, "TO:"
-            print *, endpos
-            print *, "ARRAY:"
-            print *, header_value
-            print *, "====================================="
-#endif
         end subroutine nc_diag_header_long_v
         
         ! nc_diag_header - input real(r_single)
