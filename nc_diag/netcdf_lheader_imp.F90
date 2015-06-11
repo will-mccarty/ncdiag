@@ -245,8 +245,6 @@
                 call error("NetCDF4 layer not initialized yet!")
             endif
             
-            
-            
         end subroutine nc_diag_header_expand
         
         ! nc_diag_header - input integer(i_byte)
