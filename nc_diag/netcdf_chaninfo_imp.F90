@@ -45,8 +45,9 @@
         end subroutine nc_diag_chaninfo_allocmulti
         
         !!!!!
-        !! TODO
-        !! Write the subroutine below tomorrow!
+        !! TODO:
+        !! (1) add all of the long fixes to the other types tomorrow!!!
+        !! (2) Write the subroutine below tomorrow!
         !! Make sure to warn when writing about low nchan, aka when
         !! the amount of data < nchan (since we're expecting a full write)
         !!!!!!
