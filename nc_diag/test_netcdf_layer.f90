@@ -15,6 +15,13 @@ program test_netcdf_layer
     !call nc_diag_header("test1", (/ 123, 234, 345, 456, 567, 678, 789 /))
     !call nc_diag_header("test2", (/ 123, 234, 345, 456, 567, 678, 789 /))
     ! 100,000,000
+    call nc_diag_chaninfo_dim_set(10)
+    
+    do i = 1, 10
+        call nc_diag_chaninfo("chaninfosimple1", 123)
+        call nc_diag_chaninfo("chaninfosimple2", 123)
+    end do
+    
     do i = 1, 10000000
         call nc_diag_header("headertestsimple", 123)
     end do

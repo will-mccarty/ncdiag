@@ -24,11 +24,14 @@ module netcdf_layer
     
 #include "netcdf_realloc_decl.f90"
 #include "netcdf_lheader_decl.f90"
+#include "netcdf_chaninfo_decl.F90"
     
     contains
 #include "netcdf_realloc_imp.f90"
 #include "netcdf_hresize.F90"
+#include "netcdf_ciresize.F90"
 #include "netcdf_lheader_imp.F90"
+#include "netcdf_chaninfo_imp.F90"
         
         subroutine nc_diag_init(filename)
             character(len=*),intent(in)    :: filename
@@ -48,6 +51,7 @@ module netcdf_layer
                     call error("BUG! diag_header_store is allocated, but init_done is set!")
                 end if
                 allocate(diag_header_store)
+                allocate(diag_chaninfo_store)
                 init_done = .TRUE.
             else
                 call error("Attempted to initialize without closing previous nc_diag file!")

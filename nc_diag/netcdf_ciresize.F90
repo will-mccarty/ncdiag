@@ -42,10 +42,10 @@
             if (allocated(diag_chaninfo_store%ci_byte)) then
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_byte, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_byte, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_byte)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries
@@ -78,10 +78,10 @@
             if (allocated(diag_chaninfo_store%ci_short)) then
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_short, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_short, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_short)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries
@@ -121,10 +121,10 @@
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_long, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_long, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_long)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries
@@ -157,10 +157,10 @@
             if (allocated(diag_chaninfo_store%ci_rsingle)) then
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rsingle)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries
@@ -193,10 +193,10 @@
             if (allocated(diag_chaninfo_store%ci_rdouble)) then
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rdouble)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries
@@ -229,10 +229,10 @@
             if (allocated(diag_chaninfo_store%ci_string)) then
                 diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_string, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_ci_multi(sc_index))))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_string, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_string)
                     
-                    diag_chaninfo_store%alloc_ci_multi(sc_index) = diag_chaninfo_store%alloc_ci_multi(sc_index) + 1
+                    diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
                 diag_chaninfo_store%acount(sc_index) = addl_num_entries

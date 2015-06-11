@@ -9,8 +9,10 @@ NETCDF_FLAGS=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 COMPILE_FLAGS=-D_REAL8_
 
 NETCDF_LAYER_DEPS=netcdf_realloc_decl.f90 \
-	netcdf_lheader_decl.f90 netcdf_realloc_imp.f90 \
-	netcdf_hresize.F90 netcdf_lheader_imp.F90
+	netcdf_lheader_decl.f90 netcdf_chaninfo_decl.F90 \
+	netcdf_realloc_imp.f90 netcdf_hresize.F90 \
+	netcdf_ciresize.F90 netcdf_lheader_imp.F90 \
+	netcdf_chaninfo_imp.F90
 
 kinds.mod: kinds.F90
 	ifort $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
