@@ -26,15 +26,6 @@
                 end if
                 
                 diag_chaninfo_store%nchan = nchan
-                
-                ! TODO: allocate anything necessary... maybe we need
-                ! ci_****_vi (vector indexes) again from chaninfo?
-                allocate(diag_chaninfo_store%ci_byte())
-                allocate(diag_chaninfo_store%ci_short())
-                allocate(diag_chaninfo_store%ci_long())
-                allocate(diag_chaninfo_store%ci_rsingle())
-                allocate(diag_chaninfo_store%ci_rdouble())
-                allocate(diag_chaninfo_store%ci_string())
             else
                 call error("NetCDF4 layer not initialized yet!")
             end if
@@ -77,7 +68,6 @@
                 do curdatindex = 1, diag_chaninfo_store%total
                     data_name = diag_chaninfo_store%names(curdatindex)
                     data_type = diag_chaninfo_store%types(curdatindex)
-                    data_vect = diag_chaninfo_store%vectored(curdatindex)
                     
                     if (data_type == NLAYER_BYTE) then
                         if (data_vect) then
