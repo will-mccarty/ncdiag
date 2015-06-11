@@ -67,7 +67,7 @@
                             end if
                             
                             data_type_index(1) = data_type_index(1) + curdatvecsize
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_byte(data_type_index(1):(data_type_index(1) + curdatvecsize))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
                         else
                             data_type_index(1) = data_type_index(1) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_byte(data_type_index(1))))
@@ -82,7 +82,7 @@
                                 call error("Critical error - short index exceeds internal count!")
                             end if
                             
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_short(data_type_index(2):(data_type_index(2) + curdatvecsize))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
                             data_type_index(2) = data_type_index(2) + curdatvecsize
                         else
                             data_type_index(2) = data_type_index(2) + 1
@@ -98,7 +98,7 @@
                                 call error("Critical error - long index exceeds internal count!")
                             end if
                             
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_long(data_type_index(3):(data_type_index(3) + curdatvecsize))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
                             data_type_index(3) = data_type_index(3) + curdatvecsize
                         else
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_long(data_type_index(3))))
@@ -115,7 +115,7 @@
                             end if
                             
                             data_type_index(4) = data_type_index(4) + curdatvecsize
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
                         else
                             data_type_index(4) = data_type_index(4) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rsingle(data_type_index(4))))
@@ -131,7 +131,7 @@
                             end if
                             
                             data_type_index(5) = data_type_index(5) + curdatvecsize
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
                         else
                             data_type_index(5) = data_type_index(5) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rdouble(data_type_index(5))))
@@ -148,7 +148,7 @@
                         !    end if
                         !    
                         !    data_type_index(6) = data_type_index(6) + curdatvecsize
-                        !    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6):(data_type_index(6) + curdatvecsize))))
+                        !    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
                         !else
                             data_type_index(6) = data_type_index(6) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6))))
@@ -477,6 +477,16 @@
             
             ! Now add the actual entry!
             diag_header_store%h_long(endpos - size(header_value) + 1:endpos) = header_value
+#ifdef _DEBUG_MEM_
+            print *, "====================================="
+            print *, "FROM:"
+            print *, endpos - size(header_value) + 1
+            print *, "TO:"
+            print *, endpos
+            print *, "ARRAY:"
+            print *, header_value
+            print *, "====================================="
+#endif
         end subroutine nc_diag_header_long_v
         
         ! nc_diag_header - input real(r_single)
