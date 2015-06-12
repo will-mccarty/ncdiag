@@ -293,7 +293,7 @@
             else
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -366,7 +366,7 @@
             else
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -450,7 +450,7 @@
                     print *, "!!!! diag_chaninfo_store%var_usage(var_index)"
                     print *, diag_chaninfo_store%var_usage(var_index)
 #endif
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -538,7 +538,7 @@
             else
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -611,7 +611,7 @@
             else
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -684,7 +684,7 @@
             else
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
