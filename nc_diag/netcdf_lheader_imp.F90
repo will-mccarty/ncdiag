@@ -66,11 +66,11 @@
                                 call error("Critical error - byte index exceeds internal count!")
                             end if
                             
-                            data_type_index(1) = data_type_index(1) + curdatvecsize
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
+                            data_type_index(1) = data_type_index(1) + curdatvecsize
                         else
-                            data_type_index(1) = data_type_index(1) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_byte(data_type_index(1))))
+                            data_type_index(1) = data_type_index(1) + 1
                         end if
                     else if (data_type == NLAYER_SHORT) then
                         if (data_vect) then
@@ -85,8 +85,8 @@
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
                             data_type_index(2) = data_type_index(2) + curdatvecsize
                         else
-                            data_type_index(2) = data_type_index(2) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_short(data_type_index(2))))
+                            data_type_index(2) = data_type_index(2) + 1
                         end if
                     else if (data_type == NLAYER_LONG) then
                         if (data_vect) then
@@ -114,11 +114,11 @@
                                 call error("Critical error - rsingle index exceeds internal count!")
                             end if
                             
-                            data_type_index(4) = data_type_index(4) + curdatvecsize
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
+                            data_type_index(4) = data_type_index(4) + curdatvecsize
                         else
-                            data_type_index(4) = data_type_index(4) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rsingle(data_type_index(4))))
+                            data_type_index(4) = data_type_index(4) + 1
                         end if
                     else if (data_type == NLAYER_DOUBLE) then
                         if (data_vect) then
@@ -130,11 +130,11 @@
                                 call error("Critical error - rdouble index exceeds internal count!")
                             end if
                             
-                            data_type_index(5) = data_type_index(5) + curdatvecsize
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
+                            data_type_index(5) = data_type_index(5) + curdatvecsize
                         else
-                            data_type_index(5) = data_type_index(5) + 1
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_rdouble(data_type_index(5))))
+                            data_type_index(5) = data_type_index(5) + 1
                         end if
                     else if (data_type == NLAYER_STRING) then
                         ! String array not available with NF90 attributes
@@ -150,8 +150,17 @@
                         !    data_type_index(6) = data_type_index(6) + curdatvecsize
                         !    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
                         !else
-                            data_type_index(6) = data_type_index(6) + 1
+#ifdef _DEBUG_MEM_
+                            ! NOTE: trim() is F95
+                            print *, "On curdatindex:"
+                            print *, curdatindex
+                            print *, "For variable:"
+                            print *, trim(data_name)
+                            print *, "Writing header string:"
+                            print *, trim(diag_header_store%h_string(data_type_index(6)))
+#endif
                             call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, trim(diag_header_store%h_string(data_type_index(6)))))
+                            data_type_index(6) = data_type_index(6) + 1
                         !end if
                     else
                         call error("Critical error - unknown variable type!")
