@@ -20,6 +20,7 @@
         type diag_chaninfo
             ! Number of channels to store
             integer(i_long)                               :: nchans = -1
+            integer(i_kind)                               :: nchans_dimid
             
             ! # of times we needed to realloc chaninfo
             ! also the multiplier factor for allocation (2^x)
