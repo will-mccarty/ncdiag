@@ -266,7 +266,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_byte), intent(in)     :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -285,7 +285,8 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
@@ -348,7 +349,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_short), intent(in)    :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -367,7 +368,8 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
@@ -430,7 +432,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_long), intent(in)     :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -449,7 +451,8 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
@@ -538,7 +541,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             real(r_single), intent(in)      :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -557,10 +560,18 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
+            
+#ifdef _DEBUG_MEM_
+            print *, " *** chaninfo_name"
+            print *, chaninfo_name
+            print *, " *** var_index is set to:"
+            print *, var_index
+#endif
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
@@ -607,6 +618,21 @@
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
+#ifdef _DEBUG_MEM_
+            print *, "===================================="
+            print *, "diag_chaninfo_store%total"
+            print *, diag_chaninfo_store%total
+            print *, "var_index"
+            print *, var_index
+            print *, "diag_chaninfo_store%var_rel_pos(var_index)"
+            print *, diag_chaninfo_store%var_rel_pos(var_index)
+            print *, "diag_chaninfo_store%nchans"
+            print *, diag_chaninfo_store%nchans
+            print *, "diag_chaninfo_store%var_usage(var_index)"
+            print *, diag_chaninfo_store%var_usage(var_index)
+            print *, "===================================="
+#endif
+            
             ! Now add the actual entry!
             diag_chaninfo_store%ci_rsingle(1 + &
                     ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
@@ -620,7 +646,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             real(r_double), intent(in)      :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -639,7 +665,8 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
@@ -702,7 +729,7 @@
             character(len=*), intent(in)    :: chaninfo_name
             character(len=*), intent(in)    :: chaninfo_value
             
-            integer(i_long) :: i, var_index, type_index
+            integer(i_long) :: i, var_index, var_rel_index, type_index
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -721,7 +748,8 @@
             ! find the index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
-                    var_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_rel_index = diag_chaninfo_store%var_rel_pos(i)
+                    var_index = i
                     exit
                 end if
             end do
