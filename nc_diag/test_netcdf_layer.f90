@@ -18,8 +18,12 @@ program test_netcdf_layer
     call nc_diag_chaninfo_dim_set(10)
     
     do i = 1, 10
-        call nc_diag_chaninfo("chaninfosimple1", 123)
-        call nc_diag_chaninfo("chaninfosimple2", 123)
+        call nc_diag_chaninfo("chaninfosimple1", i)
+        call nc_diag_chaninfo("chaninfosimple2", i*2)
+    end do
+    
+    do i = 1, 9
+        call nc_diag_chaninfo("chaninfosimple3_notcomplete", i*3)
     end do
     
     do i = 1, 10000000
