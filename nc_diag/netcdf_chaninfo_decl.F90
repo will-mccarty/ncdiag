@@ -26,6 +26,10 @@
             ! also the multiplier factor for allocation (2^x)
             integer(i_byte)                               :: alloc_multi
             
+            ! Did we write anything out yet?
+            logical                                       :: def_lock
+            logical                                       :: data_lock
+            
             !-----------------------------------------------------------
             ! Variable storage
             !-----------------------------------------------------------

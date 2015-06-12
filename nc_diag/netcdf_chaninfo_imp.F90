@@ -252,6 +252,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For byte, type index is 1
             type_index = 1
             
@@ -272,6 +276,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
@@ -325,6 +334,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For short, type index is 2
             type_index = 2
             
@@ -345,6 +358,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
@@ -398,6 +416,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For long, type index is 3
             type_index = 3
             
@@ -425,6 +447,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
@@ -497,6 +524,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For rsingle, type index is 4
             type_index = 4
             
@@ -517,6 +548,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
@@ -570,6 +606,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For rdouble, type index is 5
             type_index = 5
             
@@ -590,6 +630,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
@@ -643,6 +688,10 @@
             
             integer(i_long) :: i, var_index, type_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             ! For string, type index is 6
             type_index = 6
             
@@ -663,6 +712,11 @@
             
             if (var_index == -1) then
                 ! Entry does not exist yet...
+                
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
                 
                 ! Expand things first!
                 call nc_diag_chaninfo_expand
