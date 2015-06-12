@@ -6,6 +6,13 @@ program test_netcdf_layer
     implicit none
     
     integer :: i
+    real(r_single) :: f
+    real(r_double) :: d
+    
+    character(len=100) :: str_header, str_chaninfo
+    
+    f = 1.234
+    d = 2.34567890
     
     call nc_diag_init("test.nc")
     
@@ -20,6 +27,10 @@ program test_netcdf_layer
     do i = 1, 10
         call nc_diag_chaninfo("chaninfosimple1", i)
         call nc_diag_chaninfo("chaninfosimple2", i*2)
+        call nc_diag_chaninfo("chaninfosimple4_float", f + 1.00)
+        call nc_diag_chaninfo("chaninfosimple5_double", d + 1.00)
+        write(str_chaninfo, "(A, I0)") "ci6_", i
+        call nc_diag_chaninfo("chaninfosimple6_str", trim(str_chaninfo))
     end do
     
     do i = 1, 9
@@ -28,7 +39,15 @@ program test_netcdf_layer
     
     do i = 1, 10000000
         call nc_diag_header("headertestsimple", 123)
+        
+        call nc_diag_header("headertestsimple2_float", f)
+        call nc_diag_header("headertestsimple3_double", d)
+        
+        write(str_header, "(A, I0)") "header_", i
+        call nc_diag_header("headertestsimple4_str", trim(str_header))
     end do
+    call nc_diag_header("headertestsimple5_str", "hello world")
+    print *, str_header
     
     print *, "===================="
     print *, "Vector:"
@@ -48,6 +67,14 @@ program test_netcdf_layer
     call nc_diag_header("headertestarr7", (/ 111, 222, 333, 444, 555, 666, 777, 888, 999 /))
     call nc_diag_header("headertestarr7", (/ 222, 444, 666, 888 /))
     call nc_diag_header("headertestarr7", 999)
+    
+    call nc_diag_header("headertestarr8", (/ f, f*2, f*3, f*4 /))
+    call nc_diag_header("headertestarr9", (/ d, d*2, d*3, d*4 /))
+    
+    ! nc_diag_header does not support arrays of strings... because
+    ! NetCDF4 doesn't support it, either!
+    ! (At least, that's what I remember from the docs... double check
+    ! to make sure!)
     
     print *, "==============================="
     print *, "Writing resulting NetCDF file:"
