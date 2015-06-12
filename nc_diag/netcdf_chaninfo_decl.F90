@@ -45,11 +45,11 @@
             ! if "asdf" has a relative value of 2, type of BYTE, and nchan
             ! of 10, then variable "asdf" will start at 1 + [(2 - 1) * 10] = 11
             ! within the byte storage array. Eqn: 1 + [(REL_VAL - 1) * nchan]
-            integer(i_byte),     dimension(:),allocatable :: var_rel_pos
+            integer(i_long),     dimension(:),allocatable :: var_rel_pos
             
             ! Current variable usage (which, for each element,
             ! should be <= nchans)
-            integer(i_byte),     dimension(:),allocatable :: var_usage
+            integer(i_long),     dimension(:),allocatable :: var_usage
             
             ! Variable IDs (for use with NetCDF API)
             integer(i_kind),     dimension(:),allocatable :: var_ids
@@ -67,7 +67,7 @@
             ! 11 12 13 14 15 16 17 18 19 20
             ! 21 22 23 24 25 26 27 28 29 30
             ! 31
-            integer(i_byte),     dimension(6)             :: acount_v
+            integer(i_long),     dimension(6)             :: acount_v
             
             ! Total variables stored
             integer(i_long)                               :: total
