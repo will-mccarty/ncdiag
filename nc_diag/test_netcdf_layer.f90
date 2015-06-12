@@ -29,9 +29,12 @@ program test_netcdf_layer
         call nc_diag_chaninfo("chaninfosimple2", i*2)
         call nc_diag_chaninfo("chaninfosimple4_float", f + 1.00)
         call nc_diag_chaninfo("chaninfosimple5_double", d + 1.00)
-        write(str_chaninfo, "(A, I0)") "ci6_", i
-        call nc_diag_chaninfo("chaninfosimple6_str", trim(str_chaninfo))
+        !write(str_chaninfo, "(A, I0)") "ci6_", i
+        !call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
     end do
+    
+    print *, "str_chaninfo:"
+    print *, str_chaninfo
     
     do i = 1, 9
         call nc_diag_chaninfo("chaninfosimple3_notcomplete", i*3)
@@ -44,9 +47,12 @@ program test_netcdf_layer
         call nc_diag_header("headertestsimple3_double", d)
         
         write(str_header, "(A, I0)") "header_", i
-        call nc_diag_header("headertestsimple4_str", trim(str_header))
+        call nc_diag_header("headertestsimple4_str", str_header)
     end do
+    
     call nc_diag_header("headertestsimple5_str", "hello world")
+    
+    print *, "str_header:"
     print *, str_header
     
     print *, "===================="
