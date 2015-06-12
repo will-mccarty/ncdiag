@@ -151,7 +151,7 @@
                         !    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
                         !else
                             data_type_index(6) = data_type_index(6) + 1
-                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_header_store%h_string(data_type_index(6))))
+                            call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, trim(diag_header_store%h_string(data_type_index(6)))))
                         !end if
                     else
                         call error("Critical error - unknown variable type!")
