@@ -68,6 +68,13 @@ module netcdf_layer
         
         subroutine nc_diag_write
             call nc_diag_header_write
+            call nc_diag_chaninfo_write_def
+            
+            ! Lock definition writing!
+            call check(nf90_enddef(ncid))
+            
+            call nc_diag_chaninfo_write_data
+            
             call check(nf90_close(ncid))
             
         end subroutine nc_diag_write
@@ -85,6 +92,11 @@ module netcdf_layer
             write(*, "(A, A)") "ERROR: ", err
             stop "Failed to process data/write NetCDF4."
         end subroutine error
+        
+        subroutine warning(warn)
+            character(len=*), intent(in) :: warn
+            write(*, "(A, A)") "WARNING: ", warn
+        end subroutine warning
         
 #ifdef _DEBUG_MEM_
         subroutine debug(dbg)

@@ -53,130 +53,146 @@
         !! the amount of data < nchan (since we're expecting a full write)
         !!!!!!
         
-        !subroutine nc_diag_chaninfo_write
-        !    integer(i_byte)                       :: data_type
-        !    logical                               :: data_vect
-        !    integer(i_long), dimension(6)         :: data_type_index
-        !    integer(i_long), dimension(5)         :: data_type_index_vi
-        !    character(len=100)                    :: data_name
-        !    
-        !    integer(i_long)               :: curdatindex
-        !    integer(i_long)               :: curdatvecsize
-        !    
-        !    if (init_done) then
-        !        data_type_index    = (/ 1, 1, 1, 1, 1, 1 /)
-        !        data_type_index_vi = (/ 1, 1, 1, 1, 1 /)
-        !        do curdatindex = 1, diag_chaninfo_store%total
-        !            data_name = diag_chaninfo_store%names(curdatindex)
-        !            data_type = diag_chaninfo_store%types(curdatindex)
-        !            
-        !            if (data_type == NLAYER_BYTE) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(1) <= diag_chaninfo_store%acount(7)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_chaninfo_store%ci_byte_vi(data_type_index_vi(1))
-        !                        data_type_index_vi(1) = data_type_index_vi(1) + 1
-        !                    else
-        !                        call error("Critical error - byte index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    data_type_index(1) = data_type_index(1) + curdatvecsize
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_byte(data_type_index(1):(data_type_index(1) + curdatvecsize))))
-        !                else
-        !                    data_type_index(1) = data_type_index(1) + 1
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_byte(data_type_index(1))))
-        !                end if
-        !            else if (data_type == NLAYER_SHORT) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(2) <= diag_chaninfo_store%acount(8)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_chaninfo_store%ci_short_vi(data_type_index_vi(2))
-        !                        data_type_index_vi(2) = data_type_index_vi(2) + 1
-        !                    else
-        !                        call error("Critical error - short index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_short(data_type_index(2):(data_type_index(2) + curdatvecsize))))
-        !                    data_type_index(2) = data_type_index(2) + curdatvecsize
-        !                else
-        !                    data_type_index(2) = data_type_index(2) + 1
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_short(data_type_index(2))))
-        !                end if
-        !            else if (data_type == NLAYER_LONG) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(3) <= diag_chaninfo_store%acount(9)) then
-        !                        ! Grab the vector size...
-        !                        curdatvecsize = diag_chaninfo_store%ci_long_vi(data_type_index_vi(3))
-        !                        data_type_index_vi(3) = data_type_index_vi(3) + 1
-        !                    else
-        !                        call error("Critical error - long index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_long(data_type_index(3):(data_type_index(3) + curdatvecsize))))
-        !                    data_type_index(3) = data_type_index(3) + curdatvecsize
-        !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_long(data_type_index(3))))
-        !                    data_type_index(3) = data_type_index(3) + 1
-        !                end if
-        !            else if (data_type == NLAYER_FLOAT) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(4) <= diag_chaninfo_store%acount(10)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_chaninfo_store%ci_rsingle_vi(data_type_index_vi(4))
-        !                        data_type_index_vi(4) = data_type_index_vi(4) + 1
-        !                    else
-        !                        call error("Critical error - rsingle index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    data_type_index(4) = data_type_index(4) + curdatvecsize
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize))))
-        !                else
-        !                    data_type_index(4) = data_type_index(4) + 1
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_rsingle(data_type_index(4))))
-        !                end if
-        !            else if (data_type == NLAYER_DOUBLE) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(5) <= diag_chaninfo_store%acount(11)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_chaninfo_store%ci_rdouble_vi(data_type_index_vi(5))
-        !                        data_type_index_vi(5) = data_type_index_vi(5) + 1
-        !                    else
-        !                        call error("Critical error - rdouble index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    data_type_index(5) = data_type_index(5) + curdatvecsize
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize))))
-        !                else
-        !                    data_type_index(5) = data_type_index(5) + 1
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_rdouble(data_type_index(5))))
-        !                end if
-        !            else if (data_type == NLAYER_STRING) then
-        !                ! String array not available with NF90 attributes
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(6) <= diag_chaninfo_store%acount(12)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_chaninfo_store%ci_string_vi(data_type_index_vi(6))
-        !                        data_type_index_vi(6) = data_type_index_vi(6) + 1
-        !                    else
-        !                        call error("Critical error - string index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    data_type_index(6) = data_type_index(6) + curdatvecsize
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_string(data_type_index(6):(data_type_index(6) + curdatvecsize))))
-        !                else
-        !                    data_type_index(6) = data_type_index(6) + 1
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_chaninfo_store%ci_string(data_type_index(6))))
-        !                end if
-        !            else
-        !                call error("Critical error - unknown variable type!")
-        !            end if
-        !            
-        !        end do
-        !    else
-        !        call error("No nc_diag initialized yet!")
-        !    end if
-        !    
-        !end subroutine nc_diag_chaninfo_write
+        subroutine nc_diag_chaninfo_write_def
+            ! Just write the definitions out!
+            integer(i_long)               :: curdatindex
+            integer(i_byte)               :: data_type
+            integer(i_kind)               :: nc_data_type
+            
+            if (init_done .AND. allocated(diag_chaninfo_store)) then
+                if (diag_chaninfo_store%nchans /= -1) then
+                    if (.NOT. diag_chaninfo_store%def_lock) then
+                        ! First, set the dimensions!
+                        call check(nf90_def_dim(ncid, "nchans", diag_chaninfo_store%nchans, diag_chaninfo_store%nchans_dimid))
+                        
+                        ! Once we have the dimension, we can start writing
+                        ! variable definitions!
+                        do curdatindex = 1, diag_chaninfo_store%total
+                            data_type = diag_chaninfo_store%types(curdatindex)
+                            
+                            if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
+                            if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
+                            if (data_type == NLAYER_LONG)   nc_data_type = nf90_int
+                            if (data_type == NLAYER_FLOAT)  nc_data_type = nf90_float
+                            if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
+                            if (data_type == NLAYER_STRING) nc_data_type = nf90_string
+                            
+                            call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                nc_data_type, diag_chaninfo_store%nchans_dimid, &
+                                diag_chaninfo_store%var_ids(curdatindex)))
+                        end do
+                        
+                        ! Lock the definitions!
+                        diag_chaninfo_store%def_lock = .TRUE.
+                    else
+                        call error("Can't write definitions - definitions have already been written and locked!")
+                    end if
+                else
+                    call error("Can't write definitions - number of chans not set yet!")
+                end if
+            else
+                call error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_chaninfo_write_def
+        
+        subroutine nc_diag_chaninfo_write_data
+            integer(i_byte)                       :: data_type
+            integer(i_long)                       :: data_type_index
+            character(len=100)                    :: data_name
+            
+            character(len=1000)                   :: warning_str
+            
+            integer(i_long)               :: curdatindex
+            
+            if (init_done .AND. allocated(diag_chaninfo_store)) then
+                if (diag_chaninfo_store%nchans /= -1) then
+                    if (.NOT. diag_chaninfo_store%data_lock) then
+                        do curdatindex = 1, diag_chaninfo_store%total
+                            data_name = diag_chaninfo_store%names(curdatindex)
+                            data_type = diag_chaninfo_store%types(curdatindex)
+                            data_type_index = 1 + &
+                                ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
+                            
+                            ! Warn about low data filling
+                            if (diag_chaninfo_store%var_usage(curdatindex) < diag_chaninfo_store%nchans) then
+                                ! NOTE - I0 and TRIM are Fortran 95 specs
+                                write (warning_str, "(A, A, A, I0, A, I0, A)") "Amount of data written in ", &
+                                    trim(data_name), "(", diag_chaninfo_store%var_usage(curdatindex), &
+                                    ") is less than nchans (", diag_chaninfo_store%nchans, ")!"
+                                call warning(trim(warning_str))
+                                !call warning("Amount of data written in XXXX (N) is less than nchans (N)!")
+                            end if
+                            
+#ifdef _DEBUG_MEM_
+                            print *, "****** Processing ******"
+                            print *, "data_name:"
+                            print *, data_name
+                            print *, "data_type:"
+                            print *, data_type
+                            print *, "data_type_index:"
+                            print *, data_type_index
+                            print *, "diag_chaninfo_store%var_ids(curdatindex):"
+                            print *, diag_chaninfo_store%var_ids(curdatindex)
+                            print *, "diag_chaninfo_store%var_usage(curdatindex):"
+                            print *, diag_chaninfo_store%var_usage(curdatindex)
+                            print *, "Upper range (data_type_index + &"
+                            print *, "  diag_chaninfo_store%var_usage(curdatindex) - 1):"
+                            print *, (data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1)
+#endif
+                            
+                            if (data_type == NLAYER_BYTE) then
+#ifdef _DEBUG_MEM_
+                                print *, "Resulting data to be stored:"
+                                print *, diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1))
+#endif
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else if (data_type == NLAYER_SHORT) then
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_short(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else if (data_type == NLAYER_LONG) then
+#ifdef _DEBUG_MEM_
+                                print *, "Resulting data to be stored:"
+                                print *, diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1))
+#endif
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else if (data_type == NLAYER_FLOAT) then
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_rsingle(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else if (data_type == NLAYER_DOUBLE) then
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else if (data_type == NLAYER_STRING) then
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                            else
+                                call error("Critical error - unknown variable type!")
+                            end if
+                            
+                            ! Lock data writing
+                            diag_chaninfo_store%data_lock = .TRUE.
+                        end do
+                    else
+                        call error("Can't write data - data have already been written and locked!")
+                    end if
+                else
+                    call error("Can't write data - number of chans not set yet!")
+                end if
+            else
+                call error("Can't write data - NetCDF4 layer not initialized yet!")
+            end if
+            
+        end subroutine nc_diag_chaninfo_write_data
         
         subroutine nc_diag_chaninfo_expand
             ! Did we realloc at all?
