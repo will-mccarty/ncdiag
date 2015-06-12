@@ -47,6 +47,7 @@
         !!!!!
         !! TODO:
         !! (1) add all of the long fixes to the other types tomorrow!!!
+        !!     DONE!
         !! (2) Write the subroutine below tomorrow!
         !! Make sure to warn when writing about low nchan, aka when
         !! the amount of data < nchan (since we're expecting a full write)
@@ -286,17 +287,24 @@
                 
                 ! Initialize the amount of memory used to 1.
                 diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 1
+                
+                ! Set var_index to the total
+                var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = &
-                    diag_chaninfo_store%var_usage(diag_chaninfo_store%total) + 1
+                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                endif
+                
+                diag_chaninfo_store%var_usage(var_index) = &
+                    diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
             ! Now add the actual entry!
             diag_chaninfo_store%ci_byte(1 + &
-                    ((diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) - 1) &
+                    ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
                         * diag_chaninfo_store%nchans) &
-                    + (diag_chaninfo_store%var_usage(diag_chaninfo_store%total) - 1)) = chaninfo_value
+                    + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_byte
         
         ! nc_diag_chaninfo - input integer(i_short)
@@ -352,17 +360,24 @@
                 
                 ! Initialize the amount of memory used to 1.
                 diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 1
+                
+                ! Set var_index to the total
+                var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = &
-                    diag_chaninfo_store%var_usage(diag_chaninfo_store%total) + 1
+                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                endif
+                
+                diag_chaninfo_store%var_usage(var_index) = &
+                    diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
             ! Now add the actual entry!
             diag_chaninfo_store%ci_short(1 + &
-                    ((diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) - 1) &
+                    ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
                         * diag_chaninfo_store%nchans) &
-                    + (diag_chaninfo_store%var_usage(diag_chaninfo_store%total) - 1)) = chaninfo_value
+                    + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_short
         
         ! nc_diag_chaninfo - input integer(i_long)
@@ -517,17 +532,24 @@
                 
                 ! Initialize the amount of memory used to 1.
                 diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 1
+                
+                ! Set var_index to the total
+                var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = &
-                    diag_chaninfo_store%var_usage(diag_chaninfo_store%total) + 1
+                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                endif
+                
+                diag_chaninfo_store%var_usage(var_index) = &
+                    diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
             ! Now add the actual entry!
             diag_chaninfo_store%ci_rsingle(1 + &
-                    ((diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) - 1) &
+                    ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
                         * diag_chaninfo_store%nchans) &
-                    + (diag_chaninfo_store%var_usage(diag_chaninfo_store%total) - 1)) = chaninfo_value
+                    + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_rsingle
         
         ! nc_diag_chaninfo - input real(r_double)
@@ -583,17 +605,24 @@
                 
                 ! Initialize the amount of memory used to 1.
                 diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 1
+                
+                ! Set var_index to the total
+                var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = &
-                    diag_chaninfo_store%var_usage(diag_chaninfo_store%total) + 1
+                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                endif
+                
+                diag_chaninfo_store%var_usage(var_index) = &
+                    diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
             ! Now add the actual entry!
             diag_chaninfo_store%ci_rdouble(1 + &
-                    ((diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) - 1) &
+                    ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
                         * diag_chaninfo_store%nchans) &
-                    + (diag_chaninfo_store%var_usage(diag_chaninfo_store%total) - 1)) = chaninfo_value
+                    + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_rdouble
 
         ! nc_diag_chaninfo - input character(len=*)
@@ -649,17 +678,24 @@
                 
                 ! Initialize the amount of memory used to 1.
                 diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 1
+                
+                ! Set var_index to the total
+                var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = &
-                    diag_chaninfo_store%var_usage(diag_chaninfo_store%total) + 1
+                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                    call error("Data added is exceeding nchan! Data must fit within nchan constraint.")
+                endif
+                
+                diag_chaninfo_store%var_usage(var_index) = &
+                    diag_chaninfo_store%var_usage(var_index) + 1
             end if
             
             ! Now add the actual entry!
             diag_chaninfo_store%ci_string(1 + &
-                    ((diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) - 1) &
+                    ((diag_chaninfo_store%var_rel_pos(var_index) - 1) &
                         * diag_chaninfo_store%nchans) &
-                    + (diag_chaninfo_store%var_usage(diag_chaninfo_store%total) - 1)) = chaninfo_value
+                    + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_string
         
         !=============================================================
