@@ -344,7 +344,7 @@
                 
                 ! Store name and type!
                 diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
                 
                 ! We just need to add one entry...
                 call nc_diag_chaninfo_resize_short(diag_chaninfo_store%nchans)
@@ -424,7 +424,7 @@
                 
                 ! Store name and type!
                 diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
                 
                 ! We just need to add one entry...
                 call nc_diag_chaninfo_resize_long(diag_chaninfo_store%nchans)
@@ -516,7 +516,7 @@
                 
                 ! Store name and type!
                 diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
                 
                 ! We just need to add one entry...
                 call nc_diag_chaninfo_resize_rsingle(diag_chaninfo_store%nchans)
@@ -589,7 +589,7 @@
                 
                 ! Store name and type!
                 diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
                 
                 ! We just need to add one entry...
                 call nc_diag_chaninfo_resize_rdouble(diag_chaninfo_store%nchans)
@@ -662,7 +662,7 @@
                 
                 ! Store name and type!
                 diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
                 
                 ! We just need to add one entry...
                 call nc_diag_chaninfo_resize_string(diag_chaninfo_store%nchans)
