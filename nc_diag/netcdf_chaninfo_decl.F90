@@ -46,6 +46,9 @@
             ! should be <= nchans)
             integer(i_byte),     dimension(:),allocatable :: var_usage
             
+            ! Variable IDs (for use with NetCDF API)
+            integer(i_kind),     dimension(:),allocatable :: var_ids
+            
             !-----------------------------------------------------------
             ! Type metadata storage
             !-----------------------------------------------------------

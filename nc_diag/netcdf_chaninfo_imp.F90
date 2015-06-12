@@ -223,6 +223,16 @@
                         diag_chaninfo_store%var_usage = 0
                     end if
                     
+                    if (allocated(diag_chaninfo_store%var_ids)) then
+                        if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_ids)) then
+                            call nc_diag_realloc(diag_chaninfo_store%var_ids, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            meta_realloc = .TRUE.
+                        end if
+                    else
+                        allocate(diag_chaninfo_store%var_ids(NLAYER_DEFAULT_ENT))
+                        diag_chaninfo_store%var_ids = -1
+                    end if
+                    
                     if (meta_realloc) then
                         diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                     end if
