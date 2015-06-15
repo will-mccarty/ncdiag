@@ -29,8 +29,8 @@ program test_netcdf_layer
         call nc_diag_chaninfo("chaninfosimple2", i*2)
         call nc_diag_chaninfo("chaninfosimple4_float", f + 1.00)
         call nc_diag_chaninfo("chaninfosimple5_double", d + 1.00)
-        !write(str_chaninfo, "(A, I0)") "ci6_", i
-        !call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
+        write(str_chaninfo, "(A, I0)") "ci6_", i
+        call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
     end do
     
     print *, "str_chaninfo:"

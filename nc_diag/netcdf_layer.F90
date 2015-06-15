@@ -2,6 +2,7 @@ module netcdf_layer
     use netcdf
     use fnv32mod
     use kinds
+    use utils
     implicit none
     
     logical,dimension(:),allocatable        :: def_locked
@@ -35,7 +36,13 @@ module netcdf_layer
         
         subroutine nc_diag_init(filename)
             character(len=*),intent(in)    :: filename
-            print *,'Initializing netcdf layer library...'
+            character(len=:), allocatable  :: version_num
+            !print *,'Initializing netcdf layer library, version ...'
+            write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
+            call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
+            
+            call nc_version_check(version_num)
+            
             ! nf90_create creates the NetCDF file, and initializes
             ! everything needed to write a NetCDF file.
             ! 
@@ -57,6 +64,41 @@ module netcdf_layer
                 call error("Attempted to initialize without closing previous nc_diag file!")
             end if
         end subroutine nc_diag_init
+        
+        subroutine nc_version_check(version_num)
+            character(len=*),intent(in)    :: version_num
+            character(len=:), allocatable  :: version_split_char(:)
+            
+            integer(i_long), dimension(4)  :: version_split
+            
+            version_split = 0
+            
+            ! There are problems with a certain version of NetCDF,
+            ! particularly with string handling. When attempting to get
+            ! and put string data, NC_EMAPTYPE (Mapped access for
+            ! atomic types only) appears, preventing string storage from
+            ! working. We can work around this, but we need to know the
+            ! version in order to know whether we need the workaround
+            ! or not.
+            ! 
+            ! Affected versions are 4.2.1.1 and lower.
+            
+            version_split_char = string_split_index(version_num, ".")
+            
+            ! Convert to integers!
+            if (size(version_split_char) >= 1) read(version_split_char(1), "(I)") version_split(1)
+            if (size(version_split_char) >= 2) read(version_split_char(2), "(I)") version_split(2)
+            if (size(version_split_char) >= 3) read(version_split_char(3), "(I)") version_split(3)
+            if (size(version_split_char) >= 4) read(version_split_char(4), "(I)") version_split(4)
+            
+            ! Now compare!
+            if ((version_split(1) <= 4) .AND. (version_split(2) <= 2) &
+                .AND. (version_split(3) <= 2) .AND. (version_split(4) <= 1)) then
+                call warning("Detected buggy version of NetCDF with bad string data handling." &
+                    // char(10) &
+                    // "             No worries, we'll just use a workaround here.")
+            end if
+        end subroutine nc_version_check
         
         !subroutine nc_diag_metadata
         !    
@@ -89,13 +131,25 @@ module netcdf_layer
         
         subroutine error(err)
             character(len=*), intent(in) :: err
-            write(*, "(A, A)") "ERROR: ", err
-            stop "Failed to process data/write NetCDF4."
+#ifdef ANSI_TERM_COLORS
+            write(*, "(A)") CHAR(27) // "[31m"
+#endif
+            write(*, "(A, A)") " ** ERROR: ", err
+#ifdef ANSI_TERM_COLORS
+            write(*, "(A)") CHAR(27) // "[0m"
+#endif
+            stop " ** Failed to process data/write NetCDF4."
         end subroutine error
         
         subroutine warning(warn)
             character(len=*), intent(in) :: warn
-            write(*, "(A, A)") "WARNING: ", warn
+#ifdef ANSI_TERM_COLORS
+            write(*, "(A)") CHAR(27) // "[33m"
+#endif
+            write(*, "(A, A)") " ** WARNING: ", warn
+#ifdef ANSI_TERM_COLORS
+            write(*, "(A)") CHAR(27) // "[0m"
+#endif
         end subroutine warning
         
 #ifdef _DEBUG_MEM_
