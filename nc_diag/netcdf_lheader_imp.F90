@@ -545,7 +545,7 @@
             diag_header_store%h_rdouble_vi(diag_header_store%acount(6+5)) = value_size
             
             ! Now add the actual entry!
-            diag_header_store%h_rdouble(endpos - value_size:endpos) = header_value
+            diag_header_store%h_rdouble(endpos - size(header_value) + 1:endpos) = header_value
         end subroutine nc_diag_header_rdouble_v
         
         ! String array not available with NF90 attributes
