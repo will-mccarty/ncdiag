@@ -102,13 +102,13 @@ module netcdf_layer
             if ((version_split(1) <= 4) .AND. (version_split(2) <= 2) &
                 .AND. (version_split(3) <= 2) .AND. (version_split(4) <= 1)) then
                 NLAYER_STRING_BROKEN = .TRUE.
-                call warning("Detected buggy version of NetCDF with bad string data handling." &
+                call warning("Detected buggy version (<= v4.2.1.1) of NetCDF with bad string" &
                     // char(10) &
-                    // "             Any string data input will result in an error." &
+                    // "             data handling. Any string data input will result in an error." &
                     // char(10) &
-                    // "             You can use NLAYER_STRING_BROKEN to determine if strings" &
+                    // "             You can use the NLAYER_STRING_BROKEN variable to determine if" &
                     // char(10) &
-                    // "             are usable or not within this module." &
+                    // "             strings are usable or not within this module." &
                     // char(10) &
                     // "             (To ignore version, rebuild with IGNORE_VERSION defined.)")
             end if
