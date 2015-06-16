@@ -16,6 +16,10 @@ program test_netcdf_layer
     
     call nc_diag_init("test.nc")
     
+#ifndef IGNORE_VERSION
+    write (*, "(A, L)") "Is NetCDF layer string handling broken? (T for yes, F for no): ", NLAYER_STRING_BROKEN
+#endif
+    
     print *, "===================="
     print *, "Single:"
     print *, "===================="
