@@ -6,6 +6,20 @@ NETCDF_FLAGS=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 	-lnetcdff -lnetcdf -lhdf5 -lcurl -lz -lrt -lmpi -lhdf5_hl -lhdf5 \
 	-lz -lsz -lgpfs -lmfhdf -ldf -ljpeg
 
+# Available compile flags:
+#   -D_REAL8_          - define the default "real" number
+#                        (other kinds defines available!)
+#   -D_DEBUG_MEM_      - enable verbose memory debugging messages.
+#                        WARNING - this is a LOT of messages!
+#   -DANSI_TERM_COLORS - enable terminal colors for warning and error
+#                        messages.
+#   -DIGNORE_VERSION   - ignore the version of NetCDF4. This disables
+#                        any bug checks related to NetCDF4 versions.
+#                        WARNING - do not define this (aka disable
+#                        version checks) unless you know what you're
+#                        doing! (Hint: if you don't want NetCDF4 to
+#                        crash with an error message, don't define
+#                        this!)
 COMPILE_FLAGS=-D_REAL8_ -DANSI_TERM_COLORS
 
 NETCDF_LAYER_DEPS=netcdf_realloc_decl.f90 \
