@@ -172,9 +172,18 @@
                                     diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
                                         diag_chaninfo_store%var_usage(curdatindex) - 1))))
                             else if (data_type == NLAYER_STRING) then
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+#ifndef IGNORE_VERSION
+                                ! If you manage to sneak in this far...
+                                if (NLAYER_STRING_BROKEN) then
+                                    call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
+                                else
+#endif
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1))))
+#ifndef IGNORE_VERSION
+                                end if
+#endif
                             else
                                 call error("Critical error - unknown variable type!")
                             end if
@@ -734,6 +743,12 @@
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
+            
+#ifndef IGNORE_VERSION
+            if (NLAYER_STRING_BROKEN) then
+                call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
+            end if
+#endif
             
             ! For string, type index is 6
             type_index = 6

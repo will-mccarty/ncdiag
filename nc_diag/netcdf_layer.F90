@@ -23,6 +23,10 @@ module netcdf_layer
     logical :: init_done = .FALSE.
     logical :: header_locked = .FALSE.
     
+#ifndef IGNORE_VERSION
+    logical :: NLAYER_STRING_BROKEN = .FALSE.
+#endif
+    
 #include "netcdf_realloc_decl.f90"
 #include "netcdf_lheader_decl.f90"
 #include "netcdf_chaninfo_decl.F90"
@@ -41,7 +45,9 @@ module netcdf_layer
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
             call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
             
+#ifndef IGNORE_VERSION
             call nc_version_check(version_num)
+#endif
             
             ! nf90_create creates the NetCDF file, and initializes
             ! everything needed to write a NetCDF file.
@@ -65,6 +71,7 @@ module netcdf_layer
             end if
         end subroutine nc_diag_init
         
+#ifndef IGNORE_VERSION
         subroutine nc_version_check(version_num)
             character(len=*),intent(in)    :: version_num
             character(len=:), allocatable  :: version_split_char(:)
@@ -94,11 +101,19 @@ module netcdf_layer
             ! Now compare!
             if ((version_split(1) <= 4) .AND. (version_split(2) <= 2) &
                 .AND. (version_split(3) <= 2) .AND. (version_split(4) <= 1)) then
+                NLAYER_STRING_BROKEN = .TRUE.
                 call warning("Detected buggy version of NetCDF with bad string data handling." &
                     // char(10) &
-                    // "             No worries, we'll just use a workaround here.")
+                    // "             Any string data input will result in an error." &
+                    // char(10) &
+                    // "             You can use NLAYER_STRING_BROKEN to determine if strings" &
+                    // char(10) &
+                    // "             are usable or not within this module." &
+                    // char(10) &
+                    // "             (To ignore version, rebuild with IGNORE_VERSION defined.)")
             end if
         end subroutine nc_version_check
+#endif
         
         !subroutine nc_diag_metadata
         !    
