@@ -127,6 +127,10 @@
             ! also the multiplier factor for allocation (2^x)
             integer(i_byte),  dimension(6)                :: alloc_mi_multi
             
+            ! Did we write anything out yet?
+            logical                                       :: def_lock
+            logical                                       :: data_lock
+            
             integer(i_byte),     dimension(:),allocatable :: m_byte
             integer(i_short),    dimension(:),allocatable :: m_short
             integer(i_long),     dimension(:),allocatable :: m_long

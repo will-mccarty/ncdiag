@@ -76,70 +76,76 @@
             
             integer(i_long)                       :: curdatindex, j
             
-            if (init_done) then
-                do curdatindex = 1, diag_metadata_store%total
-                    data_name = diag_metadata_store%names(curdatindex)
-                    data_type = diag_metadata_store%types(curdatindex)
-                    
-                    if (data_type == NLAYER_BYTE) then
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_byte(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    else if (data_type == NLAYER_SHORT) then
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_short(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    else if (data_type == NLAYER_LONG) then
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            print *, "Writing data!"
-                            write (*, "(A, I0, A, I0)") "Data ", j, " stored at: ", diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)
-                            write (*, "(A, I0)") "Actual data: ", diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    else if (data_type == NLAYER_FLOAT) then
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    else if (data_type == NLAYER_DOUBLE) then
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_rdouble(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    else if (data_type == NLAYER_STRING) then
+            if (init_done .AND. allocated(diag_metadata_store)) then
+                if (.NOT. diag_chaninfo_store%data_lock) then
+                    do curdatindex = 1, diag_metadata_store%total
+                        data_name = diag_metadata_store%names(curdatindex)
+                        data_type = diag_metadata_store%types(curdatindex)
+                        
+                        if (data_type == NLAYER_BYTE) then
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_byte(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        else if (data_type == NLAYER_SHORT) then
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_short(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        else if (data_type == NLAYER_LONG) then
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                print *, "Writing data!"
+                                write (*, "(A, I0, A, I0)") "Data ", j, " stored at: ", diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)
+                                write (*, "(A, I0)") "Actual data: ", diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        else if (data_type == NLAYER_FLOAT) then
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        else if (data_type == NLAYER_DOUBLE) then
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_rdouble(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        else if (data_type == NLAYER_STRING) then
 #ifndef IGNORE_VERSION
-                        ! If you manage to sneak in this far...
-                        if (NLAYER_STRING_BROKEN) then
-                            call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-                        end if
+                            ! If you manage to sneak in this far...
+                            if (NLAYER_STRING_BROKEN) then
+                                call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
+                            end if
 #endif
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                (/ j /) &
-                                ))
-                        end do
-                    end if
-                end do
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    (/ j /) &
+                                    ))
+                            end do
+                        end if
+                    end do
+                else
+                    call error("Can't write data - data have already been written and locked!")
+                end if
+            else
+                call error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_metadata_write_data
         
@@ -419,7 +425,16 @@
             
             integer(i_long)                 :: var_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
@@ -452,7 +467,16 @@
             
             integer(i_long)                 :: var_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
@@ -485,7 +509,16 @@
             
             integer(i_long)                 :: var_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 print *, "metadata: long var doesn't exist, go create it!"
                 call nc_diag_metadata_expand
                 print *, "metadata: diag_metadata_store%var_ids(1) is:"
@@ -531,7 +564,16 @@
 
             integer(i_long)                 :: var_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
@@ -564,7 +606,16 @@
 
             integer(i_long)                 :: var_index
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
@@ -603,7 +654,16 @@
             end if
 #endif
             
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
+            
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+                ! First, check to make sure we can still define new variables.
+                if (diag_chaninfo_store%def_lock) then
+                    call error("Can't add new variable - definitions have already been written and locked!")
+                end if
+                
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
