@@ -45,16 +45,12 @@
             integer(i_long)                       :: curdatindex
             integer(i_kind)                       :: nc_data_type
             
-            print *, "start metadata define"
             if (init_done) then
                 call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
                 
                 do curdatindex = 1, diag_metadata_store%total
                     data_name = diag_metadata_store%names(curdatindex)
                     data_type = diag_metadata_store%types(curdatindex)
-                    
-                    print *, "defining new metadata var:"
-                    print *, data_name
                     
                     if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
                     if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
@@ -67,7 +63,6 @@
                         diag_metadata_store%var_ids(curdatindex)))
                 end do
             end if
-            print *, "end metadata define"
         end subroutine nc_diag_metadata_write_def
         
         subroutine nc_diag_metadata_write_data
@@ -100,9 +95,6 @@
                             end do
                         else if (data_type == NLAYER_LONG) then
                             do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                print *, "Writing data!"
-                                write (*, "(A, I0, A, I0)") "Data ", j, " stored at: ", diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)
-                                write (*, "(A, I0)") "Actual data: ", diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 call check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
@@ -290,10 +282,7 @@
             
             meta_realloc = .FALSE.
             
-            print *, "expand start"
-            
             if (init_done .AND. allocated(diag_metadata_store)) then
-                print *, "expand gogogo: init all good"
 #ifdef _DEBUG_MEM_
                 call debug("INITIAL value of diag_metadata_store%alloc_s_multi:")
                 print *, diag_metadata_store%alloc_s_multi
@@ -361,12 +350,10 @@
                     if (diag_metadata_store%total >= size(diag_metadata_store%var_ids)) then
                         call nc_diag_realloc(diag_metadata_store%var_ids, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
                         meta_realloc = .TRUE.
-                        print *, "var_ids REALLOCATED"
                     end if
                 else
                     allocate(diag_metadata_store%var_ids(NLAYER_DEFAULT_ENT))
                     diag_metadata_store%var_ids = -1
-                    print *, "var_ids ALLOCATED"
                 end if
                 
                 if (meta_realloc) then
@@ -519,11 +506,6 @@
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                print *, "metadata: long var doesn't exist, go create it!"
-                call nc_diag_metadata_expand
-                print *, "metadata: diag_metadata_store%var_ids(1) is:"
-                print *, diag_metadata_store%var_ids(1)
-                
                 diag_metadata_store%total = diag_metadata_store%total + 1
                 
                 diag_metadata_store%names(diag_metadata_store%total) = metadata_name
@@ -531,7 +513,6 @@
                 
                 var_index = diag_metadata_store%total
             else
-                print *, "metadata: long var exists, fetch the index!"
                 var_index = nc_diag_metadata_lookup_var(metadata_name)
                 
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
@@ -548,9 +529,6 @@
             
             ! Now add the actual entry!
             diag_metadata_store%m_long(diag_metadata_store%acount(3)) = metadata_value
-            write (*, "(A, I0)") "diag_metadata_store%stor_i_arr(var_index)%icount = ", diag_metadata_store%stor_i_arr(var_index)%icount
-            write (*, "(A, I0)") "diag_metadata_store%acount(1) =", diag_metadata_store%acount(3)
-            !write (*, "(A, I") "diag_metadata_store%stor_i_arr(var_index)%index_arr(diag_metadata_store%stor_i_arr(var_index)%icount)"
             
             diag_metadata_store%stor_i_arr(var_index)%index_arr(diag_metadata_store%stor_i_arr(var_index)%icount) = &
                 diag_metadata_store%acount(3)
