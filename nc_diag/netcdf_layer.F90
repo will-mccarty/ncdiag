@@ -30,12 +30,15 @@ module netcdf_layer
 #include "netcdf_realloc_decl.f90"
 #include "netcdf_lheader_decl.f90"
 #include "netcdf_chaninfo_decl.F90"
+#include "netcdf_metadata_decl.f90"
     
     contains
 #include "netcdf_realloc_imp.f90"
 #include "netcdf_ciresize.F90"
+#include "netcdf_mresize.F90"
 #include "netcdf_lheader_imp.F90"
 #include "netcdf_chaninfo_imp.F90"
+#include "netcdf_metadata_imp.F90"
         
         subroutine nc_diag_init(filename)
             character(len=*),intent(in)    :: filename
@@ -62,7 +65,14 @@ module netcdf_layer
                 if (allocated(diag_chaninfo_store)) then
                     call error("BUG! diag_chaninfo_store is allocated, but init_done is set!")
                 end if
+                
+                if (allocated(diag_metadata_store)) then
+                    call error("BUG! diag_metadata_store is allocated, but init_done is set!")
+                end if
+                
                 allocate(diag_chaninfo_store)
+                allocate(diag_metadata_store)
+                
                 init_done = .TRUE.
             else
                 call error("Attempted to initialize without closing previous nc_diag file!")
@@ -123,11 +133,13 @@ module netcdf_layer
         
         subroutine nc_diag_write
             call nc_diag_chaninfo_write_def
+            call nc_diag_metadata_write_def
             
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
             
             call nc_diag_chaninfo_write_data
+            call nc_diag_metadata_write_data
             
             call check(nf90_close(ncid))
             

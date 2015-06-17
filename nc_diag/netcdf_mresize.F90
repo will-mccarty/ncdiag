@@ -21,9 +21,8 @@
         
         ! nc_diag_metadata_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
-        subroutine nc_diag_metadata_resize_byte(addl_num_entries, elevector)
+        subroutine nc_diag_metadata_resize_byte(addl_num_entries)
             integer(i_long), intent(in)     :: addl_num_entries
-            logical, intent(in)             :: elevector
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -57,38 +56,12 @@
                 allocate(diag_metadata_store%m_byte(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            
-            if (elevector) then
-                ! Element 6 is the last "single" element.
-                ! Element 7 and beyond stores the vector size/count info.
-                ! 
-                ! The range is from element 7 to element 12.
-                ! (7, 8, 9, 10, 11, 12)
-                ! 
-                ! Note that here we're just storing the index info - so we're only
-                ! ever going to increase the size by 1.
-                
-                if (allocated(diag_metadata_store%m_byte_vi)) then
-                    diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-                    if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-                        call nc_diag_realloc(diag_metadata_store%m_byte_vi, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_hi_multi(sc_index))))
-                        diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi)
-                        
-                        diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-                    end if
-                else
-                    diag_metadata_store%acount(sc_index_vi) = 1
-                    allocate(diag_metadata_store%m_byte_vi(NLAYER_DEFAULT_ENT))
-                    diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-                end if
-            end if
         end subroutine nc_diag_metadata_resize_byte
         
         ! nc_diag_metadata_resize - input integer(i_short)
         ! Corresponding NetCDF4 type: short
-        subroutine nc_diag_metadata_resize_short(addl_num_entries, elevector)
+        subroutine nc_diag_metadata_resize_short(addl_num_entries)
             integer(i_long), intent(in)     :: addl_num_entries
-            logical, intent(in)             :: elevector
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -122,38 +95,12 @@
                 allocate(diag_metadata_store%m_short(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            
-            if (elevector) then
-                ! Element 6 is the last "single" element.
-                ! Element 7 and beyond stores the vector size/count info.
-                ! 
-                ! The range is from element 7 to element 12.
-                ! (7, 8, 9, 10, 11, 12)
-                ! 
-                ! Note that here we're just storing the index info - so we're only
-                ! ever going to increase the size by 1.
-                
-                if (allocated(diag_metadata_store%m_short_vi)) then
-                    diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-                    if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-                        call nc_diag_realloc(diag_metadata_store%m_short_vi, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_hi_multi(sc_index))))
-                        diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi)
-                        
-                        diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-                    end if
-                else
-                    diag_metadata_store%acount(sc_index_vi) = 1
-                    allocate(diag_metadata_store%m_short_vi(NLAYER_DEFAULT_ENT))
-                    diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-                end if
-            end if
         end subroutine nc_diag_metadata_resize_short
         
         ! nc_diag_metadata_resize - input integer(i_long)
         ! Corresponding NetCDF4 type: int (old: long)
-        subroutine nc_diag_metadata_resize_long(addl_num_entries, elevector)
+        subroutine nc_diag_metadata_resize_long(addl_num_entries)
             integer(i_long), intent(in)     :: addl_num_entries
-            logical, intent(in)             :: elevector
             
             ! Did we realloc at all?
             !logical :: metadata_realloc
@@ -212,43 +159,12 @@
                 allocate(diag_metadata_store%m_long(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            
-            if (elevector) then
-                ! Element 6 is the last "single" element.
-                ! Element 7 and beyond stores the vector size/count info.
-                ! 
-                ! The range is from element 7 to element 12.
-                ! (7, 8, 9, 10, 11, 12)
-                ! 
-                ! Note that here we're just storing the index info - so we're only
-                ! ever going to increase the size by 1.
-                
-                if (allocated(diag_metadata_store%m_long_vi)) then
-                    diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-                    if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-                        call nc_diag_realloc(diag_metadata_store%m_long_vi, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_hi_multi(sc_index))))
-                        !diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + NLAYER_DEFAULT_ENT
-                        diag_metadata_store%asize(sc_index_vi) = size(diag_metadata_store%m_long_vi)
-                        
-                        diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-#ifdef _DEBUG_MEM_
-                        print *, "alloc_hi_multi increased to:"
-                        print *, diag_metadata_store%alloc_hi_multi(sc_index)
-#endif
-                    end if
-                else
-                    diag_metadata_store%acount(sc_index_vi) = 1
-                    allocate(diag_metadata_store%m_long_vi(NLAYER_DEFAULT_ENT))
-                    diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-                end if
-            end if
         end subroutine nc_diag_metadata_resize_long
         
         ! nc_diag_metadata_resize - input real(r_single)
         ! Corresponding NetCDF4 type: float (or real)
-        subroutine nc_diag_metadata_resize_rsingle(addl_num_entries, elevector)
+        subroutine nc_diag_metadata_resize_rsingle(addl_num_entries)
             integer(i_long), intent(in)     :: addl_num_entries
-            logical, intent(in)             :: elevector
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -282,38 +198,12 @@
                 allocate(diag_metadata_store%m_rsingle(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            
-            if (elevector) then
-                ! Element 6 is the last "single" element.
-                ! Element 7 and beyond stores the vector size/count info.
-                ! 
-                ! The range is from element 7 to element 12.
-                ! (7, 8, 9, 10, 11, 12)
-                ! 
-                ! Note that here we're just storing the index info - so we're only
-                ! ever going to increase the size by 1.
-                
-                if (allocated(diag_metadata_store%m_rsingle_vi)) then
-                    diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-                    if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-                        call nc_diag_realloc(diag_metadata_store%m_rsingle_vi, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_hi_multi(sc_index))))
-                        diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi)
-                        
-                        diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-                    end if
-                else
-                    diag_metadata_store%acount(sc_index_vi) = 1
-                    allocate(diag_metadata_store%m_rsingle_vi(NLAYER_DEFAULT_ENT))
-                    diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-                end if
-            end if
         end subroutine nc_diag_metadata_resize_rsingle
         
         ! nc_diag_metadata_resize - input real(r_double)
         ! Corresponding NetCDF4 type: double
-        subroutine nc_diag_metadata_resize_rdouble(addl_num_entries, elevector)
+        subroutine nc_diag_metadata_resize_rdouble(addl_num_entries)
             integer(i_long), intent(in)     :: addl_num_entries
-            logical, intent(in)             :: elevector
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -346,31 +236,6 @@
                 diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_rdouble(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
-            end if
-            
-            if (elevector) then
-                ! Element 6 is the last "single" element.
-                ! Element 7 and beyond stores the vector size/count info.
-                ! 
-                ! The range is from element 7 to element 12.
-                ! (7, 8, 9, 10, 11, 12)
-                ! 
-                ! Note that here we're just storing the index info - so we're only
-                ! ever going to increase the size by 1.
-                
-                if (allocated(diag_metadata_store%m_rdouble_vi)) then
-                    diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-                    if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-                        call nc_diag_realloc(diag_metadata_store%m_rdouble_vi, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_hi_multi(sc_index))))
-                        diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi)
-                        
-                        diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-                    end if
-                else
-                    diag_metadata_store%acount(sc_index_vi) = 1
-                    allocate(diag_metadata_store%m_rdouble_vi(NLAYER_DEFAULT_ENT))
-                    diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-                end if
             end if
         end subroutine nc_diag_metadata_resize_rdouble
 
@@ -411,31 +276,39 @@
                 allocate(diag_metadata_store%m_string(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            
-            ! String array not available with NF90 attributes
-            !if (elevector) then
-            !    ! Element 6 is the last "single" element.
-            !    ! Element 7 and beyond stores the vector size/count info.
-            !    ! 
-            !    ! The range is from element 7 to element 12.
-            !    ! (7, 8, 9, 10, 11, 12)
-            !    ! 
-            !    ! Note that here we're just storing the index info - so we're only
-            !    ! ever going to increase the size by 1.
-            !    
-            !    if (allocated(diag_metadata_store%m_string_vi)) then
-            !        diag_metadata_store%acount(sc_index_vi) = diag_metadata_store%acount(sc_index_vi) + 1
-            !        if (diag_metadata_store%acount(sc_index_vi) >= diag_metadata_store%asize(sc_index_vi)) then
-            !            call nc_diag_realloc(diag_metadata_store%m_string_vi, 1)
-            !            diag_metadata_store%asize(sc_index_vi) = diag_metadata_store%acount(sc_index_vi)
-            !            
-            !            diag_metadata_store%alloc_hi_multi(sc_index) = diag_metadata_store%alloc_hi_multi(sc_index) + 1
-            !        end if
-            !    else
-            !        diag_metadata_store%acount(sc_index_vi) = 1
-            !        allocate(diag_metadata_store%m_string_vi(NLAYER_DEFAULT_ENT))
-            !        diag_metadata_store%asize(sc_index_vi) = NLAYER_DEFAULT_ENT
-            !    end if
-            !end if
         end subroutine nc_diag_metadata_resize_string
         
+        subroutine nc_diag_metadata_resize_iarr_type(addl_num_entries)
+            integer(i_long), intent(in)     :: addl_num_entries
+            
+            type(diag_md_iarr), dimension(:), allocatable   :: tmp_stor_i_arr
+            
+            ! We need to realloc ourselves here...
+            allocate(tmp_stor_i_arr(size(diag_metadata_store%stor_i_arr) + addl_num_entries))
+            tmp_stor_i_arr(1:size(diag_metadata_store%stor_i_arr)) = diag_metadata_store%stor_i_arr
+            deallocate(diag_metadata_store%stor_i_arr)
+            allocate(diag_metadata_store%stor_i_arr(size(tmp_stor_i_arr)))
+            diag_metadata_store%stor_i_arr = tmp_stor_i_arr
+            deallocate(tmp_stor_i_arr)
+        end subroutine nc_diag_metadata_resize_iarr_type
+        
+        subroutine nc_diag_metadata_resize_iarr(iarr_index, sc_index, addl_num_entries)
+            integer(i_long), intent(in)     :: iarr_index
+            integer(i_long), intent(in)     :: sc_index
+            integer(i_long), intent(in)     :: addl_num_entries
+            
+            if (allocated(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)) then
+                diag_metadata_store%stor_i_arr(iarr_index)%icount = &
+                    diag_metadata_store%stor_i_arr(iarr_index)%icount + addl_num_entries
+                if (diag_metadata_store%stor_i_arr(iarr_index)%icount >= diag_metadata_store%stor_i_arr(iarr_index)%isize) then
+                    call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
+                    diag_metadata_store%stor_i_arr(iarr_index)%isize = size(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)
+                    
+                    diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
+                end if
+            else
+                diag_metadata_store%stor_i_arr(iarr_index)%icount = addl_num_entries
+                allocate(diag_metadata_store%stor_i_arr(iarr_index)%index_arr(addl_num_entries + NLAYER_DEFAULT_ENT))
+                diag_metadata_store%stor_i_arr(iarr_index)%isize = addl_num_entries + NLAYER_DEFAULT_ENT
+            end if
+        end subroutine nc_diag_metadata_resize_iarr

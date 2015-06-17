@@ -97,13 +97,23 @@
         !                a length of 1 vector each. The rest of the m_***_vi
         !                will be empty. These are only populated when a
         !                vector of data is added.
+        type diag_md_iarr
+            integer(i_long),    dimension(:), allocatable :: index_arr
+            integer(i_long)                               :: icount
+            integer(i_long)                               :: isize
+        end type diag_md_iarr
+        
         type diag_metadata
             character(len=100), dimension(:), allocatable :: names
-            integer(i_byte),  dimension(:),   allocatable :: types
-            logical,          dimension(:),   allocatable :: vectored
+            integer(i_byte),    dimension(:), allocatable :: types
+            type(diag_md_iarr), dimension(:), allocatable :: stor_i_arr
+            
+            ! Total variables
             integer(i_long)                               :: total
-            integer(i_long),  dimension(12)               :: asize
-            integer(i_long),  dimension(12)               :: acount
+            
+            ! Array sizes
+            integer(i_long),  dimension(6)                :: asize
+            integer(i_long),  dimension(6)                :: acount
             
             ! # of times we needed to realloc simple metadata
             ! also the multiplier factor for allocation (2^x)
@@ -115,7 +125,7 @@
             
             ! # of times we needed to realloc metadata INDEX data storage
             ! also the multiplier factor for allocation (2^x)
-            integer(i_byte),  dimension(6)                :: alloc_hi_multi
+            integer(i_byte),  dimension(6)                :: alloc_mi_multi
             
             integer(i_byte),     dimension(:),allocatable :: m_byte
             integer(i_short),    dimension(:),allocatable :: m_short
@@ -124,13 +134,8 @@
             real(r_double),      dimension(:),allocatable :: m_rdouble
             character(len=1000), dimension(:),allocatable :: m_string
             
-            ! Index information
-            integer(i_long),  dimension(:),   allocatable :: m_byte_vi
-            integer(i_long),  dimension(:),   allocatable :: m_short_vi
-            integer(i_long),  dimension(:),   allocatable :: m_long_vi
-            integer(i_long),  dimension(:),   allocatable :: m_rsingle_vi
-            integer(i_long),  dimension(:),   allocatable :: m_rdouble_vi
-            integer(i_long),  dimension(:),   allocatable :: m_string_vi
+            integer(i_long)                               :: nobs_dim_id
+            integer(i_long),    dimension(:), allocatable :: var_ids
         end type diag_metadata
         
         type(diag_metadata), allocatable :: diag_metadata_store
@@ -139,7 +144,5 @@
             module procedure nc_diag_metadata_byte, &
                 nc_diag_metadata_short, nc_diag_metadata_long, &
                 nc_diag_metadata_rsingle, nc_diag_metadata_rdouble, &
-                nc_diag_metadata_string, nc_diag_metadata_byte_v, &
-                nc_diag_metadata_short_v, nc_diag_metadata_long_v, &
-                nc_diag_metadata_rsingle_v, nc_diag_metadata_rdouble_v
+                nc_diag_metadata_string
         end interface nc_diag_metadata
