@@ -506,6 +506,8 @@
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
+                call nc_diag_metadata_expand
+                
                 diag_metadata_store%total = diag_metadata_store%total + 1
                 
                 diag_metadata_store%names(diag_metadata_store%total) = metadata_name
