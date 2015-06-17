@@ -737,15 +737,15 @@
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
             
-            if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
-            end if
-            
 #ifndef IGNORE_VERSION
             if (NLAYER_STRING_BROKEN) then
                 call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
             end if
 #endif
+            
+            if (diag_chaninfo_store%data_lock) then
+                call error("Can't add new data - data have already been written and locked!")
+            end if
             
             ! For string, type index is 6
             type_index = 6
