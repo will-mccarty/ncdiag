@@ -24,7 +24,7 @@ COMPILE_FLAGS=-D_REAL8_ -DANSI_TERM_COLORS
 
 NETCDF_LAYER_DEPS=netcdf_realloc_decl.f90 \
 	netcdf_lheader_decl.f90 netcdf_chaninfo_decl.F90 \
-	netcdf_realloc_imp.f90 netcdf_hresize.F90 \
+	netcdf_realloc_imp.f90 \
 	netcdf_ciresize.F90 netcdf_lheader_imp.F90 \
 	netcdf_chaninfo_imp.F90
 
