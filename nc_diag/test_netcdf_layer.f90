@@ -39,19 +39,20 @@ program test_netcdf_layer
         call nc_diag_metadata("metadatasimple4_float", f + 1.00 + i)
         call nc_diag_metadata("metadatasimple4_float2", f + 2.00 + i)
         call nc_diag_metadata("metadatasimple5_double", d + 1.00 + i)
-        call nc_diag_metadata("metadatasimple6_str", "testing")
+        
         !write(str_chaninfo, "(A, I0)") "ci6_", i
         !call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
     end do
     
-    print *, "str_chaninfo:"
-    print *, str_chaninfo
+    !print *, "str_chaninfo:"
+    !print *, str_chaninfo
     
     do i = 1, 9
         call nc_diag_chaninfo("chaninfosimple3_notcomplete", i*3)
     end do
     
-    do i = 1, 10000000
+    !do i = 1, 10000000
+    do i = 1, 100
         call nc_diag_header("headertestsimple", 123)
         
         call nc_diag_header("headertestsimple2_float", f)
@@ -59,6 +60,8 @@ program test_netcdf_layer
         
         write(str_header, "(A, I0)") "header_", i
         call nc_diag_header("headertestsimple4_str", str_header)
+        
+        call nc_diag_metadata("metadatasimple7_big", i*2)
     end do
     
     call nc_diag_header("headertestsimple5_str", "hello world")
@@ -70,7 +73,7 @@ program test_netcdf_layer
     print *, "Vector:"
     print *, "===================="
     
-    do i = 1, 10000000
+    do i = 1, 1000
         call nc_diag_header("headertestarr1", (/ 123, 234, 345, 456, 567, 678, 789 /))
     end do
     
