@@ -77,7 +77,7 @@
             integer(i_long)                       :: curdatindex, j
             
             if (init_done .AND. allocated(diag_metadata_store)) then
-                if (.NOT. diag_chaninfo_store%data_lock) then
+                if (.NOT. diag_metadata_store%data_lock) then
                     do curdatindex = 1, diag_metadata_store%total
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
@@ -425,13 +425,13 @@
             
             integer(i_long)                 :: var_index
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
@@ -467,13 +467,13 @@
             
             integer(i_long)                 :: var_index
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
@@ -509,13 +509,13 @@
             
             integer(i_long)                 :: var_index
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
@@ -564,13 +564,13 @@
 
             integer(i_long)                 :: var_index
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
@@ -606,13 +606,13 @@
 
             integer(i_long)                 :: var_index
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
@@ -654,13 +654,13 @@
             end if
 #endif
             
-            if (diag_chaninfo_store%data_lock) then
+            if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
             if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
                 ! First, check to make sure we can still define new variables.
-                if (diag_chaninfo_store%def_lock) then
+                if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
