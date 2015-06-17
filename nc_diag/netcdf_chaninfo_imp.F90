@@ -176,14 +176,11 @@
                                 ! If you manage to sneak in this far...
                                 if (NLAYER_STRING_BROKEN) then
                                     call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-                                else
-#endif
-                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                        diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                            diag_chaninfo_store%var_usage(curdatindex) - 1))))
-#ifndef IGNORE_VERSION
                                 end if
 #endif
+                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
                             else
                                 call error("Critical error - unknown variable type!")
                             end if
