@@ -19,16 +19,32 @@
         ! resizing, referred to by the metadata resizing interface.
         !---------------------------------------------------------------
         
+        ! For all subroutines: update_acount_in specifies wheter to
+        ! update acount or not. By default, this is true. This is useful
+        ! for preallocation, when you aren't actually adding entries,
+        ! so you're just allocating ahead of time and NOT adding 
+        ! elements, thus not adding to acount.
+        
         ! nc_diag_metadata_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
-        subroutine nc_diag_metadata_resize_byte(addl_num_entries)
+        subroutine nc_diag_metadata_resize_byte(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
             integer(i_long)                 :: sc_index_vi
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -44,7 +60,7 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_byte)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_metadata_store%m_byte, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_byte)
@@ -52,7 +68,7 @@
                     diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_byte(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -60,14 +76,24 @@
         
         ! nc_diag_metadata_resize - input integer(i_short)
         ! Corresponding NetCDF4 type: short
-        subroutine nc_diag_metadata_resize_short(addl_num_entries)
+        subroutine nc_diag_metadata_resize_short(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
             integer(i_long)                 :: sc_index_vi
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -83,7 +109,7 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_short)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_metadata_store%m_short, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_short)
@@ -91,7 +117,7 @@
                     diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_short(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -99,8 +125,9 @@
         
         ! nc_diag_metadata_resize - input integer(i_long)
         ! Corresponding NetCDF4 type: int (old: long)
-        subroutine nc_diag_metadata_resize_long(addl_num_entries)
+        subroutine nc_diag_metadata_resize_long(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! Did we realloc at all?
             !logical :: metadata_realloc
@@ -114,6 +141,15 @@
 #ifdef _DEBUG_MEM_
             character(len=200) :: debugstr
 #endif
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Default is false - no realloc done. 
             !metadata_realloc = .FALSE.
@@ -132,7 +168,7 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_long)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 
 #ifdef _DEBUG_MEM_
                 write (debugstr, "(A, I1, A, I7, A, I7)") "In sc_index ", sc_index, ", the acount/asize is: ", diag_metadata_store%acount(sc_index), "/", diag_metadata_store%asize(sc_index)
@@ -155,7 +191,7 @@
 #endif
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_long(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -163,14 +199,24 @@
         
         ! nc_diag_metadata_resize - input real(r_single)
         ! Corresponding NetCDF4 type: float (or real)
-        subroutine nc_diag_metadata_resize_rsingle(addl_num_entries)
+        subroutine nc_diag_metadata_resize_rsingle(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
             integer(i_long)                 :: sc_index_vi
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -186,15 +232,17 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_rsingle)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+                    print *, "realloc needed for metadata rsingle!"
+                    write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%acount(sc_index), " / ", diag_metadata_store%asize(sc_index), ")"
                     call nc_diag_realloc(diag_metadata_store%m_rsingle, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_rsingle)
                     
                     diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_rsingle(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -202,8 +250,9 @@
         
         ! nc_diag_metadata_resize - input real(r_double)
         ! Corresponding NetCDF4 type: double
-        subroutine nc_diag_metadata_resize_rdouble(addl_num_entries)
+        subroutine nc_diag_metadata_resize_rdouble(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -211,6 +260,14 @@
             integer(i_long)                 :: sc_index
             integer(i_long)                 :: sc_index_vi
             
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
             ! 
@@ -225,7 +282,7 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_rdouble)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_metadata_store%m_rdouble, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_rdouble)
@@ -233,7 +290,7 @@
                     diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_rdouble(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -241,8 +298,9 @@
 
         ! nc_diag_metadata_resize - input character(len=*)
         ! Corresponding NetCDF4 type: string? char?
-        subroutine nc_diag_metadata_resize_string(addl_num_entries)
+        subroutine nc_diag_metadata_resize_string(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
@@ -250,6 +308,14 @@
             integer(i_long)                 :: sc_index
             integer(i_long)                 :: sc_index_vi
             
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
             ! 
@@ -264,7 +330,7 @@
             sc_index_vi = sc_index + 6
             
             if (allocated(diag_metadata_store%m_string)) then
-                diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_metadata_store%m_string, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_string)
@@ -272,7 +338,7 @@
                     diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_metadata_store%acount(sc_index) = addl_num_entries
                 allocate(diag_metadata_store%m_string(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -292,23 +358,41 @@
             deallocate(tmp_stor_i_arr)
         end subroutine nc_diag_metadata_resize_iarr_type
         
-        subroutine nc_diag_metadata_resize_iarr(iarr_index, sc_index, addl_num_entries)
+        subroutine nc_diag_metadata_resize_iarr(iarr_index, sc_index, addl_num_entries, update_icount_in)
             integer(i_long), intent(in)     :: iarr_index
             integer(i_long), intent(in)     :: sc_index
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_icount_in
+            
+            logical                         :: update_icount
+            
+            ! Assume true by default
+            if (.NOT. present(update_icount_in)) then
+                update_icount = .TRUE.
+            else
+                update_icount = update_icount_in
+            end if
             
             if (allocated(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)) then
-                diag_metadata_store%stor_i_arr(iarr_index)%icount = &
+                if (update_icount) diag_metadata_store%stor_i_arr(iarr_index)%icount = &
                     diag_metadata_store%stor_i_arr(iarr_index)%icount + addl_num_entries
                 if (diag_metadata_store%stor_i_arr(iarr_index)%icount >= diag_metadata_store%stor_i_arr(iarr_index)%isize) then
-                    call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
+                    print *, "realloc needed for metadata iarr!"
+                    write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize, ")"
+                    if (update_icount) then
+                        call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
+                    else
+                        call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + NLAYER_DEFAULT_ENT)
+                    end if
+                    
                     diag_metadata_store%stor_i_arr(iarr_index)%isize = size(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)
                     
-                    diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
+                    if (update_icount) diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
                 end if
             else
-                diag_metadata_store%stor_i_arr(iarr_index)%icount = addl_num_entries
+                if (update_icount) diag_metadata_store%stor_i_arr(iarr_index)%icount = addl_num_entries
                 allocate(diag_metadata_store%stor_i_arr(iarr_index)%index_arr(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_metadata_store%stor_i_arr(iarr_index)%isize = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
+            !write (*, "(A, I0, A, I0, A, I0)") "iarr resize result on index ", iarr_index, ": count / size => ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize
         end subroutine nc_diag_metadata_resize_iarr

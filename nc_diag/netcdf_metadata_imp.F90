@@ -330,6 +330,87 @@
         !    
         !end subroutine nc_diag_metadata_write
         
+        ! Preallocate variable name/type/etc. storage.
+        subroutine nc_diag_metadata_prealloc_vars(num_of_addl_vars)
+            integer(i_long), intent(in)           :: num_of_addl_vars
+            if (init_done .AND. allocated(diag_metadata_store)) then
+                if (allocated(diag_metadata_store%names)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%names)) then
+                        call nc_diag_realloc(diag_metadata_store%names, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%names(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                end if
+                
+                if (allocated(diag_metadata_store%types)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%types)) then
+                        call nc_diag_realloc(diag_metadata_store%types, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%types(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                end if
+                
+                if (allocated(diag_metadata_store%stor_i_arr)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%stor_i_arr)) then
+                        call nc_diag_metadata_resize_iarr_type(num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%stor_i_arr(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                end if
+                
+                if (allocated(diag_metadata_store%var_ids)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%var_ids)) then
+                        call nc_diag_realloc(diag_metadata_store%var_ids, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%var_ids(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_metadata_store%var_ids = -1
+                end if
+                
+                diag_metadata_store%prealloc_total = diag_metadata_store%prealloc_total + num_of_addl_vars
+            else
+                call error("NetCDF4 layer not initialized yet!")
+            endif
+        end subroutine nc_diag_metadata_prealloc_vars
+        
+        ! Preallocate actual variable data storage
+        subroutine nc_diag_metadata_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
+            integer(i_byte), intent(in)           :: nclayer_type
+            integer(i_long), intent(in)           :: num_of_addl_slots
+            
+            if (nclayer_type == NLAYER_BYTE) then
+                call nc_diag_metadata_resize_byte(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_SHORT) then
+                call nc_diag_metadata_resize_short(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_LONG) then
+                call nc_diag_metadata_resize_long(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_FLOAT) then
+                call nc_diag_metadata_resize_rsingle(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_DOUBLE) then
+                call nc_diag_metadata_resize_rdouble(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_STRING) then
+                call nc_diag_metadata_resize_string(num_of_addl_slots, .FALSE.)
+            else
+                call error("Invalid type specified for variable storage preallocation!")
+            end if
+            
+            ! resize nc_diag_metadata_resize_iarr ?
+            
+        end subroutine nc_diag_metadata_prealloc_vars_storage
+        
+        ! Preallocate index storage
+        subroutine nc_diag_metadata_prealloc_vars_storage_all(num_of_addl_slots)
+            integer(i_long), intent(in)           :: num_of_addl_slots
+            integer(i_long)                       :: i
+            
+            !print *, "PREALLOC IARR: "
+            !print *, num_of_addl_slots
+            
+            do i = 1, diag_metadata_store%prealloc_total
+                call nc_diag_metadata_resize_iarr(i, -1, num_of_addl_slots, .FALSE.)
+            end do
+        end subroutine nc_diag_metadata_prealloc_vars_storage_all
+        
         subroutine nc_diag_metadata_expand
             ! Did we realloc at all?
             logical :: meta_realloc

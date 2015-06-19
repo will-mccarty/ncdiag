@@ -210,6 +210,83 @@
             
         end subroutine nc_diag_chaninfo_write_data
         
+        ! Preallocate variable name/type/etc. storage.
+        subroutine nc_diag_chaninfo_prealloc_vars(num_of_addl_vars)
+            integer(i_long), intent(in)           :: num_of_addl_vars
+            if (init_done .AND. allocated(diag_chaninfo_store)) then
+                if (allocated(diag_chaninfo_store%names)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
+                        call nc_diag_realloc(diag_chaninfo_store%names, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%names(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                end if
+                
+                if (allocated(diag_chaninfo_store%types)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%types)) then
+                        call nc_diag_realloc(diag_chaninfo_store%types, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%types(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                end if
+                
+                if (allocated(diag_chaninfo_store%var_rel_pos)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_rel_pos)) then
+                        call nc_diag_realloc(diag_chaninfo_store%var_rel_pos, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%var_rel_pos(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_chaninfo_store%var_rel_pos = -1
+                end if
+                
+                if (allocated(diag_chaninfo_store%var_usage)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_usage)) then
+                        call nc_diag_realloc(diag_chaninfo_store%var_usage, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%var_usage(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_chaninfo_store%var_usage = 0
+                end if
+                
+                if (allocated(diag_chaninfo_store%var_ids)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_ids)) then
+                        call nc_diag_realloc(diag_chaninfo_store%var_ids, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%var_ids(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_chaninfo_store%var_ids = -1
+                end if
+            else
+                call error("NetCDF4 layer not initialized yet!")
+            endif
+        end subroutine nc_diag_chaninfo_prealloc_vars
+        
+        ! Preallocate actual variable data storage
+        subroutine nc_diag_chaninfo_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
+            integer(i_byte), intent(in)           :: nclayer_type
+            integer(i_long), intent(in)           :: num_of_addl_slots
+            
+            if (nclayer_type == NLAYER_BYTE) then
+                call nc_diag_chaninfo_resize_byte(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_SHORT) then
+                call nc_diag_chaninfo_resize_short(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_LONG) then
+                call nc_diag_chaninfo_resize_long(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_FLOAT) then
+                call nc_diag_chaninfo_resize_rsingle(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_DOUBLE) then
+                call nc_diag_chaninfo_resize_rdouble(num_of_addl_slots, .FALSE.)
+            else if (nclayer_type == NLAYER_STRING) then
+                call nc_diag_chaninfo_resize_string(num_of_addl_slots, .FALSE.)
+            else
+                call error("Invalid type specified for variable storage preallocation!")
+            end if
+            
+            ! resize nc_diag_chaninfo_resize_iarr ?
+            
+            
+        end subroutine nc_diag_chaninfo_prealloc_vars_storage
+        
         subroutine nc_diag_chaninfo_expand
             ! Did we realloc at all?
             logical :: meta_realloc

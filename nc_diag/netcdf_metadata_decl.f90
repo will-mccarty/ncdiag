@@ -110,6 +110,7 @@
             
             ! Total variables
             integer(i_long)                               :: total
+            integer(i_long)                               :: prealloc_total
             
             ! Array sizes
             integer(i_long),  dimension(6)                :: asize

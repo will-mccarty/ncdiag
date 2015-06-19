@@ -20,13 +20,23 @@
         
         ! nc_diag_chaninfo_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
-        subroutine nc_diag_chaninfo_resize_byte(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_byte(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -40,7 +50,7 @@
             sc_index = 1
             
             if (allocated(diag_chaninfo_store%ci_byte)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_chaninfo_store%ci_byte, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_byte)
@@ -48,7 +58,7 @@
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_byte(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -56,13 +66,23 @@
         
         ! nc_diag_chaninfo_resize - input integer(i_short)
         ! Corresponding NetCDF4 type: short
-        subroutine nc_diag_chaninfo_resize_short(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_short(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -76,7 +96,7 @@
             sc_index = 2
             
             if (allocated(diag_chaninfo_store%ci_short)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_chaninfo_store%ci_short, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_short)
@@ -84,7 +104,7 @@
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_short(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -92,8 +112,9 @@
         
         ! nc_diag_chaninfo_resize - input integer(i_long)
         ! Corresponding NetCDF4 type: int (old: long)
-        subroutine nc_diag_chaninfo_resize_long(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_long(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! Did we realloc at all?
             !logical :: chaninfo_realloc
@@ -102,6 +123,15 @@
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Default is false - no realloc done. 
             !chaninfo_realloc = .FALSE.
@@ -118,16 +148,18 @@
             sc_index = 3
             
             if (allocated(diag_chaninfo_store%ci_long)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
+                    print *, "realloc needed for chaninfo long!"
+                    write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_chaninfo_store%acount(sc_index), " / ", diag_chaninfo_store%asize(sc_index), ")"
                     call nc_diag_realloc(diag_chaninfo_store%ci_long, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_long)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_long(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -135,13 +167,23 @@
         
         ! nc_diag_chaninfo_resize - input real(r_single)
         ! Corresponding NetCDF4 type: float (or real)
-        subroutine nc_diag_chaninfo_resize_rsingle(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_rsingle(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -155,7 +197,7 @@
             sc_index = 4
             
             if (allocated(diag_chaninfo_store%ci_rsingle)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rsingle)
@@ -163,7 +205,7 @@
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_rsingle(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -171,13 +213,23 @@
         
         ! nc_diag_chaninfo_resize - input real(r_double)
         ! Corresponding NetCDF4 type: double
-        subroutine nc_diag_chaninfo_resize_rdouble(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_rdouble(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -191,7 +243,7 @@
             sc_index = 5
             
             if (allocated(diag_chaninfo_store%ci_rdouble)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rdouble)
@@ -199,7 +251,7 @@
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_rdouble(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
@@ -207,13 +259,23 @@
 
         ! nc_diag_chaninfo_resize - input character(len=*)
         ! Corresponding NetCDF4 type: string? char?
-        subroutine nc_diag_chaninfo_resize_string(addl_num_entries)
+        subroutine nc_diag_chaninfo_resize_string(addl_num_entries, update_acount_in)
             integer(i_long), intent(in)     :: addl_num_entries
+            logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
             ! this and then just change the variable we're altering
             ! every time.
             integer(i_long)                 :: sc_index
+            
+            logical                         :: update_acount
+            
+            ! Assume true by default
+            if (.NOT. present(update_acount_in)) then
+                update_acount = .TRUE.
+            else
+                update_acount = update_acount_in
+            end if
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -227,7 +289,7 @@
             sc_index = 6
             
             if (allocated(diag_chaninfo_store%ci_string)) then
-                diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     call nc_diag_realloc(diag_chaninfo_store%ci_string, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_string)
@@ -235,7 +297,7 @@
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                 end if
             else
-                diag_chaninfo_store%acount(sc_index) = addl_num_entries
+                if (update_acount) diag_chaninfo_store%acount(sc_index) = addl_num_entries
                 allocate(diag_chaninfo_store%ci_string(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
