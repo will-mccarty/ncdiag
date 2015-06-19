@@ -77,9 +77,19 @@
                             if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
                             if (data_type == NLAYER_STRING) nc_data_type = nf90_string
                             
+                            print *, "chaninfo part 1"
+                            
                             call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                 nc_data_type, diag_chaninfo_store%nchans_dimid, &
-                                diag_chaninfo_store%var_ids(curdatindex)))
+                                diag_chaninfo_store%var_ids(curdatindex), &
+                                .FALSE., diag_chaninfo_store%nchans ))
+                            
+                            print *, "chaninfo part 2"
+                            
+                            ! Enable compression
+                            ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+                            call check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                1, 1, NLAYER_COMPRESSION))
                         end do
                         
                         ! Lock the definitions!

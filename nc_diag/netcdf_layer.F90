@@ -19,6 +19,8 @@ module netcdf_layer
     
     integer(i_short), parameter             :: NLAYER_DEFAULT_ENT = 1024
     
+    integer(i_byte), parameter              :: NLAYER_COMPRESSION = 9
+    
     integer :: ncid
     logical :: init_done = .FALSE.
     logical :: header_locked = .FALSE.
@@ -43,6 +45,9 @@ module netcdf_layer
         subroutine nc_diag_init(filename)
             character(len=*),intent(in)    :: filename
             character(len=:), allocatable  :: version_num
+            
+            integer                        :: bsize = 16777216;
+            
             !print *,'Initializing netcdf layer library, version ...'
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
             call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
@@ -61,7 +66,9 @@ module netcdf_layer
             ! track of what file you're working on. We're returning that
             ! here.
             if (.NOT. init_done) then
-                call check( nf90_create(filename, OR(NF90_NETCDF4, NF90_CLOBBER), ncid) )
+                call check( nf90_create(filename, OR(NF90_NETCDF4, NF90_CLOBBER), ncid, &
+                    0, bsize, cache_nelems = 16777216) ) ! Optimization settings
+                
                 if (allocated(diag_chaninfo_store)) then
                     call error("BUG! diag_chaninfo_store is allocated, but init_done is set!")
                 end if
@@ -72,6 +79,8 @@ module netcdf_layer
                 
                 allocate(diag_chaninfo_store)
                 allocate(diag_metadata_store)
+                
+                write (*,"(A, I0, A)") 'NetCDF will use ', bsize, ' bytes of cache.'
                 
                 init_done = .TRUE.
             else
@@ -138,11 +147,18 @@ module netcdf_layer
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
             
+            print *, "Writing chaninfo:"
             call nc_diag_chaninfo_write_data
+            
+            print *, "Writing metadata:"
+            
             call nc_diag_metadata_write_data
+            
+            print *, "All done queuing in data, letting NetCDF take over!"
             
             call check(nf90_close(ncid))
             
+            print *, "All done!"
         end subroutine nc_diag_write
         
         subroutine check(status)
