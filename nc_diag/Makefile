@@ -32,15 +32,18 @@ NETCDF_LAYER_DEPS=netcdf_realloc_decl.f90 \
 kinds.mod: kinds.F90
 	ifort $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
 
-netcdf_layer.mod: kinds.mod utils.mod fnv32mod.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
+netcdf_layer.mod: kinds.mod utils.mod fnv32mod.mod minidict.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
 	ifort $(F90FLAGS) -c netcdf_layer.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
 fnv32mod.mod: fnv32mod.f90
 	ifort $(F90FLAGS) -c fnv32mod.f90
 
+minidict.mod: fnv32mod.mod minidict.f90
+	ifort $(F90FLAGS) -c minidict.f90
+
 test_netcdf_layer.x: netcdf_layer.mod test_netcdf_layer.f90
 	ifort $(F90FLAGS) -o test_netcdf_layer.x test_netcdf_layer.f90 \
-		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+		netcdf_layer.o minidict.o fnv32mod.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
 generic_data.x: netcdf_layer.mod generic_data.f90
 	ifort $(F90FLAGS) -o generic_data.x generic_data.f90

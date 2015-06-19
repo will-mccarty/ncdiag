@@ -148,9 +148,8 @@ module minidict
             
             ! Check if the key exists. If it does, overwrite the node!
             exists = .FALSE.
-            
-            do i = 1, dict%mdict_arr_alloc(hash)
-                if (dict%mdict_arr(hash)%ptr(i)%id == key) then
+            do i = 1, dict%mdict_arr_alloc(hash + 1)
+                if (dict%mdict_arr(hash + 1)%ptr(i)%id == key) then
                     exists = .TRUE.
                     exit
                 end if
@@ -172,9 +171,9 @@ module minidict
             ! Check if the key exists. If it does, overwrite the node!
             exists = .FALSE.
             
-            do i = 1, dict%mdict_arr_alloc(hash)
-                if (dict%mdict_arr(hash)%ptr(i)%id == key) then
-                    value = dict%mdict_arr(hash)%ptr(i)%value
+            do i = 1, dict%mdict_arr_alloc(hash + 1)
+                if (dict%mdict_arr(hash + 1)%ptr(i)%id == key) then
+                    value = dict%mdict_arr(hash + 1)%ptr(i)%value
                     exists = .TRUE.
                     exit
                 end if

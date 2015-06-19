@@ -3,6 +3,7 @@ module netcdf_layer
     use fnv32mod
     use kinds
     use utils
+    use minidict
     implicit none
     
     logical,dimension(:),allocatable        :: def_locked
@@ -79,6 +80,8 @@ module netcdf_layer
                 
                 allocate(diag_chaninfo_store)
                 allocate(diag_metadata_store)
+                
+                call mdict_init(diag_metadata_store%name_ind_dict)
                 
                 write (*,"(A, I0, A)") 'NetCDF will use ', bsize, ' bytes of cache.'
                 

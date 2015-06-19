@@ -108,6 +108,8 @@
             integer(i_byte),    dimension(:), allocatable :: types
             type(diag_md_iarr), dimension(:), allocatable :: stor_i_arr
             
+            type(mdict), pointer                          :: name_ind_dict
+            
             ! Total variables
             integer(i_long)                               :: total
             integer(i_long)                               :: prealloc_total
