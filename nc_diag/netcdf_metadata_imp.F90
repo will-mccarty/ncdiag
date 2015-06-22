@@ -367,6 +367,15 @@
                     diag_metadata_store%var_ids = -1
                 end if
                 
+                if (allocated(diag_metadata_store%alloc_sia_multi)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%alloc_sia_multi)) then
+                        call nc_diag_realloc(diag_metadata_store%alloc_sia_multi, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%alloc_sia_multi(NLAYER_DEFAULT_ENT) + num_of_addl_vars)
+                    diag_metadata_store%alloc_sia_multi = 0
+                end if
+                
                 diag_metadata_store%prealloc_total = diag_metadata_store%prealloc_total + num_of_addl_vars
             else
                 call error("NetCDF4 layer not initialized yet!")
@@ -407,7 +416,7 @@
             !print *, num_of_addl_slots
             
             do i = 1, diag_metadata_store%prealloc_total
-                call nc_diag_metadata_resize_iarr(i, -1, num_of_addl_slots, .FALSE.)
+                call nc_diag_metadata_resize_iarr(i, num_of_addl_slots, .FALSE.)
             end do
         end subroutine nc_diag_metadata_prealloc_vars_storage_all
         
@@ -495,6 +504,16 @@
                     diag_metadata_store%var_ids = -1
                 end if
                 
+                if (allocated(diag_metadata_store%alloc_sia_multi)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%alloc_sia_multi)) then
+                        call nc_diag_realloc(diag_metadata_store%alloc_sia_multi, addl_fields)
+                        meta_realloc = .TRUE.
+                    end if
+                else
+                    allocate(diag_metadata_store%alloc_sia_multi(NLAYER_DEFAULT_ENT))
+                    diag_metadata_store%alloc_sia_multi = 0
+                end if
+                
                 if (meta_realloc) then
                     !diag_metadata_store%alloc_s_count = diag_metadata_store%alloc_s_count + 1
                     diag_metadata_store%alloc_s_multi = diag_metadata_store%alloc_s_multi + 1
@@ -576,7 +595,7 @@
             end if
             
             ! We just need to add one entry...
-            call nc_diag_metadata_resize_iarr(var_index, 1, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_byte(1)
             
             ! Now add the actual entry!
@@ -618,7 +637,7 @@
             end if
             
             ! We just need to add one entry...
-            call nc_diag_metadata_resize_iarr(var_index, 2, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_short(1)
             
             ! Now add the actual entry!
@@ -665,7 +684,7 @@
 #endif
             
             ! We just need to add one entry...
-            call nc_diag_metadata_resize_iarr(var_index, 3, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_long(1)
             
             ! Now add the actual entry!
@@ -708,7 +727,7 @@
             end if
             
             ! We just need to add one entry...
-            call nc_diag_metadata_resize_iarr(var_index, 4, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_rsingle(1)
             
             ! Now add the actual entry!
@@ -750,7 +769,7 @@
             end if
             
             ! We just need to add one entry...
-            call nc_diag_metadata_resize_iarr(var_index, 5, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_rdouble(1)
             
             ! Now add the actual entry!
@@ -800,7 +819,7 @@
             ! We just need to add one entry...
             ! Strings can't be vectored (at least for attributes), so no 2nd argument
             ! here.
-            call nc_diag_metadata_resize_iarr(var_index, 6, 1)
+            call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_string(1)
             
             ! Now add the actual entry!

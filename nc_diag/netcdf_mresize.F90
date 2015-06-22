@@ -358,9 +358,8 @@
             deallocate(tmp_stor_i_arr)
         end subroutine nc_diag_metadata_resize_iarr_type
         
-        subroutine nc_diag_metadata_resize_iarr(iarr_index, sc_index, addl_num_entries, update_icount_in)
+        subroutine nc_diag_metadata_resize_iarr(iarr_index, addl_num_entries, update_icount_in)
             integer(i_long), intent(in)     :: iarr_index
-            integer(i_long), intent(in)     :: sc_index
             integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_icount_in
             
@@ -375,14 +374,27 @@
                 update_icount = update_icount_in
             end if
             
+            !!!!!! NOTE/TODO:
+            !!!!!! This currently uses an array to reallocate on a
+            !!!!!! variable by variable basis. In the future, assuming
+            !!!!!! that all the variables will have around the same
+            !!!!!! amount of data, we can potentially optimize this to 
+            !!!!!! use a scalar! However, we must be careful in doing
+            !!!!!! so - if we use a scalar, we must call this ONLY ONCE.
+            !!!!!! Or rather, we can call this for each variable, but
+            !!!!!! the scalar can only be incremented once. Otherwise,
+            !!!!!! like before, we WILL run out of memory!
+            
             if (allocated(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)) then
                 if (update_icount) diag_metadata_store%stor_i_arr(iarr_index)%icount = &
                     diag_metadata_store%stor_i_arr(iarr_index)%icount + addl_num_entries
                 if (diag_metadata_store%stor_i_arr(iarr_index)%icount >= diag_metadata_store%stor_i_arr(iarr_index)%isize) then
                     print *, "realloc needed for metadata iarr!"
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize, ")"
+                    print *, diag_metadata_store%alloc_sia_multi(iarr_index)
+                    print *, (2 ** int8(diag_metadata_store%alloc_sia_multi(iarr_index)))
                     if (update_icount) then
-                        addl_num_entries_r = addl_num_entries + (int8(NLAYER_DEFAULT_ENT) * (2 ** int8(diag_metadata_store%alloc_m_multi(sc_index))))
+                        addl_num_entries_r = addl_num_entries + (int8(NLAYER_DEFAULT_ENT) * (2 ** int8(diag_metadata_store%alloc_sia_multi(iarr_index))))
                     else
                         addl_num_entries_r = addl_num_entries + NLAYER_DEFAULT_ENT
                     end if
@@ -392,7 +404,7 @@
                     
                     diag_metadata_store%stor_i_arr(iarr_index)%isize = size(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)
                     
-                    if (update_icount) diag_metadata_store%alloc_m_multi(sc_index) = diag_metadata_store%alloc_m_multi(sc_index) + 1
+                    if (update_icount) diag_metadata_store%alloc_sia_multi(iarr_index) = diag_metadata_store%alloc_sia_multi(iarr_index) + 1
                 end if
             else
                 if (update_icount) diag_metadata_store%stor_i_arr(iarr_index)%icount = addl_num_entries

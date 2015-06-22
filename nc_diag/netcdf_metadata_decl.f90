@@ -107,6 +107,7 @@
             character(len=100), dimension(:), allocatable :: names
             integer(i_byte),    dimension(:), allocatable :: types
             type(diag_md_iarr), dimension(:), allocatable :: stor_i_arr
+            integer(i_byte),    dimension(:), allocatable :: alloc_sia_multi
             
             ! Total variables
             integer(i_long)                               :: total
