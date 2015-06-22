@@ -372,7 +372,7 @@
                         call nc_diag_realloc(diag_metadata_store%alloc_sia_multi, num_of_addl_vars)
                     end if
                 else
-                    allocate(diag_metadata_store%alloc_sia_multi(NLAYER_DEFAULT_ENT) + num_of_addl_vars)
+                    allocate(diag_metadata_store%alloc_sia_multi(NLAYER_DEFAULT_ENT + num_of_addl_vars))
                     diag_metadata_store%alloc_sia_multi = 0
                 end if
                 
