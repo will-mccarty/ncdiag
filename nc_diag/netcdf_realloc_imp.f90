@@ -22,7 +22,7 @@
         !         specified array
         subroutine nc_diag_realloc_byte(arr, addl_num_entries)
             integer(i_byte), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_byte), dimension(:), allocatable   :: tmp
             
@@ -42,7 +42,7 @@
         !         specified array
         subroutine nc_diag_realloc_short(arr, addl_num_entries)
             integer(i_short), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_short), dimension(:), allocatable   :: tmp
             
@@ -62,7 +62,7 @@
         !         specified array
         subroutine nc_diag_realloc_long(arr, addl_num_entries)
             integer(i_long), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_long), dimension(:), allocatable   :: tmp
             
@@ -90,7 +90,7 @@
         !         specified array
         subroutine nc_diag_realloc_rsingle(arr, addl_num_entries)
             real(r_single), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             real(r_single), dimension(:), allocatable   :: tmp
             
@@ -110,7 +110,7 @@
         !         specified array
         subroutine nc_diag_realloc_rdouble(arr, addl_num_entries)
             real(r_double), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             real(r_double), dimension(:), allocatable   :: tmp
             
@@ -130,15 +130,16 @@
         !         specified array
         subroutine nc_diag_realloc_string(arr, addl_num_entries)
             character(len=*), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             character(len=len(arr(1))), dimension(:), allocatable   :: tmp
+            
+#ifdef _DEBUG_MEM_
             integer :: string_len, string_arr_size
             
             string_len = len(arr(1))
             string_arr_size = size(arr)
             
-#ifdef _DEBUG_MEM_
             call debug("[string] Length of string to allocate to:")
             print *, string_len
             
@@ -165,7 +166,7 @@
         !         specified array
         subroutine nc_diag_realloc_logical(arr, addl_num_entries)
             logical, dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long), intent(in) :: addl_num_entries
+            integer(i_llong),intent(in) :: addl_num_entries
             
             logical, dimension(:), allocatable   :: tmp
             integer :: logical_arr_size

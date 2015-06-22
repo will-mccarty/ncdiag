@@ -28,7 +28,7 @@
         ! nc_diag_metadata_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
         subroutine nc_diag_metadata_resize_byte(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -77,7 +77,7 @@
         ! nc_diag_metadata_resize - input integer(i_short)
         ! Corresponding NetCDF4 type: short
         subroutine nc_diag_metadata_resize_short(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -126,7 +126,7 @@
         ! nc_diag_metadata_resize - input integer(i_long)
         ! Corresponding NetCDF4 type: int (old: long)
         subroutine nc_diag_metadata_resize_long(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! Did we realloc at all?
@@ -200,7 +200,7 @@
         ! nc_diag_metadata_resize - input real(r_single)
         ! Corresponding NetCDF4 type: float (or real)
         subroutine nc_diag_metadata_resize_rsingle(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -251,7 +251,7 @@
         ! nc_diag_metadata_resize - input real(r_double)
         ! Corresponding NetCDF4 type: double
         subroutine nc_diag_metadata_resize_rdouble(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -299,7 +299,7 @@
         ! nc_diag_metadata_resize - input character(len=*)
         ! Corresponding NetCDF4 type: string? char?
         subroutine nc_diag_metadata_resize_string(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -345,7 +345,7 @@
         end subroutine nc_diag_metadata_resize_string
         
         subroutine nc_diag_metadata_resize_iarr_type(addl_num_entries)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             
             type(diag_md_iarr), dimension(:), allocatable   :: tmp_stor_i_arr
             
@@ -361,10 +361,12 @@
         subroutine nc_diag_metadata_resize_iarr(iarr_index, sc_index, addl_num_entries, update_icount_in)
             integer(i_long), intent(in)     :: iarr_index
             integer(i_long), intent(in)     :: sc_index
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_icount_in
             
             logical                         :: update_icount
+            
+            integer(i_llong)                :: addl_num_entries_r
             
             ! Assume true by default
             if (.NOT. present(update_icount_in)) then
@@ -380,10 +382,13 @@
                     print *, "realloc needed for metadata iarr!"
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize, ")"
                     if (update_icount) then
-                        call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_m_multi(sc_index))))
+                        addl_num_entries_r = addl_num_entries + (int8(NLAYER_DEFAULT_ENT) * (2 ** int8(diag_metadata_store%alloc_m_multi(sc_index))))
                     else
-                        call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries  + NLAYER_DEFAULT_ENT)
+                        addl_num_entries_r = addl_num_entries + NLAYER_DEFAULT_ENT
                     end if
+                    print *, " ** addl_num_entries_r = "
+                    print *, addl_num_entries_r
+                    call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries_r)
                     
                     diag_metadata_store%stor_i_arr(iarr_index)%isize = size(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)
                     

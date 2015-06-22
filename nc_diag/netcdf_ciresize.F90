@@ -21,7 +21,7 @@
         ! nc_diag_chaninfo_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
         subroutine nc_diag_chaninfo_resize_byte(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -67,7 +67,7 @@
         ! nc_diag_chaninfo_resize - input integer(i_short)
         ! Corresponding NetCDF4 type: short
         subroutine nc_diag_chaninfo_resize_short(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -113,7 +113,7 @@
         ! nc_diag_chaninfo_resize - input integer(i_long)
         ! Corresponding NetCDF4 type: int (old: long)
         subroutine nc_diag_chaninfo_resize_long(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! Did we realloc at all?
@@ -168,7 +168,7 @@
         ! nc_diag_chaninfo_resize - input real(r_single)
         ! Corresponding NetCDF4 type: float (or real)
         subroutine nc_diag_chaninfo_resize_rsingle(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -214,7 +214,7 @@
         ! nc_diag_chaninfo_resize - input real(r_double)
         ! Corresponding NetCDF4 type: double
         subroutine nc_diag_chaninfo_resize_rdouble(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set
@@ -260,7 +260,7 @@
         ! nc_diag_chaninfo_resize - input character(len=*)
         ! Corresponding NetCDF4 type: string? char?
         subroutine nc_diag_chaninfo_resize_string(addl_num_entries, update_acount_in)
-            integer(i_long), intent(in)     :: addl_num_entries
+            integer(i_llong), intent(in)    :: addl_num_entries
             logical, intent(in), optional   :: update_acount_in
             
             ! This is the Size Count index (sc_index) - we'll just set

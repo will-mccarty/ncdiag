@@ -212,7 +212,7 @@
         
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_chaninfo_prealloc_vars(num_of_addl_vars)
-            integer(i_long), intent(in)           :: num_of_addl_vars
+            integer(i_llong), intent(in)           :: num_of_addl_vars
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (allocated(diag_chaninfo_store%names)) then
                     if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
@@ -264,7 +264,7 @@
         ! Preallocate actual variable data storage
         subroutine nc_diag_chaninfo_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
             integer(i_byte), intent(in)           :: nclayer_type
-            integer(i_long), intent(in)           :: num_of_addl_slots
+            integer(i_llong), intent(in)          :: num_of_addl_slots
             
             if (nclayer_type == NLAYER_BYTE) then
                 call nc_diag_chaninfo_resize_byte(num_of_addl_slots, .FALSE.)
@@ -288,15 +288,17 @@
         end subroutine nc_diag_chaninfo_prealloc_vars_storage
         
         subroutine nc_diag_chaninfo_expand
+            integer(i_llong) :: addl_fields
             ! Did we realloc at all?
             logical :: meta_realloc
             meta_realloc = .FALSE.
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
+                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi))
                 if (diag_chaninfo_store%nchans /= -1) then
                     if (allocated(diag_chaninfo_store%names)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
-                            call nc_diag_realloc(diag_chaninfo_store%names, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            call nc_diag_realloc(diag_chaninfo_store%names, addl_fields)
                             meta_realloc = .TRUE.
                         end if
                     else
@@ -305,7 +307,7 @@
                     
                     if (allocated(diag_chaninfo_store%types)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%types)) then
-                            call nc_diag_realloc(diag_chaninfo_store%types, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            call nc_diag_realloc(diag_chaninfo_store%types, addl_fields)
                             meta_realloc = .TRUE.
                         end if
                     else
@@ -314,7 +316,7 @@
                     
                     if (allocated(diag_chaninfo_store%var_rel_pos)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_rel_pos)) then
-                            call nc_diag_realloc(diag_chaninfo_store%var_rel_pos, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            call nc_diag_realloc(diag_chaninfo_store%var_rel_pos, addl_fields)
                             meta_realloc = .TRUE.
                         end if
                     else
@@ -324,7 +326,7 @@
                     
                     if (allocated(diag_chaninfo_store%var_usage)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_usage)) then
-                            call nc_diag_realloc(diag_chaninfo_store%var_usage, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            call nc_diag_realloc(diag_chaninfo_store%var_usage, addl_fields)
                             meta_realloc = .TRUE.
                         end if
                     else
@@ -334,7 +336,7 @@
                     
                     if (allocated(diag_chaninfo_store%var_ids)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%var_ids)) then
-                            call nc_diag_realloc(diag_chaninfo_store%var_ids, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                            call nc_diag_realloc(diag_chaninfo_store%var_ids, addl_fields)
                             meta_realloc = .TRUE.
                         end if
                     else
@@ -403,7 +405,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_byte(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_byte(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 
@@ -486,7 +488,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_short(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_short(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 
@@ -576,7 +578,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_long(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_long(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 
@@ -685,7 +687,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_rsingle(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_rsingle(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 
@@ -783,7 +785,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_rdouble(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_rdouble(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 
@@ -872,7 +874,7 @@
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
                 
                 ! We just need to add one entry...
-                call nc_diag_chaninfo_resize_string(diag_chaninfo_store%nchans)
+                call nc_diag_chaninfo_resize_string(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
                 

@@ -332,7 +332,7 @@
         
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_metadata_prealloc_vars(num_of_addl_vars)
-            integer(i_long), intent(in)           :: num_of_addl_vars
+            integer(i_llong), intent(in)          :: num_of_addl_vars
             if (init_done .AND. allocated(diag_metadata_store)) then
                 if (allocated(diag_metadata_store%names)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%names)) then
@@ -376,7 +376,7 @@
         ! Preallocate actual variable data storage
         subroutine nc_diag_metadata_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
             integer(i_byte), intent(in)           :: nclayer_type
-            integer(i_long), intent(in)           :: num_of_addl_slots
+            integer(i_llong), intent(in)          :: num_of_addl_slots
             
             if (nclayer_type == NLAYER_BYTE) then
                 call nc_diag_metadata_resize_byte(num_of_addl_slots, .FALSE.)
@@ -400,7 +400,7 @@
         
         ! Preallocate index storage
         subroutine nc_diag_metadata_prealloc_vars_storage_all(num_of_addl_slots)
-            integer(i_long), intent(in)           :: num_of_addl_slots
+            integer(i_llong), intent(in)          :: num_of_addl_slots
             integer(i_long)                       :: i
             
             !print *, "PREALLOC IARR: "
@@ -412,12 +412,16 @@
         end subroutine nc_diag_metadata_prealloc_vars_storage_all
         
         subroutine nc_diag_metadata_expand
+            integer(i_llong) :: addl_fields
+            
             ! Did we realloc at all?
             logical :: meta_realloc
             
             meta_realloc = .FALSE.
             
             if (init_done .AND. allocated(diag_metadata_store)) then
+                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi))
+                
 #ifdef _DEBUG_MEM_
                 call debug("INITIAL value of diag_metadata_store%alloc_s_multi:")
                 print *, diag_metadata_store%alloc_s_multi
@@ -428,9 +432,9 @@
 #ifdef _DEBUG_MEM_
                         call debug("Reallocating diag_metadata_store%names...")
                         print *, (2 ** diag_metadata_store%alloc_s_multi)
-                        print *, (1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        print *, addl_fields
 #endif
-                        call nc_diag_realloc(diag_metadata_store%names, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        call nc_diag_realloc(diag_metadata_store%names, addl_fields)
 #ifdef _DEBUG_MEM_
                     call debug("Reallocated diag_metadata_store%names. Size:")
                     print *, size(diag_metadata_store%names)
@@ -456,9 +460,9 @@
 #ifdef _DEBUG_MEM_
                         call debug("Reallocating diag_metadata_store%types...")
                         print *, (2 ** diag_metadata_store%alloc_s_multi)
-                        print *, (1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        print *, addl_fields
 #endif
-                        call nc_diag_realloc(diag_metadata_store%types, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        call nc_diag_realloc(diag_metadata_store%types, addl_fields)
                         meta_realloc = .TRUE.
                     end if
                 else
@@ -472,7 +476,7 @@
                         print *, (2 ** diag_metadata_store%alloc_s_multi)
                         print *, (1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
 #endif
-                        call nc_diag_metadata_resize_iarr_type((NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        call nc_diag_metadata_resize_iarr_type(addl_fields)
                         
                         !call nc_diag_realloc(diag_metadata_store%stor_i_arr, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
                         meta_realloc = .TRUE.
@@ -483,7 +487,7 @@
                 
                 if (allocated(diag_metadata_store%var_ids)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%var_ids)) then
-                        call nc_diag_realloc(diag_metadata_store%var_ids, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        call nc_diag_realloc(diag_metadata_store%var_ids, addl_fields)
                         meta_realloc = .TRUE.
                     end if
                 else
