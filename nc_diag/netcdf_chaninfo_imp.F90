@@ -249,6 +249,8 @@
                                     string_arr, &
                                     start = (/ 1, 1 /), &
                                     count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
+                                
+                                deallocate(string_arr)
                             else
                                 call error("Critical error - unknown variable type!")
                             end if
