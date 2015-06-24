@@ -1,11 +1,11 @@
 #!/bin/bash
-if [ ! "$#" = "1" ];then
-    echo "Usage: $0 [program to profile]"
+if [ "$#" = "0" ];then
+    echo "Usage: $0 [program to profile] [args to program]"
     exit 1
 fi
 
 make clean
 make
-./$1
-gprof $1 gmon.out > analysis.txt
+time $@ > analysis.txt
+gprof $1 gmon.out >> analysis.txt
 nano analysis.txt
