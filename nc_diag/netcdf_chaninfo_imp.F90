@@ -55,9 +55,16 @@
         
         subroutine nc_diag_chaninfo_write_def
             ! Just write the definitions out!
-            integer(i_long)               :: curdatindex
+            integer(i_llong)              :: curdatindex
             integer(i_byte)               :: data_type
+            integer(i_long)               :: data_type_index
+            character(len=100)            :: data_name
             integer(i_kind)               :: nc_data_type
+            
+            integer(i_long)               :: tmp_dim_id
+            character(len=120)            :: data_dim_name
+            
+            character(len=:), allocatable :: string_arr(:)
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (diag_chaninfo_store%nchans /= -1) then
@@ -68,23 +75,51 @@
                         ! Once we have the dimension, we can start writing
                         ! variable definitions!
                         do curdatindex = 1, diag_chaninfo_store%total
+                            data_name = diag_chaninfo_store%names(curdatindex)
                             data_type = diag_chaninfo_store%types(curdatindex)
+                            data_type_index = 1 + &
+                                ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                             
-                            if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
-                            if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
-                            if (data_type == NLAYER_LONG)   nc_data_type = nf90_int
-                            if (data_type == NLAYER_FLOAT)  nc_data_type = nf90_float
-                            if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
-                            if (data_type == NLAYER_STRING) nc_data_type = nf90_string
+                            if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
+                            if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
+                            if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
+                            if (data_type == NLAYER_FLOAT)  nc_data_type = NF90_FLOAT
+                            if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
+                            if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
                             
                             print *, "chaninfo part 1"
                             
-                            call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
-                                nc_data_type, diag_chaninfo_store%nchans_dimid, &
-                                diag_chaninfo_store%var_ids(curdatindex), &
-                                .FALSE., diag_chaninfo_store%nchans ))
+                            if (data_type == NLAYER_STRING) then
+                                write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
+                                
+                                ! Dimension is # of chars by # of obs (unlimited)
+                                allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                
+                                string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))
+                                
+                                call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                                print *, "Defining char var type..."
+                                call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                    nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
+                                    diag_chaninfo_store%var_ids(curdatindex)))
+                                print *, "Done defining char var type..."
+                                deallocate(string_arr)
+                            else
+                                call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                    nc_data_type, diag_chaninfo_store%nchans_dimid, &
+                                    diag_chaninfo_store%var_ids(curdatindex)))
+                            end if
                             
                             print *, "chaninfo part 2"
+                            
+                            if (data_type == NLAYER_STRING) then
+                                call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ 1, diag_chaninfo_store%nchans /)))
+                            else
+                                call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ diag_chaninfo_store%nchans /)))
+                            end if
                             
                             ! Enable compression
                             ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
@@ -112,7 +147,10 @@
             
             character(len=1000)                   :: warning_str
             
-            integer(i_long)               :: curdatindex
+            integer(i_llong)               :: curdatindex, j
+            integer(i_long)                :: string_arr_maxlen
+            
+            character(len=:), allocatable :: string_arr(:)
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (diag_chaninfo_store%nchans /= -1) then
@@ -182,15 +220,35 @@
                                     diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
                                         diag_chaninfo_store%var_usage(curdatindex) - 1))))
                             else if (data_type == NLAYER_STRING) then
-#ifndef IGNORE_VERSION
-                                ! If you manage to sneak in this far...
-                                if (NLAYER_STRING_BROKEN) then
-                                    call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-                                end if
-#endif
+                                allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                
+                                string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1))
+                                
+                                string_arr_maxlen = max_len_string_array(string_arr)
+                                
+                                deallocate(string_arr)
+                                
+                                allocate(character(string_arr_maxlen) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                do j = data_type_index, data_type_index + &
+                                        diag_chaninfo_store%var_usage(curdatindex) - 1
+                                    string_arr(j - data_type_index + 1) = trim(diag_chaninfo_store%ci_string(j))
+                                end do
+                                
+                                !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                !        diag_chaninfo_store%var_usage(curdatindex) - 1))
+                                
+                                do j = 1, diag_chaninfo_store%var_usage(curdatindex)
+                                    write (*, "(A, A, A)") "String: '", string_arr(j), "'"
+                                end do
+                                
+                                write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
+                                write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
+                                
                                 call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
+                                    string_arr, &
+                                    start = (/ 1, 1 /), &
+                                    count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
                             else
                                 call error("Critical error - unknown variable type!")
                             end if

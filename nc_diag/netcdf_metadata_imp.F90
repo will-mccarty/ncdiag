@@ -42,8 +42,12 @@
             integer(i_byte)                       :: data_type
             character(len=100)                    :: data_name
             
-            integer(i_long)                       :: curdatindex
+            integer(i_llong)                      :: curdatindex, j
             integer(i_kind)                       :: nc_data_type
+            integer(i_long)                       :: tmp_dim_id
+            character(len=120)                    :: data_dim_name
+            
+            character(len=:),         allocatable :: string_arr(:)
             
             if (init_done) then
                 call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
@@ -52,25 +56,54 @@
                     data_name = diag_metadata_store%names(curdatindex)
                     data_type = diag_metadata_store%types(curdatindex)
                     
-                    if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
-                    if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
-                    if (data_type == NLAYER_LONG)   nc_data_type = nf90_int
-                    if (data_type == NLAYER_FLOAT)  nc_data_type = nf90_float
-                    if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
-                    if (data_type == NLAYER_STRING) nc_data_type = nf90_string
+                    if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
+                    if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
+                    if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
+                    if (data_type == NLAYER_FLOAT)  nc_data_type = NF90_FLOAT
+                    if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
+                    if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
                     
                     print *, "metadata part 1"
                     
-                    call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
-                        diag_metadata_store%var_ids(curdatindex), &
-                        .FALSE., 1024))
+                    if (data_type == NLAYER_STRING) then
+                        write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
+                        
+                        ! Dimension is # of chars by # of obs (unlimited)
+                        allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                            string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                        end do
+                        
+                        call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                        print *, "Defining char var type..."
+                        call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                            (/ tmp_dim_id, diag_metadata_store%nobs_dim_id /), &
+                            diag_metadata_store%var_ids(curdatindex)))
+                        print *, "Done defining char var type..."
+                        deallocate(string_arr)
+                    else
+                        call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
+                            diag_metadata_store%var_ids(curdatindex)))
+                    end if
                     
                     print *, "metadata part 2"
                     
                     ! Enable compression
                     ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+                    print *, "Defining compression 1 (chunking)..."
+                    
+                    if (data_type == NLAYER_STRING) then
+                        call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                            NF90_CHUNKED, (/ 1, 1024 /)))
+                    else
+                        call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                            NF90_CHUNKED, (/ 1024 /)))
+                    end if
+                    
+                    print *, "Defining compression 2 (gzip)..."
                     call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
                         1, 1, NLAYER_COMPRESSION))
+                    print *, "Done defining compression..."
                 end do
             end if
         end subroutine nc_diag_metadata_write_def
@@ -87,6 +120,8 @@
             real(r_single),  dimension(:), allocatable :: rsingle_arr
             real(r_double),  dimension(:), allocatable :: rdouble_arr
             character(len=:),              allocatable :: string_arr(:)
+            
+            integer(i_llong)                           :: string_arr_maxlen
             
             if (init_done .AND. allocated(diag_metadata_store)) then
                 if (.NOT. diag_metadata_store%data_lock) then
@@ -167,14 +202,17 @@
                                 ))
                             deallocate(rdouble_arr)
                         else if (data_type == NLAYER_STRING) then
-#ifndef IGNORE_VERSION
-                            ! If you manage to sneak in this far...
-                            if (NLAYER_STRING_BROKEN) then
-                                call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-                            end if
-#endif
                             !max_len_string_array(
-                            allocate(character(1000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                            allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                            end do
+                            
+                            string_arr_maxlen = max_len_string_array(string_arr)
+                            
+                            deallocate(string_arr)
+                            
+                            allocate(character(string_arr_maxlen) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
                             do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
                                 string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                             end do
@@ -182,7 +220,7 @@
                             call check(nf90_put_var(&
                                 ncid, diag_metadata_store%var_ids(curdatindex), &
                                 string_arr, &
-                                (/ 1 /) &
+                                (/ 1, 1 /) &
                                 ))
                             deallocate(string_arr)
                         end if
@@ -785,12 +823,6 @@
             character(len=*), intent(in)    :: metadata_value
 
             integer(i_long)                 :: var_index
-            
-#ifndef IGNORE_VERSION
-            if (NLAYER_STRING_BROKEN) then
-                call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-            end if
-#endif
             
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
