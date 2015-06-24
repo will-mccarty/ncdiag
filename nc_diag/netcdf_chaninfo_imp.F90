@@ -165,7 +165,7 @@
                             if (diag_chaninfo_store%var_usage(curdatindex) < diag_chaninfo_store%nchans) then
                                 ! NOTE - I0 and TRIM are Fortran 95 specs
                                 write (warning_str, "(A, A, A, I0, A, I0, A)") "Amount of data written in ", &
-                                    trim(data_name), "(", diag_chaninfo_store%var_usage(curdatindex), &
+                                    trim(data_name), " (", diag_chaninfo_store%var_usage(curdatindex), &
                                     ") is less than nchans (", diag_chaninfo_store%nchans, ")!"
                                 call warning(trim(warning_str))
                                 !call warning("Amount of data written in XXXX (N) is less than nchans (N)!")
