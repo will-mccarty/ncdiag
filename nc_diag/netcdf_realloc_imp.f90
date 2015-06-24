@@ -25,11 +25,21 @@
             integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_byte), dimension(:), allocatable   :: tmp
+            integer(i_llong)                             :: new_size
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
         end subroutine nc_diag_realloc_byte
         
@@ -45,11 +55,21 @@
             integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_short), dimension(:), allocatable   :: tmp
+            integer(i_llong)                              :: new_size
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                               :: alloc_err
+            character(len=100)                            :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
         end subroutine nc_diag_realloc_short
         
@@ -65,15 +85,26 @@
             integer(i_llong),intent(in) :: addl_num_entries
             
             integer(i_long), dimension(:), allocatable   :: tmp
+            integer(i_llong)                             :: new_size
             
 #ifdef _DEBUG_MEM_
             call debug("Reallocating long array...")
 #endif
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
+            
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
             
 #ifdef _DEBUG_MEM_
@@ -92,12 +123,22 @@
             real(r_single), dimension(:), allocatable, intent(inout) :: arr
             integer(i_llong),intent(in) :: addl_num_entries
             
-            real(r_single), dimension(:), allocatable   :: tmp
+            real(r_single), dimension(:), allocatable    :: tmp
+            integer(i_llong)                             :: new_size
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
         end subroutine nc_diag_realloc_rsingle
         
@@ -112,12 +153,22 @@
             real(r_double), dimension(:), allocatable, intent(inout) :: arr
             integer(i_llong),intent(in) :: addl_num_entries
             
-            real(r_double), dimension(:), allocatable   :: tmp
+            real(r_double), dimension(:), allocatable    :: tmp
+            integer(i_llong)                             :: new_size
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
         end subroutine nc_diag_realloc_rdouble
         
@@ -133,6 +184,7 @@
             integer(i_llong),intent(in) :: addl_num_entries
             
             character(len=len(arr(1))), dimension(:), allocatable   :: tmp
+            integer(i_llong)            :: new_size
             
 #ifdef _DEBUG_MEM_
             integer :: string_len, string_arr_size
@@ -150,10 +202,19 @@
             print *, (string_arr_size + addl_num_entries)
 #endif
             
-            allocate(tmp(size(arr) + addl_num_entries))
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
-            allocate(arr(size(tmp)))
+            allocate(arr(new_size))
             arr = tmp
         end subroutine nc_diag_realloc_string
         
@@ -169,8 +230,12 @@
             integer(i_llong),intent(in) :: addl_num_entries
             
             logical, dimension(:), allocatable   :: tmp
-            integer :: logical_arr_size
+            integer(i_llong)                     :: new_size
+            
+            integer(i_llong) :: logical_arr_size
             logical_arr_size = size(arr)
+            
+            new_size = logical_arr_size + addl_num_entries
             
 #ifdef _DEBUG_MEM_
             call debug("[logical] Allocating from...")
@@ -180,10 +245,10 @@
             print *, (logical_arr_size + addl_num_entries)
 #endif
             
-            allocate(tmp(logical_arr_size + addl_num_entries))
+            allocate(tmp(new_size))
             tmp(1:logical_arr_size) = arr
             deallocate(arr)
-            allocate(arr(logical_arr_size + addl_num_entries))
+            allocate(arr(new_size))
             arr = tmp
 #ifdef _DEBUG_MEM_
             call debug("[logical] Final size:")
