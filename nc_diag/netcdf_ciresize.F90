@@ -52,7 +52,7 @@
             if (allocated(diag_chaninfo_store%ci_byte)) then
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_byte, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_byte, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_byte)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
@@ -98,7 +98,7 @@
             if (allocated(diag_chaninfo_store%ci_short)) then
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_short, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_short, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_short)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
@@ -153,7 +153,7 @@
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
                     print *, "realloc needed for chaninfo long!"
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_chaninfo_store%acount(sc_index), " / ", diag_chaninfo_store%asize(sc_index), ")"
-                    call nc_diag_realloc(diag_chaninfo_store%ci_long, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_long, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_long)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
@@ -199,7 +199,7 @@
             if (allocated(diag_chaninfo_store%ci_rsingle)) then
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rsingle)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
@@ -245,7 +245,7 @@
             if (allocated(diag_chaninfo_store%ci_rdouble)) then
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, addl_num_entries + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_rdouble)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
@@ -291,7 +291,7 @@
             if (allocated(diag_chaninfo_store%ci_string)) then
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
-                    call nc_diag_realloc(diag_chaninfo_store%ci_string, addl_num_entries  + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi)))
+                    call nc_diag_realloc(diag_chaninfo_store%ci_string, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
                     diag_chaninfo_store%asize(sc_index) = size(diag_chaninfo_store%ci_string)
                     
                     diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1

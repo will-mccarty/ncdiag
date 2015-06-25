@@ -467,7 +467,7 @@
             meta_realloc = .FALSE.
             
             if (init_done .AND. allocated(diag_metadata_store)) then
-                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi))
+                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi))
                 
 #ifdef _DEBUG_MEM_
                 call debug("INITIAL value of diag_metadata_store%alloc_s_multi:")
@@ -478,7 +478,7 @@
                     if (diag_metadata_store%total >= size(diag_metadata_store%names)) then
 #ifdef _DEBUG_MEM_
                         call debug("Reallocating diag_metadata_store%names...")
-                        print *, (2 ** diag_metadata_store%alloc_s_multi)
+                        print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
                         print *, addl_fields
 #endif
                         call nc_diag_realloc(diag_metadata_store%names, addl_fields)
@@ -506,7 +506,7 @@
                     if (diag_metadata_store%total >= size(diag_metadata_store%types)) then
 #ifdef _DEBUG_MEM_
                         call debug("Reallocating diag_metadata_store%types...")
-                        print *, (2 ** diag_metadata_store%alloc_s_multi)
+                        print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
                         print *, addl_fields
 #endif
                         call nc_diag_realloc(diag_metadata_store%types, addl_fields)
@@ -520,12 +520,12 @@
                     if (diag_metadata_store%total >= size(diag_metadata_store%stor_i_arr)) then
 #ifdef _DEBUG_MEM_
                         call debug("Reallocating diag_metadata_store%stor_i_arr...")
-                        print *, (2 ** diag_metadata_store%alloc_s_multi)
-                        print *, (1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
+                        print *, (1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)))
 #endif
                         call nc_diag_metadata_resize_iarr_type(addl_fields)
                         
-                        !call nc_diag_realloc(diag_metadata_store%stor_i_arr, 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_metadata_store%alloc_s_multi)))
+                        !call nc_diag_realloc(diag_metadata_store%stor_i_arr, 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)))
                         meta_realloc = .TRUE.
                     end if
                 else

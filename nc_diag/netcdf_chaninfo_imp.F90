@@ -354,7 +354,7 @@
             meta_realloc = .FALSE.
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
-                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (2 ** diag_chaninfo_store%alloc_multi))
+                addl_fields = 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))
                 if (diag_chaninfo_store%nchans /= -1) then
                     if (allocated(diag_chaninfo_store%names)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then

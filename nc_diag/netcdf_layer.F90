@@ -17,9 +17,14 @@ module netcdf_layer
     integer(i_byte), parameter              :: NLAYER_DOUBLE = 5
     integer(i_byte), parameter              :: NLAYER_STRING = 6
     
+    ! Default number of starting entries
     integer(i_short), parameter             :: NLAYER_DEFAULT_ENT = 1024
     
+    ! NetCDF zlib (/gzip) compression level
     integer(i_byte), parameter              :: NLAYER_COMPRESSION = 9
+    
+    ! Base used when exponentiated.
+#define NLAYER_MULTI_BASE 2
     
     integer :: ncid
     logical :: init_done = .FALSE.
