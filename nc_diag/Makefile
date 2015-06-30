@@ -56,7 +56,9 @@ NETCDF_LAYER_DEPS+=Makefile \
 	netcdf_metadata_decl.f90 \
 	netcdf_realloc_imp.f90 netcdf_mresize.F90 \
 	netcdf_ciresize.F90 netcdf_lheader_imp.F90 \
-	netcdf_chaninfo_imp.F90 netcdf_metadata_imp.F90
+	netcdf_chaninfo_imp.F90 netcdf_metadata_imp.F90 \
+	netcdf_data2d_decl.f90 netcdf_data2d_imp.F90 \
+	netcdf_dresize.F90 
 
 kinds.mod: Makefile kinds.F90
 	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)

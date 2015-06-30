@@ -1,17 +1,21 @@
 program test_netcdf_layer
     use kinds
+#ifndef NO_NETCDF
     use netcdf
+#endif
     use fnv32mod
     use netcdf_layer
     implicit none
     
     integer :: i
+    integer(i_llong) :: index_llong
     real(r_single) :: f
     real(r_double) :: d
     
     character(len=100) :: str_header
     character(len=100) :: str_chaninfo
     character(len=100) :: str_metadata
+    character(len=100) :: str_data2d
     
     f = 1.234
     d = 2.34567890
@@ -31,16 +35,23 @@ program test_netcdf_layer
     call nc_diag_chaninfo_dim_set(10)
     
     do i = 1, 10
+        index_llong = i
         call nc_diag_chaninfo("chaninfosimple1", i)
         call nc_diag_chaninfo("chaninfosimple2", i*2)
         call nc_diag_chaninfo("chaninfosimple4_float", f + 1.00)
         call nc_diag_chaninfo("chaninfosimple5_double", d + 1.00)
         
         call nc_diag_metadata("metadatasimple1", i)
-        call nc_diag_metadata("metadatasimple2", i*2)
-        call nc_diag_metadata("metadatasimple4_float", f + 1.00 + i)
-        call nc_diag_metadata("metadatasimple4_float2", f + 2.00 + i)
-        call nc_diag_metadata("metadatasimple5_double", d + 1.00 + i)
+        !call nc_diag_metadata("metadatasimple2", i*2)
+        !call nc_diag_metadata("metadatasimple4_float", f + 1.00 + i)
+        !call nc_diag_metadata("metadatasimple4_float2", f + 2.00 + i)
+        !call nc_diag_metadata("metadatasimple5_double", d + 1.00 + i)
+        
+        call nc_diag_data2d("data2dsimple1", index_llong, (/ i, i+1, i+2 /))
+        call nc_diag_data2d("data2dsimple2", index_llong, (/ i*2, i*3, i*4 /))
+        call nc_diag_data2d("data2dsimple4_float", index_llong, (/ f + 1.00 + i, f + 2.00 + i, f + 3.00 + i, f + 4.00 + i /))
+        call nc_diag_data2d("data2dsimple4_float2", index_llong, (/ f + 2.00 + i, f + 4.00 + i /))
+        call nc_diag_data2d("data2dsimple5_double", index_llong, (/ d + 1.00 + i /))
         
         write(str_chaninfo, "(A, I0)") "ci6_", i
         call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
@@ -62,7 +73,8 @@ program test_netcdf_layer
     end do
     
     !do i = 1, 10000000
-    do i = 1, 10000
+    do i = 1, 10000!000
+        index_llong = i
         call nc_diag_header("headertestsimple", 123)
         
         call nc_diag_header("headertestsimple2_float", f)
@@ -71,12 +83,22 @@ program test_netcdf_layer
         write(str_header, "(A, I0)") "header_", i
         call nc_diag_header("headertestsimple4_str", str_header)
         
-        call nc_diag_metadata("metadatasimple7_big", i*2)
+        !call nc_diag_metadata("metadatasimple7_big", i*2)
     end do
     
-    do i = 1, 100
+    do i = 1, 100000
+        index_llong = i
         write(str_metadata, "(A, I0)") "morehellometa_", i
         call nc_diag_metadata("metadatasimple8_str", str_metadata)
+        
+        write(str_data2d, "(A, I0)") "data2d_", i
+        call nc_diag_metadata("data2dsimple6_str", str_data2d)
+        
+        ! This is broken... but it's an interesting testcase, as it breaks
+        ! a LOT of stuff!
+        ! index_llong = i needs to be commented out
+        !call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
+        call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
     end do
     
     call nc_diag_header("headertestsimple5_str", "hello world")
