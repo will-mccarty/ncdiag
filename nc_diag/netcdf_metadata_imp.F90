@@ -231,6 +231,7 @@
             else
                 call error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
+            print *, "All done writing metadata data"
         end subroutine nc_diag_metadata_write_data
         
         !subroutine nc_diag_metadata_write
