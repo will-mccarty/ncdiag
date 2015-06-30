@@ -1,5 +1,9 @@
 module netcdf_layer
+#ifndef NO_NETCDF
     use netcdf
+#else
+#warning NetCDF library usage disabled. Filler routines will be used.
+#endif
     use fnv32mod
     use kinds
     use utils
@@ -34,12 +38,20 @@ module netcdf_layer
     logical :: NLAYER_STRING_BROKEN = .FALSE.
 #endif
     
+#ifdef NO_NETCDF
+#include "netcdf_nonetcdf_decl.F90"
+#endif
+
 #include "netcdf_realloc_decl.f90"
 #include "netcdf_lheader_decl.f90"
 #include "netcdf_chaninfo_decl.F90"
 #include "netcdf_metadata_decl.f90"
     
     contains
+#ifdef NO_NETCDF
+#include "netcdf_nonetcdf_imp.F90"
+#endif
+        
 #include "netcdf_realloc_imp.f90"
 #include "netcdf_ciresize.F90"
 #include "netcdf_mresize.F90"
@@ -53,12 +65,15 @@ module netcdf_layer
             
             integer                        :: bsize = 16777216;
             
+#ifndef NO_NETCDF
             !print *,'Initializing netcdf layer library, version ...'
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
             call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
             
 #ifndef IGNORE_VERSION
             call nc_version_check(version_num)
+#endif
+
 #endif
             
             ! nf90_create creates the NetCDF file, and initializes
@@ -71,8 +86,10 @@ module netcdf_layer
             ! track of what file you're working on. We're returning that
             ! here.
             if (.NOT. init_done) then
+#ifndef NO_NETCDF
                 call check( nf90_create(filename, OR(NF90_NETCDF4, NF90_CLOBBER), ncid, &
                     0, bsize, cache_nelems = 16777216) ) ! Optimization settings
+#endif
                 
                 if (allocated(diag_chaninfo_store)) then
                     call error("BUG! diag_chaninfo_store is allocated, but init_done is set!")
