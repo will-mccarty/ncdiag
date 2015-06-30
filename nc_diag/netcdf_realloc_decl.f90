@@ -19,6 +19,7 @@
         interface nc_diag_realloc
             module procedure nc_diag_realloc_byte, &
                 nc_diag_realloc_short, nc_diag_realloc_long, &
-                nc_diag_realloc_rsingle, nc_diag_realloc_rdouble, &
-                nc_diag_realloc_string, nc_diag_realloc_logical
+                nc_diag_realloc_llong, nc_diag_realloc_rsingle, &
+                nc_diag_realloc_rdouble, nc_diag_realloc_string, &
+                nc_diag_realloc_logical
         end interface nc_diag_realloc

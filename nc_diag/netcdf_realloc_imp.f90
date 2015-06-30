@@ -112,6 +112,45 @@
 #endif
         end subroutine nc_diag_realloc_long
         
+        ! nc_diag_realloc_llong(arr, addl_num_entries)
+        !   input:
+        !     integer(i_llong), dimension(:)  :: arr
+        !         array to reallocate
+        !     integer(i_llong), intent(in)    :: addl_num_entries
+        !         additional number of elements to allocate to the
+        !         specified array
+        subroutine nc_diag_realloc_llong(arr, addl_num_entries)
+            integer(i_llong), dimension(:), allocatable, intent(inout) :: arr
+            integer(i_llong),intent(in) :: addl_num_entries
+            
+            integer(i_llong), dimension(:), allocatable   :: tmp
+            integer(i_llong)                             :: new_size
+            
+#ifdef _DEBUG_MEM_
+            call debug("Reallocating long array...")
+#endif
+            
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
+            new_size = size(arr) + addl_num_entries
+            
+            allocate(tmp(new_size), STAT=alloc_err)
+            if (alloc_err /= 0) then
+                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
+                call error(trim(err_msg))
+            end if
+            
+            tmp(1:size(arr)) = arr
+            deallocate(arr)
+            allocate(arr(new_size))
+            arr = tmp
+            
+#ifdef _DEBUG_MEM_
+            call debug("Realloc finished for long")
+#endif
+        end subroutine nc_diag_realloc_llong
+        
         ! nc_diag_realloc_rsingle(arr, addl_num_entries)
         !   input:
         !     real(r_single), dimension(:)   :: arr
