@@ -96,6 +96,10 @@
             
             new_size = size(arr) + addl_num_entries
             
+#ifdef _DEBUG_MEM_
+            print *, "REALLOCATOR: new_size is ", new_size
+#endif
+            
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
@@ -108,6 +112,7 @@
             arr = tmp
             
 #ifdef _DEBUG_MEM_
+            print *, "REALLOCATOR: final actual size is ", size(arr)
             call debug("Realloc finished for long")
 #endif
         end subroutine nc_diag_realloc_long
