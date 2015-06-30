@@ -50,61 +50,69 @@
             character(len=:),         allocatable :: string_arr(:)
             
             if (init_done) then
-                call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
-                
-                do curdatindex = 1, diag_metadata_store%total
-                    data_name = diag_metadata_store%names(curdatindex)
-                    data_type = diag_metadata_store%types(curdatindex)
+                if (.NOT. diag_metadata_store%def_lock) then
+                    call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
                     
-                    if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
-                    if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
-                    if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
-                    if (data_type == NLAYER_FLOAT)  nc_data_type = NF90_FLOAT
-                    if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
-                    if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
-                    
-                    print *, "metadata part 1"
-                    
-                    if (data_type == NLAYER_STRING) then
-                        write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
+                    do curdatindex = 1, diag_metadata_store%total
+                        data_name = diag_metadata_store%names(curdatindex)
+                        data_type = diag_metadata_store%types(curdatindex)
                         
-                        ! Dimension is # of chars by # of obs (unlimited)
-                        allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                        do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                        end do
+                        if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
+                        if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
+                        if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
+                        if (data_type == NLAYER_FLOAT)  nc_data_type = NF90_FLOAT
+                        if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
+                        if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
                         
-                        call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
-                        print *, "Defining char var type..."
-                        call check(nf90_def_var(ncid, data_name, nc_data_type, &
-                            (/ tmp_dim_id, diag_metadata_store%nobs_dim_id /), &
-                            diag_metadata_store%var_ids(curdatindex)))
-                        print *, "Done defining char var type..."
-                        deallocate(string_arr)
-                    else
-                        call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
-                            diag_metadata_store%var_ids(curdatindex)))
-                    end if
-                    
-                    print *, "metadata part 2"
-                    
-                    ! Enable compression
-                    ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
-                    print *, "Defining compression 1 (chunking)..."
-                    
-                    if (data_type == NLAYER_STRING) then
-                        call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                            NF90_CHUNKED, (/ 1, 1024 /)))
-                    else
-                        call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                            NF90_CHUNKED, (/ 1024 /)))
-                    end if
-                    
-                    print *, "Defining compression 2 (gzip)..."
-                    call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
-                        1, 1, NLAYER_COMPRESSION))
-                    print *, "Done defining compression..."
-                end do
+                        print *, "metadata part 1"
+                        
+                        if (data_type == NLAYER_STRING) then
+                            write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
+                            
+                            ! Dimension is # of chars by # of obs (unlimited)
+                            allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                            end do
+                            
+                            call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                            print *, "Defining char var type..."
+                            call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                                (/ tmp_dim_id, diag_metadata_store%nobs_dim_id /), &
+                                diag_metadata_store%var_ids(curdatindex)))
+                            print *, "Done defining char var type..."
+                            deallocate(string_arr)
+                        else
+                            call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
+                                diag_metadata_store%var_ids(curdatindex)))
+                        end if
+                        
+                        print *, "metadata part 2"
+                        
+                        ! Enable compression
+                        ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+                        print *, "Defining compression 1 (chunking)..."
+                        
+                        if (data_type == NLAYER_STRING) then
+                            call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                NF90_CHUNKED, (/ 1, 1024 /)))
+                        else
+                            call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                NF90_CHUNKED, (/ 1024 /)))
+                        end if
+                        
+                        print *, "Defining compression 2 (gzip)..."
+                        call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
+                            1, 1, NLAYER_COMPRESSION))
+                        print *, "Done defining compression..."
+                        
+                        ! Lock the definitions!
+                        diag_metadata_store%def_lock = .TRUE.
+                    end do
+                else
+                    if(.NOT. present(internal)) &
+                        call error("Can't write definitions - definitions have already been written and locked!")
+                end if
             end if
         end subroutine nc_diag_metadata_write_def
         

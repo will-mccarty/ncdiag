@@ -31,27 +31,35 @@
             integer(i_kind)                       :: nc_data_type
             
             if (init_done) then
-                call check(nf90_def_dim(ncid, "nobs_data2d", NF90_UNLIMITED, diag_data2d_store%nobs_dim_id))
-                
-                do curdatindex = 1, diag_data2d_store%total
-                    data_name = diag_data2d_store%names(curdatindex)
-                    data_type = diag_data2d_store%types(curdatindex)
+                if (.NOT. diag_data2d_store%def_lock) then
+                    call check(nf90_def_dim(ncid, "nobs_data2d", NF90_UNLIMITED, diag_data2d_store%nobs_dim_id))
                     
-                    if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
-                    if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
-                    if (data_type == NLAYER_LONG)   nc_data_type = nf90_int
-                    if (data_type == NLAYER_FLOAT)  nc_data_type = nf90_float
-                    if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
-                    if (data_type == NLAYER_STRING) nc_data_type = nf90_char
-                    
-                    write (data_dim_name, "(A, A)") trim(data_name), "_dim"
-                    
-                    call check(nf90_def_dim(ncid, data_dim_name, max_len_var(curdatindex), diag_data2d_store%var_dim_ids(curdatindex)))
-                    
-                    call check(nf90_def_var(ncid, data_name, nc_data_type, &
-                        (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
-                        diag_data2d_store%var_ids(curdatindex)))
-                end do
+                    do curdatindex = 1, diag_data2d_store%total
+                        data_name = diag_data2d_store%names(curdatindex)
+                        data_type = diag_data2d_store%types(curdatindex)
+                        
+                        if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
+                        if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
+                        if (data_type == NLAYER_LONG)   nc_data_type = nf90_int
+                        if (data_type == NLAYER_FLOAT)  nc_data_type = nf90_float
+                        if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
+                        if (data_type == NLAYER_STRING) nc_data_type = nf90_char
+                        
+                        write (data_dim_name, "(A, A)") trim(data_name), "_dim"
+                        
+                        call check(nf90_def_dim(ncid, data_dim_name, max_len_var(curdatindex), diag_data2d_store%var_dim_ids(curdatindex)))
+                        
+                        call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                            (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
+                            diag_data2d_store%var_ids(curdatindex)))
+                        
+                        ! Lock the definitions!
+                        diag_data2d_store%def_lock = .TRUE.
+                    end do
+                else
+                    if(.NOT. present(internal)) &
+                        call error("Can't write definitions - definitions have already been written and locked!")
+                end if
             end if
         end subroutine nc_diag_data2d_write_def
         
