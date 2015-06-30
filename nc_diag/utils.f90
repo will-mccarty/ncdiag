@@ -199,6 +199,18 @@ module utils
             end do
         end subroutine string_array_dump
         
+        function max_len_string_array(str_arr) result(max_len)
+            character(len=:), intent(in),  allocatable :: str_arr(:)
+            
+            integer :: i, max_len
+            
+            max_len = -1
+            
+            do i = 1, size(str_arr)
+                if (len_trim(str_arr(i)) > max_len) max_len = len_trim(str_arr(i))
+            end do
+        end function max_len_string_array
+        
         ! Note to self - ifort does NOT like:
         !   character(len=:), allocatable :: string_part
         ! ... as a function return. It will freak out and throw a fit!
