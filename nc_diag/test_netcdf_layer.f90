@@ -101,6 +101,17 @@ program test_netcdf_layer
         call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
     end do
     
+    ! In order for variable attributes to work, we MUST call
+    ! nc_diag_lock_def! This is due to the fact that we need the NetCDF
+    ! variable IDs in order for attribute defining to work, and
+    ! the variable IDs aren't created until the variables definitions
+    ! have been created (and locked)!
+    call nc_diag_lock_def
+    
+    ! Now we can add variable attributes!
+    call nc_diag_varattr("data2dsimple7", "data2dsimple7_testattr1", "hi")
+    call nc_diag_varattr("data2dsimple7", "data2dsimple7_testattr2", (/ 1, 2, 3 /))
+    
     call nc_diag_header("headertestsimple5_str", "hello world")
     
     print *, "str_header:"

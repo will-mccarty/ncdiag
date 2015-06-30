@@ -21,7 +21,9 @@
         ! referred to by the interface. It also provides support
         ! subroutines for data writing and allocation setup.
         
-        subroutine nc_diag_data2d_write_def
+        subroutine nc_diag_data2d_write_def(internal)
+            logical, intent(in), optional         :: internal
+            
             integer(i_byte)                       :: data_type
             character(len=100)                    :: data_name
             
@@ -52,6 +54,9 @@
                         call check(nf90_def_var(ncid, data_name, nc_data_type, &
                             (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
                             diag_data2d_store%var_ids(curdatindex)))
+                        
+                        call nc_diag_varattr_add_var(diag_data2d_store%names(curdatindex), &
+                            diag_data2d_store%var_ids(curdatindex))
                         
                         ! Lock the definitions!
                         diag_data2d_store%def_lock = .TRUE.

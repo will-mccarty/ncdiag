@@ -38,7 +38,9 @@
             end if
         end subroutine nc_diag_metadata_allocmulti
         
-        subroutine nc_diag_metadata_write_def
+        subroutine nc_diag_metadata_write_def(internal)
+            logical, intent(in), optional         :: internal
+            
             integer(i_byte)                       :: data_type
             character(len=100)                    :: data_name
             
@@ -88,6 +90,9 @@
                         end if
                         
                         print *, "metadata part 2"
+                        
+                        call nc_diag_varattr_add_var(diag_metadata_store%names(curdatindex), &
+                                    diag_metadata_store%var_ids(curdatindex))
                         
                         ! Enable compression
                         ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level

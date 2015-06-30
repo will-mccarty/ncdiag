@@ -53,7 +53,9 @@
         !! the amount of data < nchan (since we're expecting a full write)
         !!!!!!
         
-        subroutine nc_diag_chaninfo_write_def
+        subroutine nc_diag_chaninfo_write_def(internal)
+            logical, intent(in), optional :: internal
+            
             ! Just write the definitions out!
             integer(i_llong)              :: curdatindex
             integer(i_byte)               :: data_type
@@ -113,6 +115,9 @@
                             
                             print *, "chaninfo part 2"
                             
+                            call nc_diag_varattr_add_var(diag_chaninfo_store%names(curdatindex), &
+                                diag_chaninfo_store%var_ids(curdatindex))
+                            
                             if (data_type == NLAYER_STRING) then
                                 call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                     NF90_CHUNKED, (/ 1, diag_chaninfo_store%nchans /)))
@@ -130,7 +135,8 @@
                         ! Lock the definitions!
                         diag_chaninfo_store%def_lock = .TRUE.
                     else
-                        call error("Can't write definitions - definitions have already been written and locked!")
+                        if(.NOT. present(internal)) &
+                            call error("Can't write definitions - definitions have already been written and locked!")
                     end if
                 else
                     call error("Can't write definitions - number of chans not set yet!")

@@ -47,6 +47,7 @@ module netcdf_layer
 #include "netcdf_chaninfo_decl.F90"
 #include "netcdf_metadata_decl.f90"
 #include "netcdf_data2d_decl.f90"
+#include "netcdf_varattr_decl.F90"
     
     contains
 #ifdef NO_NETCDF
@@ -61,6 +62,7 @@ module netcdf_layer
 #include "netcdf_chaninfo_imp.F90"
 #include "netcdf_metadata_imp.F90"
 #include "netcdf_data2d_imp.F90"
+#include "netcdf_varattr_imp.F90"
         
         subroutine nc_diag_init(filename)
             character(len=*),intent(in)    :: filename
@@ -106,9 +108,14 @@ module netcdf_layer
                     call error("BUG! diag_data2d_store is allocated, but init_done is set!")
                 end if
                 
+                if (allocated(diag_varattr_store)) then
+                    call error("BUG! diag_data2d_store is allocated, but init_done is set!")
+                end if
+                
                 allocate(diag_chaninfo_store)
                 allocate(diag_metadata_store)
                 allocate(diag_data2d_store)
+                allocate(diag_varattr_store)
                 
                 write (*,"(A, I0, A)") 'NetCDF will use ', bsize, ' bytes of cache.'
                 
@@ -170,7 +177,8 @@ module netcdf_layer
         !    
         !end subroutine nc_diag_data
         
-        subroutine nc_diag_write
+        subroutine nc_diag_lock_def
+            print *, " **** Locking all variable definitions!"
 #ifndef NO_NETCDF
             print *, "Defining chaninfo:"
             call nc_diag_chaninfo_write_def
@@ -180,6 +188,20 @@ module netcdf_layer
             
             print *, "Defining data2d:"
             call nc_diag_data2d_write_def
+#endif
+            print *, " **** All variable definitions locked!"
+        end subroutine nc_diag_lock_def
+        
+        subroutine nc_diag_write
+#ifndef NO_NETCDF
+            print *, "Defining chaninfo:"
+            call nc_diag_chaninfo_write_def(.TRUE.)
+            
+            print *, "Defining metadata:"
+            call nc_diag_metadata_write_def(.TRUE.)
+            
+            print *, "Defining data2d:"
+            call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
