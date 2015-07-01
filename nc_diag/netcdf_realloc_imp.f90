@@ -87,12 +87,12 @@
             integer(i_long), dimension(:), allocatable   :: tmp
             integer(i_llong)                             :: new_size
             
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
 #ifdef _DEBUG_MEM_
             call debug("Reallocating long array...")
 #endif
-            
-            integer(i_byte)                              :: alloc_err
-            character(len=100)                           :: err_msg
             
             new_size = size(arr) + addl_num_entries
             
@@ -131,12 +131,12 @@
             integer(i_llong), dimension(:), allocatable   :: tmp
             integer(i_llong)                             :: new_size
             
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
 #ifdef _DEBUG_MEM_
             call debug("Reallocating long array...")
 #endif
-            
-            integer(i_byte)                              :: alloc_err
-            character(len=100)                           :: err_msg
             
             new_size = size(arr) + addl_num_entries
             
@@ -230,6 +230,9 @@
             character(len=len(arr(1))), dimension(:), allocatable   :: tmp
             integer(i_llong)            :: new_size
             
+            integer(i_byte)                              :: alloc_err
+            character(len=100)                           :: err_msg
+            
 #ifdef _DEBUG_MEM_
             integer :: string_len, string_arr_size
             
@@ -245,9 +248,6 @@
             call debug("[string] ...to size...")
             print *, (string_arr_size + addl_num_entries)
 #endif
-            
-            integer(i_byte)                              :: alloc_err
-            character(len=100)                           :: err_msg
             
             new_size = size(arr) + addl_num_entries
             
