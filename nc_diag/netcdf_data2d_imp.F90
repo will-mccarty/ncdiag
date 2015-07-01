@@ -60,6 +60,8 @@
                         
                         call check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
                         
+                        ! Store maximum length
+                        diag_data2d_store%max_lens(curdatindex) = max_len;
                         
                         if (data_type == NLAYER_STRING) then
                             max_str_len = 0
@@ -91,6 +93,9 @@
 #ifdef _DEBUG_MEM_
                             write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data_name ", trim(data_name), ", FINAL max_str_len computes to ", max_str_len, ", max_len computes to ", max_len
 #endif
+                            
+                            ! Save the max string len
+                            diag_data2d_store%max_str_lens(curdatindex) = max_str_len
                             
                             ! Create the dimension needed!
                             write (data_dim_str_name, "(A, A)") trim(data_name), "_str_dim"
@@ -367,6 +372,28 @@
                     allocate(diag_data2d_store%var_dim_ids(NLAYER_DEFAULT_ENT))
                     diag_data2d_store%var_dim_ids = -1
                 end if
+                
+                if (allocated(diag_data2d_store%max_lens)) then
+                    if (diag_data2d_store%total >= size(diag_data2d_store%max_lens)) then
+                        tmp_size = size(diag_data2d_store%max_lens) * 0.5
+                        call nc_diag_realloc(diag_data2d_store%max_lens, tmp_size)
+                        meta_realloc = .TRUE.
+                    end if
+                else
+                    allocate(diag_data2d_store%max_lens(NLAYER_DEFAULT_ENT))
+                    diag_data2d_store%max_lens = -1
+                end if
+                
+                if (allocated(diag_data2d_store%max_str_lens)) then
+                    if (diag_data2d_store%total >= size(diag_data2d_store%max_str_lens)) then
+                        tmp_size = size(diag_data2d_store%max_str_lens) * 0.5
+                        call nc_diag_realloc(diag_data2d_store%max_str_lens, tmp_size)
+                        meta_realloc = .TRUE.
+                    end if
+                else
+                    allocate(diag_data2d_store%max_str_lens(NLAYER_DEFAULT_ENT))
+                    diag_data2d_store%max_str_lens = -1
+                end if
             else
                 call error("NetCDF4 layer not initialized yet!")
             endif
@@ -443,6 +470,11 @@
             
             input_size = size(data_value)
             
+            if ((diag_data2d_store%def_lock) .AND. &
+                (input_size > diag_data2d_store%max_lens(var_index))) then
+                call error("Cannot expand variable size after locking variable definitions!")
+            end if
+            
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)
             call nc_diag_data2d_resize_byte(var_index, data_index, input_size)
@@ -486,6 +518,11 @@
             end if
             
             input_size = size(data_value)
+            
+            if ((diag_data2d_store%def_lock) .AND. &
+                (input_size > diag_data2d_store%max_lens(var_index))) then
+                call error("Cannot expand variable size after locking variable definitions!")
+            end if
             
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)
@@ -534,6 +571,11 @@
             end if
             
             input_size = size(data_value)
+            
+            if ((diag_data2d_store%def_lock) .AND. &
+                (input_size > diag_data2d_store%max_lens(var_index))) then
+                call error("Cannot expand variable size after locking variable definitions!")
+            end if
             
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)
@@ -589,6 +631,11 @@
             
             input_size = size(data_value)
             
+            if ((diag_data2d_store%def_lock) .AND. &
+                (input_size > diag_data2d_store%max_lens(var_index))) then
+                call error("Cannot expand variable size after locking variable definitions!")
+            end if
+            
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)
             call nc_diag_data2d_resize_rsingle(var_index, data_index, input_size)
@@ -633,6 +680,11 @@
             
             input_size = size(data_value)
             
+            if ((diag_data2d_store%def_lock) .AND. &
+                (input_size > diag_data2d_store%max_lens(var_index))) then
+                call error("Cannot expand variable size after locking variable definitions!")
+            end if
+            
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)
             call nc_diag_data2d_resize_rdouble(var_index, data_index, input_size)
@@ -650,6 +702,8 @@
 
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
+            
+            integer(i_long)                            :: max_str_len
             
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -676,6 +730,22 @@
             end if
             
             input_size = size(data_value)
+            
+            if (diag_data2d_store%def_lock) then
+                if (input_size > diag_data2d_store%max_lens(var_index)) &
+                    call error("Cannot expand variable size after locking variable definitions!")
+                
+                ! Check max string length
+                max_str_len = max_len_string_array(data_value)
+                
+#ifdef _DEBUG_MEM_
+                print *, "max_str_len: ", max_str_len
+                print *, "diag_data2d_store%max_str_lens(var_index): ", diag_data2d_store%max_str_lens(var_index)
+#endif
+                
+                if (max_str_len > diag_data2d_store%max_str_lens(var_index)) &
+                    call error("Cannot expand variable string length after locking variable definitions!")
+            end if
             
             ! We just need to add one entry...
             call nc_diag_data2d_resize_internal_storage(var_index, data_index)

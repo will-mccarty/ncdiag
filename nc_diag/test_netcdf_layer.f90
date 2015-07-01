@@ -101,6 +101,10 @@ program test_netcdf_layer
         call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
     end do
     
+    ! Add one entry... so we can test out valid/invalid data adding
+    ! below!
+    call nc_diag_chaninfo("chaninfosimple8_str", "test1234")
+    
     ! In order for variable attributes to work, we MUST call
     ! nc_diag_lock_def! This is due to the fact that we need the NetCDF
     ! variable IDs in order for attribute defining to work, and
@@ -112,6 +116,24 @@ program test_netcdf_layer
     call nc_diag_varattr("data2dsimple7", "data2dsimple7_testattr1", "hi")
     call nc_diag_varattr("data2dsimple7", "data2dsimple7_testattr2", (/ 1, 2, 3 /))
     
+    ! We can still add more data, but now we must adhere to the maximum
+    ! variable length (the array input length).
+    
+    ! This is fine:
+    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "data2d_11", "fill1", "fill2" /))
+    call nc_diag_data2d("data2dsimple7", int8(11), (/ -1, -2, -3 /))
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_11")
+    call nc_diag_chaninfo("chaninfosimple8_str", "test5678")
+    
+    ! This, however, is not. (Note that the array/string is longer than
+    ! the others above.) (Uncomment the below lines to see what will
+    ! happen!)
+    !call nc_diag_data2d("data2dsimple6_str", int8(12), (/ "data2d_122", "fill1", "fill2" /))
+    !call nc_diag_data2d("data2dsimple7", int8(12), (/ -4, -5, -6, -7 /))
+    !call nc_diag_metadata("metadatasimple8_str", "morehellometa_111")
+    !call nc_diag_chaninfo("chaninfosimple8_str", "test9101112")
+    
+    ! Back to header stuff...
     call nc_diag_header("headertestsimple5_str", "hello world")
     
     print *, "str_header:"

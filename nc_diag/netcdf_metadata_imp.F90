@@ -77,6 +77,9 @@
                                 string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                             end do
                             
+                            ! Save the max string len
+                            diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
+                            
                             call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
                             print *, "Defining char var type..."
                             call check(nf90_def_var(ncid, data_name, nc_data_type, &
@@ -428,6 +431,15 @@
                     diag_metadata_store%alloc_sia_multi = 0
                 end if
                 
+                if (allocated(diag_metadata_store%max_str_lens)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%max_str_lens)) then
+                        call nc_diag_realloc(diag_metadata_store%max_str_lens, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%max_str_lens(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_metadata_store%max_str_lens = -1
+                end if
+                
                 diag_metadata_store%prealloc_total = diag_metadata_store%prealloc_total + num_of_addl_vars
             else
                 call error("NetCDF4 layer not initialized yet!")
@@ -564,6 +576,16 @@
                 else
                     allocate(diag_metadata_store%alloc_sia_multi(NLAYER_DEFAULT_ENT))
                     diag_metadata_store%alloc_sia_multi = 0
+                end if
+                
+                if (allocated(diag_metadata_store%max_str_lens)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%max_str_lens)) then
+                        call nc_diag_realloc(diag_metadata_store%max_str_lens, addl_fields)
+                        meta_realloc = .TRUE.
+                    end if
+                else
+                    allocate(diag_metadata_store%max_str_lens(NLAYER_DEFAULT_ENT))
+                    diag_metadata_store%max_str_lens = -1
                 end if
                 
                 if (meta_realloc) then
@@ -860,6 +882,15 @@
                 var_index = nc_diag_metadata_lookup_var(metadata_name)
                 
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
+                
+                ! Check max string length
+#ifdef _DEBUG_MEM_
+                print *, "len_trim(metadata_value) = ", len_trim(metadata_value)
+                print *, "diag_metadata_store%max_str_lens(var_index) = ", diag_metadata_store%max_str_lens(var_index)
+#endif
+                if ((diag_metadata_store%def_lock) .AND. &
+                    (len_trim(metadata_value) > diag_metadata_store%max_str_lens(var_index))) &
+                    call error("Cannot expand variable string length after locking variable definitions!")
             end if
             
             ! We just need to add one entry...

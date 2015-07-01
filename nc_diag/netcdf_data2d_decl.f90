@@ -62,6 +62,11 @@
             type(diag_d_storage),dimension(:),allocatable :: stores
             integer(i_long),    dimension(:), allocatable :: dims
             
+            ! Maximum variable length - only used when the variable
+            ! definitions are locked.
+            integer(i_long),    dimension(:), allocatable :: max_lens
+            integer(i_long),    dimension(:), allocatable :: max_str_lens
+            
             ! Total variables
             integer(i_long)                               :: total
             

@@ -54,6 +54,10 @@
             ! Variable IDs (for use with NetCDF API)
             integer(i_kind),     dimension(:),allocatable :: var_ids
             
+            ! Maximum string length - only used when the variable
+            ! definitions are locked.
+            integer(i_long),    dimension(:), allocatable :: max_str_lens
+            
             !-----------------------------------------------------------
             ! Type metadata storage
             !-----------------------------------------------------------

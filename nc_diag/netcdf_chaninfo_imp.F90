@@ -100,6 +100,9 @@
                                 string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                         diag_chaninfo_store%var_usage(curdatindex) - 1))
                                 
+                                ! Save the max string len
+                                diag_chaninfo_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
+                                
                                 call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
                                 print *, "Defining char var type..."
                                 call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
@@ -248,8 +251,10 @@
                                     write (*, "(A, A, A)") "String: '", string_arr(j), "'"
                                 end do
                                 
+#ifdef _DEBUG_MEM_
                                 write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
                                 write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
+#endif
                                 
                                 call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                     string_arr, &
@@ -321,6 +326,15 @@
                 else
                     allocate(diag_chaninfo_store%var_ids(NLAYER_DEFAULT_ENT + num_of_addl_vars))
                     diag_chaninfo_store%var_ids = -1
+                end if
+                
+                if (allocated(diag_chaninfo_store%max_str_lens)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%max_str_lens)) then
+                        call nc_diag_realloc(diag_chaninfo_store%max_str_lens, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%max_str_lens(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_chaninfo_store%max_str_lens = -1
                 end if
             else
                 call error("NetCDF4 layer not initialized yet!")
@@ -408,6 +422,16 @@
                     else
                         allocate(diag_chaninfo_store%var_ids(NLAYER_DEFAULT_ENT))
                         diag_chaninfo_store%var_ids = -1
+                    end if
+                    
+                    if (allocated(diag_chaninfo_store%max_str_lens)) then
+                        if (diag_chaninfo_store%total >= size(diag_chaninfo_store%max_str_lens)) then
+                            call nc_diag_realloc(diag_chaninfo_store%max_str_lens, addl_fields)
+                            meta_realloc = .TRUE.
+                        end if
+                    else
+                        allocate(diag_chaninfo_store%max_str_lens(NLAYER_DEFAULT_ENT))
+                        diag_chaninfo_store%max_str_lens = -1
                     end if
                     
                     if (meta_realloc) then
@@ -961,6 +985,11 @@
                 if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
+                
+                ! Check max string length
+                if ((diag_chaninfo_store%def_lock) .AND. &
+                    (len_trim(chaninfo_value) > diag_chaninfo_store%max_str_lens(var_index))) &
+                    call error("Cannot expand variable string length after locking variable definitions!")
                 
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1

@@ -109,6 +109,10 @@
             type(diag_md_iarr), dimension(:), allocatable :: stor_i_arr
             integer(i_byte),    dimension(:), allocatable :: alloc_sia_multi
             
+            ! Maximum string length - only used when the variable
+            ! definitions are locked.
+            integer(i_long),    dimension(:), allocatable :: max_str_lens
+            
             ! Total variables
             integer(i_long)                               :: total
             integer(i_long)                               :: prealloc_total
