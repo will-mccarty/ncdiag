@@ -28,8 +28,7 @@
             
             integer(i_llong)                 :: new_size
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%byte)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
@@ -54,8 +53,7 @@
             integer(i_llong)                 :: new_size
             
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%short)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
@@ -80,13 +78,14 @@
             integer(i_llong)                 :: new_size
             
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%long)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
 #ifdef _DEBUG_MEM_
                 print *, "diag_data2d_store%stores(var_index)%storage(data_index)%acount"
                 print *, diag_data2d_store%stores(var_index)%storage(data_index)%acount
                 print *, "diag_data2d_store%stores(var_index)%storage(data_index)%asize"
                 print *, diag_data2d_store%stores(var_index)%storage(data_index)%asize
+                print *, "diag_data2d_store%stores(var_index)%storage(data_index)%long actual size:"
+                print *, size(diag_data2d_store%stores(var_index)%storage(data_index)%long)
 #endif
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
@@ -99,6 +98,10 @@
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = size(diag_data2d_store%stores(var_index)%storage(data_index)%long)
                 end if
             else
+#ifdef _DEBUG_MEM_
+                print *, "INITIAL - diag_data2d_store%stores(var_index)%storage(data_index)%acount set to:"
+                print *, addl_num_entries
+#endif
                 diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 allocate(diag_data2d_store%stores(var_index)%storage(data_index)%long(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_data2d_store%stores(var_index)%storage(data_index)%asize = addl_num_entries + NLAYER_DEFAULT_ENT
@@ -115,8 +118,7 @@
             integer(i_llong)                 :: new_size
             
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%rsingle)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
@@ -141,8 +143,7 @@
             integer(i_llong)                 :: new_size
             
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%rdouble)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
@@ -173,8 +174,7 @@
             end if
             
             if (allocated(diag_data2d_store%stores(var_index)%storage(data_index)%string)) then
-                diag_data2d_store%stores(var_index)%storage(data_index)%acount = &
-                    diag_data2d_store%stores(var_index)%storage(data_index)%acount + addl_num_entries
+                diag_data2d_store%stores(var_index)%storage(data_index)%acount = addl_num_entries
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
