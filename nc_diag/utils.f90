@@ -4,6 +4,7 @@
 
 module utils
     implicit none
+    
     contains
         function lentrim(s)
             implicit none
@@ -183,8 +184,9 @@ module utils
             split_strings(total) = s(start_idx:tmp_idx - 1)
         end function string_split_index
         
+        ! asl = assumed shape length
         subroutine string_array_dump(strings)
-            character(len=*), allocatable     :: strings(:)
+            character(len=:), allocatable     :: strings(:)
             integer i
             
             write (*, "(A, I0)") "Length of strings array: ", size(strings(:))
@@ -192,15 +194,15 @@ module utils
             
             do i = 1, size(strings(:))
                 if (strings(i) == "") then
-                    write (*, "(A, I0, A)") "  --> Position ", i, ": (empty)"
+                    write (*, "(A, I0, A, I0, A, I0, A)") "  --> Position ", i, ": (empty) [Trim length = ", len_trim(strings(i)), ", Full length = ", len(strings(i)), "]"
                 else
-                    write (*, "(A, I0, A, A, A)") "  --> Position ", i, ": '", trim(strings(i)), "'"
+                    write (*, "(A, I0, A, A, A, I0, A, I0, A)") "  --> Position ", i, ": '", trim(strings(i)), "' [Trim length = ", len_trim(strings(i)), ", Full length = ", len(strings(i)), "]"
                 end if
             end do
         end subroutine string_array_dump
         
         function max_len_string_array(str_arr) result(max_len)
-            character(len=:), intent(in),  allocatable :: str_arr(:)
+            character(len=*), intent(in) :: str_arr(:)
             
             integer :: i, max_len
             
