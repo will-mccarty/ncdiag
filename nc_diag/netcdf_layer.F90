@@ -232,6 +232,9 @@ module netcdf_layer
         
         subroutine error(err)
             character(len=*), intent(in) :: err
+#ifdef ERROR_TRACEBACK
+            integer                      :: div0
+#endif
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[31m"
 #endif
@@ -239,7 +242,13 @@ module netcdf_layer
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[0m"
 #endif
+#ifdef ERROR_TRACEBACK
+            write(*, "(A)") " ** Failed to process data/write NetCDF4."
+            write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
+            div0 = 1 / 0
+#else
             stop " ** Failed to process data/write NetCDF4."
+#endif
         end subroutine error
         
         subroutine warning(warn)

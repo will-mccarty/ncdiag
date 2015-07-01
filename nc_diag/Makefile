@@ -39,6 +39,10 @@ endif
 #                        WARNING - this is a LOT of messages!
 #   -DANSI_TERM_COLORS - enable terminal colors for warning and error
 #                        messages.
+#   -DERROR_TRACEBACK  - enable a traceback on error. This is useful for
+#                        debugging any issues with code or NCLayer.
+#                        This works by triggering a divide-by-zero
+#                        runtime error, which generates a traceback.
 #   -DIGNORE_VERSION   - ignore the version of NetCDF4. This disables
 #                        any bug checks related to NetCDF4 versions.
 #                        WARNING - do not define this (aka disable
@@ -50,7 +54,7 @@ endif
 #                        
 #                        NOTE - this is set automatically if
 #                        DISABLE_NETCDF is set.
-COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION
+COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK
 
 NETCDF_LAYER_DEPS+=Makefile \
 	netcdf_realloc_decl.f90 \
