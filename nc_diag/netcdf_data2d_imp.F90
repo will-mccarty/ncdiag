@@ -28,9 +28,16 @@
             character(len=100)                    :: data_name
             
             character(len=110)                    :: data_dim_name
+            character(len=110)                    :: data_dim_str_name
+            integer(i_long)                       :: tmp_dim_id
             
-            integer(i_long)                       :: curdatindex
+            integer(i_long)                       :: curdatindex, j
             integer(i_kind)                       :: nc_data_type
+            
+            integer(i_long)                       :: max_len
+            
+            integer(i_long)                       :: max_str_len, msl_tmp
+            character(len=:), allocatable         :: string_arr(:)
             
             if (init_done) then
                 if (.NOT. diag_data2d_store%def_lock) then
@@ -47,13 +54,60 @@
                         if (data_type == NLAYER_DOUBLE) nc_data_type = nf90_double
                         if (data_type == NLAYER_STRING) nc_data_type = nf90_char
                         
-                        write (data_dim_name, "(A, A)") trim(data_name), "_dim"
+                        write (data_dim_name, "(A, A)") trim(data_name), "_arr_dim"
                         
-                        call check(nf90_def_dim(ncid, data_dim_name, max_len_var(curdatindex), diag_data2d_store%var_dim_ids(curdatindex)))
+                        max_len = max_len_var(curdatindex)
                         
-                        call check(nf90_def_var(ncid, data_name, nc_data_type, &
-                            (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
-                            diag_data2d_store%var_ids(curdatindex)))
+                        call check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
+                        
+                        
+                        if (data_type == NLAYER_STRING) then
+                            max_str_len = 0
+                            
+#ifdef _DEBUG_MEM_
+                            write (*, "(A, A, A)") "DEBUG DATA2D DEF WRITE: at data_name ", trim(data_name), ", doing custom string var def"
+#endif
+                            
+                            do j = 1, diag_data2d_store%stores(curdatindex)%acount
+                                ! Allocate a temp string array, and copy stuff to it
+                                allocate(character(1000) :: string_arr(diag_data2d_store%stores(curdatindex)%storage(j)%acount))
+                                string_arr = diag_data2d_store%stores(curdatindex)%storage(j)%string(1:diag_data2d_store%stores(curdatindex)%storage(j)%acount)
+                                
+                                ! Now we can calculate the length!
+                                msl_tmp = max_len_string_array(string_arr)
+                                
+                                if (msl_tmp > max_str_len) max_str_len = msl_tmp
+                                
+#ifdef _DEBUG_MEM_
+                                write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: at data_name ", trim(data_name), ", msl_tmp computes to ", msl_tmp, ", max_str_len computes to ", max_str_len
+                                print *, "DEBUG DATA2D DEF WRITE: string array dump follows:"
+                                call string_array_dump(string_arr)
+#endif
+                                
+                                ! Deallocate right after we're done!
+                                deallocate(string_arr)
+                            end do
+                            
+#ifdef _DEBUG_MEM_
+                            write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data_name ", trim(data_name), ", FINAL max_str_len computes to ", max_str_len, ", max_len computes to ", max_len
+#endif
+                            
+                            ! Create the dimension needed!
+                            write (data_dim_str_name, "(A, A)") trim(data_name), "_str_dim"
+                            call check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
+                            call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                                (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
+                                diag_data2d_store%var_ids(curdatindex)))
+                            
+#ifdef _DEBUG_MEM_
+                            write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data_name ", trim(data_name), ", result VID is ", diag_data2d_store%var_ids(curdatindex)
+                            write (*, "(A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** result dim is unlim x max_len = ", max_len, " x max_str_len = ", max_str_len
+#endif
+                        else
+                            call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                                (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
+                                diag_data2d_store%var_ids(curdatindex)))
+                        end if
                         
                         call nc_diag_varattr_add_var(diag_data2d_store%names(curdatindex), &
                             diag_data2d_store%var_ids(curdatindex))
@@ -73,6 +127,9 @@
             character(len=100)                    :: data_name
             
             integer(i_long)                       :: curdatindex, j, k
+            integer(i_long)                       :: max_str_len, acount
+            
+            character(len=:), allocatable :: string_arr(:)
             
             if (init_done .AND. allocated(diag_data2d_store)) then
                 if (.NOT. diag_data2d_store%data_lock) then
@@ -138,13 +195,94 @@
                                     ))
                             end do
                         else if (data_type == NLAYER_STRING) then
+#ifdef _DEBUG_MEM_
+                            write (*, "(A, A, A, I0)") "DEBUG DATA2D DATA WRITE: at data_name ", trim(data_name), ", doing custom string var def via vid ", diag_data2d_store%var_ids(curdatindex)
+#endif
                             do j = 1, diag_data2d_store%stores(curdatindex)%acount
+                                ! Allocate a temp string array, and copy stuff to it
+                                allocate(character(1000) :: string_arr(diag_data2d_store%stores(curdatindex)%storage(j)%acount))
+                                string_arr = diag_data2d_store%stores(curdatindex)%storage(j)%string(1:diag_data2d_store%stores(curdatindex)%storage(j)%acount)
+                                
+                                ! Now we can calculate the length!
+                                max_str_len = max_len_string_array(string_arr)
+                                
+                                deallocate(string_arr)
+                                
+                                allocate(character(max_str_len) :: string_arr(diag_data2d_store%stores(curdatindex)%storage(j)%acount))
+                                
+#ifdef _DEBUG_MEM_
+                                print *, " ****************** PRE COPY"
+                                call string_array_dump(string_arr)
+#endif
+                                
+                                acount = diag_data2d_store%stores(curdatindex)%storage(j)%acount
+                                
+                                do k = 1, acount
+                                    string_arr(k) = &
+                                        trim(diag_data2d_store%stores(curdatindex)%storage(j)%string(k))
+                                end do
+                                
+#ifdef _DEBUG_MEM_
+                                write (*, "(A, A, A, I0)") "DEBUG DATA2D DATA WRITE: at data_name ", trim(data_name), ", max_str_len computes to ", max_str_len
+                                print *, "DEBUG DATA2D DATA WRITE: string array dump follows:"
+                                call string_array_dump(string_arr)
+                                
+                                write (*, "(A, I0)") "DEBUG DATA2D DATA WRITE: acount = ", &
+                                    diag_data2d_store%stores(curdatindex)%storage(j)%acount
+#endif
+                                
+                                ! This was tricky to figure out...
+                                ! The dimensions are parsed in reverse order, e.g. (z, y, x) instead
+                                ! of (x, y, z). This applies here as well!
+                                ! 
+                                ! For start, start is the index to start writing data at, starting
+                                ! at one. It is represented as a reverse, e.g. (start z, start y,
+                                ! start x).
+                                ! 
+                                ! For count, count is the amount of data to write. Again, it is in
+                                ! reverse order, e.g. (write # z, write # y, write # x).
+                                ! 
+                                ! Despite any errors, the maximum is NOT calculated as count + start.
+                                ! (Otherwise, if the dimension was 1, start = 1, and count = 1, things
+                                ! wouldn't go well...)
+                                ! Instead, it is calculated as (start + count) - 1.
+                                ! 
+                                ! Example: given an 11 by 3 by 9 character array (this would be an
+                                !          array of string arrays, with each string array having 3
+                                !          strings, and each string having a max length of 9 chars:
+                                !          
+                                !          call check(nf90_put_var(&
+                                !              ncid, diag_data2d_store%var_ids(curdatindex), &
+                                !              (/ 'AAAAAAAAA', 'BBBBBBBBB', 'CCCCCCCCC' /), &
+                                !              (/ 1, 1, 1 /), &
+                                !              (/ 9, 3, 1 /) &
+                                !              ))
+                                !          
+                                !          call check(nf90_put_var(&
+                                !              ncid, diag_data2d_store%var_ids(curdatindex), &
+                                !              (/ 'DDDDDDDDD', 'EEEEEEEEE', 'FFFFFFFFF' /), &
+                                !              (/ 1, 1, 2 /), &
+                                !              (/ 9, 3, 1 /) &
+                                !              ))
+                                
                                 call check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
-                                    diag_data2d_store%stores(curdatindex)%storage(j)%string(1:diag_data2d_store%stores(curdatindex)%storage(j)%acount), &
-                                    (/ 1, j /), &
-                                    (/ diag_data2d_store%stores(curdatindex)%storage(j)%acount, 1 /) &
+                                    string_arr, &
+                                    (/ 1, 1, j /), &
+                                    (/ max_str_len, diag_data2d_store%stores(curdatindex)%storage(j)%acount, 1 /) &
                                     ))
+                                
+                                !do k = 1, diag_data2d_store%stores(curdatindex)%storage(j)%acount
+                                !    call check(nf90_put_var(&
+                                !        ncid, diag_data2d_store%var_ids(curdatindex), &
+                                !        diag_data2d_store%stores(curdatindex)%storage(j)%string(k), &
+                                !        (/ 1, k, j /), &
+                                !        (/ max_str_len, 1, 1 /) &
+                                !        ))
+                                !end do
+                                
+                                ! Deallocate right after we're done!
+                                deallocate(string_arr)
                             end do
                         end if
                     end do

@@ -86,13 +86,13 @@ program test_netcdf_layer
         !call nc_diag_metadata("metadatasimple7_big", i*2)
     end do
     
-    do i = 1, 100000
+    do i = 1, 10!0000
         index_llong = i
         write(str_metadata, "(A, I0)") "morehellometa_", i
         call nc_diag_metadata("metadatasimple8_str", str_metadata)
         
         write(str_data2d, "(A, I0)") "data2d_", i
-        call nc_diag_metadata("data2dsimple6_str", str_data2d)
+        call nc_diag_data2d("data2dsimple6_str", index_llong, (/ str_data2d, "fill1", "fill2" /))
         
         ! This is broken... but it's an interesting testcase, as it breaks
         ! a LOT of stuff!
