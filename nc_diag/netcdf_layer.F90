@@ -188,6 +188,12 @@ module netcdf_layer
             
             print *, "Defining data2d:"
             call nc_diag_data2d_write_def
+#else
+            call warning("NetCDF support is disabled, so defintions will not be" &
+                    // char(10) &
+                    // "             locked. Any functions that depend on definition locking will" &
+                    // char(10) &
+                    // "             not work!")
 #endif
             print *, " **** All variable definitions locked!"
         end subroutine nc_diag_lock_def
@@ -218,6 +224,8 @@ module netcdf_layer
             print *, "All done queuing in data, letting NetCDF take over!"
             
             call check(nf90_close(ncid))
+#else
+            call warning("NetCDF support is disabled, so no writing will occur.")
 #endif
             print *, "All done!"
         end subroutine nc_diag_write

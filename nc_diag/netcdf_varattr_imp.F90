@@ -90,11 +90,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_byte
         
@@ -112,11 +118,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_short
         
@@ -134,11 +146,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_long
         
@@ -156,11 +174,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_rsingle
         
@@ -178,11 +202,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_rdouble
 
@@ -200,11 +230,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_string
         
@@ -226,11 +262,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_byte_v
         
@@ -248,11 +290,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_short_v
         
@@ -270,11 +318,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_long_v
         
@@ -292,11 +346,17 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_rsingle_v
         
@@ -314,10 +374,16 @@
                 if (var_index == -1) call error("Bug! Variable exists but could not lookup index for attr!")
                 call check(nf90_put_att(ncid, diag_varattr_store%var_ids(var_index), attr_name, attr_value))
             else
+#ifndef NO_NETCDF
                 call error("Can't set attribute for a non-existent variable!" &
                     // char(10) &
                     // "             (If you did add the variable, make sure you lock" &
                     // char(10) &
                     // "             the definitions before calling varattr!) ")
+#else
+                call warning("NetCDF support is disabled, so variable attributes" &
+                    // char(10) &
+                    // "             are not possible.")
+#endif
             end if
         end subroutine nc_diag_varattr_rdouble_v
