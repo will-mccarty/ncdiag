@@ -241,6 +241,9 @@
                             deallocate(string_arr)
                         end if
                     end do
+                    
+                    ! Lock data writing
+                    diag_chaninfo_store%data_lock = .TRUE.
                 else
                     call error("Can't write data - data have already been written and locked!")
                 end if
