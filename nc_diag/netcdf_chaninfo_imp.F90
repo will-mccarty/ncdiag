@@ -206,7 +206,7 @@
                             print *, (data_type_index + &
                                         diag_chaninfo_store%var_usage(curdatindex) - 1)
 #endif
-                            
+                            ! Make sure we have data to write in the first place!
                             if (diag_chaninfo_store%var_usage(curdatindex) > 0) then
                                 if (data_type == NLAYER_BYTE) then
 #ifdef _DEBUG_MEM_
@@ -288,9 +288,8 @@
                                     call error("Critical error - unknown variable type!")
                                 end if
                                 
-                                
-                                
-                                ! Check!!!!
+                                ! Check for data flushing, and if so, update the relative indexes
+                                ! and set var_usage to 0.
                                 if (present(flush_data_only) .AND. flush_data_only) then
                                     diag_chaninfo_store%rel_indexes(curdatindex) = &
                                         diag_chaninfo_store%rel_indexes(curdatindex) + &
@@ -304,9 +303,6 @@
                         end do
                         
                         if (present(flush_data_only) .AND. flush_data_only) then
-                            ! Set flag for buffer flush... but don't
-                            ! lock any data.
-                            diag_chaninfo_store%buf_flush = .TRUE.
                             print *, "In buffer flush mode!"
                         else
                             ! Lock data writing
