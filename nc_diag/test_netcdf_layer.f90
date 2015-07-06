@@ -105,6 +105,17 @@ program test_netcdf_layer
     ! below!
     call nc_diag_chaninfo("chaninfosimple8_str", "test1234")
     
+    ! ...and another one, for fun with buffered writing!
+    call nc_diag_chaninfo("chaninfosimple9_buf", 3)
+    
+    ! Invalid buffered write test - we can't do any buffered write
+    ! until we lock definitions:
+    !call nc_diag_flush_buffer
+    
+    !------------------------------------------------------------------
+    ! Variable attribute test! (With definition locking on the side!)
+    !------------------------------------------------------------------
+    
     ! In order for variable attributes to work, we MUST call
     ! nc_diag_lock_def! This is due to the fact that we need the NetCDF
     ! variable IDs in order for attribute defining to work, and
@@ -132,6 +143,86 @@ program test_netcdf_layer
     !call nc_diag_data2d("data2dsimple7", int8(12), (/ -4, -5, -6, -7 /))
     !call nc_diag_metadata("metadatasimple8_str", "morehellometa_111")
     !call nc_diag_chaninfo("chaninfosimple8_str", "test9101112")
+    
+    !------------------------------------------------------------------
+    ! Buffered writing test!
+    !------------------------------------------------------------------
+    ! NOTE: For now, data2d does NOT have buffered writing enabled.
+    !       This will be fixed in a future release.
+    
+    call nc_diag_chaninfo("chaninfosimple9_buf", 6)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 9)
+    
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b1")
+    call nc_diag_metadata("metadatasimple6_str", "meta_b1")
+    call nc_diag_metadata("metadatasimple1", 100)
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b2")
+    call nc_diag_metadata("metadatasimple6_str", "meta_b2")
+    
+    call nc_diag_data2d("data2dsimple1", int8(11), (/ 1000, 2000, 3000 /))
+    call nc_diag_data2d("data2dsimple1", int8(12), (/ 2000, 4000, 6000 /))
+    call nc_diag_data2d("data2dsimple2", int8(11), (/ 1111, 2222, 3333 /))
+    call nc_diag_data2d("data2dsimple2", int8(12), (/ 2222, 4444, 6666 /))
+    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
+    call nc_diag_data2d("data2dsimple6_str", int8(12), (/ "boink", "kabam", "peekaboo" /))
+    call nc_diag_data2d("data2dsimple7", int8(11), (/ 20, 40, 60 /))
+    call nc_diag_data2d("data2dsimple7", int8(12), (/ 40, 80, 120 /))
+    
+    print *, "Attempting to flush buf 1:"
+    call nc_diag_flush_buffer
+    
+    call nc_diag_chaninfo("chaninfosimple9_buf", 12)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 15)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 18)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 21)
+    
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b3")
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b4")
+    call nc_diag_metadata("metadatasimple6_str", "meta_b3")
+    call nc_diag_metadata("metadatasimple6_str", "meta_b4")
+    call nc_diag_metadata("metadatasimple1", 200)
+    
+    ! We can add something in the future!
+    call nc_diag_data2d("data2dsimple1", int8(14), (/ -1000, -2000, -3000 /))
+    call nc_diag_data2d("data2dsimple6_str", int8(14), (/ "aaaaaaaaa", "bbbbbbbb", "ccccccccc" /))
+    call nc_diag_data2d("data2dsimple7", int8(14), (/ 4000, 8000, 12000 /))
+    
+    print *, "Attempting to flush buf 2:"
+    call nc_diag_flush_buffer
+    
+    call nc_diag_chaninfo("chaninfosimple9_buf", 24)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 27)
+    call nc_diag_chaninfo("chaninfosimple9_buf", 30)
+    
+    call nc_diag_metadata("metadatasimple1", 300)
+    call nc_diag_metadata("metadatasimple6_str", "meta_b5")
+    call nc_diag_metadata("metadatasimple6_str", "meta_b6")
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b5")
+    call nc_diag_metadata("metadatasimple8_str", "morehellometa_b6")
+    
+    ! We can still change an old value at the end!
+    call nc_diag_data2d("data2dsimple1", int8(11), (/ 2000, 4000, 6000 /))
+    call nc_diag_data2d("data2dsimple2", int8(11), (/ 1111, 2222, 3333 /))
+    
+    call nc_diag_data2d("data2dsimple1", int8(12), (/ 4000, 6000, 8000 /))
+    call nc_diag_data2d("data2dsimple2", int8(12), (/ 2222, 4444, 6666 /))
+    
+    call nc_diag_data2d("data2dsimple1", int8(13), (/ 6000, 8000, 10000 /))
+    call nc_diag_data2d("data2dsimple2", int8(13), (/ 3333, 6666, 9999 /))
+    
+    ! Out of order is fine too!
+    call nc_diag_data2d("data2dsimple6_str", int8(12), (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
+    call nc_diag_data2d("data2dsimple7", int8(12), (/ 20, 40, 60 /))
+    
+    call nc_diag_data2d("data2dsimple7", int8(13), (/ 200, 400, 600 /))
+    call nc_diag_data2d("data2dsimple6_str", int8(13), (/ "asdfghjk", "zxcvbnm", "qwerty" /))
+    
+    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "boink", "kabam", "peekaboo" /))
+    call nc_diag_data2d("data2dsimple7", int8(11), (/ 40, 80, 120 /))
+    
+    ! Even with buffering, you still can't overwrite nchans...
+    ! (The following line, if uncommented, should result in an error!)
+    !call nc_diag_chaninfo("chaninfosimple9_buf", 33)
     
     ! Back to header stuff...
     call nc_diag_header("headertestsimple5_str", "hello world")
