@@ -230,6 +230,14 @@ module netcdf_layer
             print *, "All done!"
         end subroutine nc_diag_write
         
+        subroutine nc_diag_flush_to_file
+#ifndef NO_NETCDF
+            call check(nf90_sync(ncid))
+#else
+            call warning("NetCDF support is disabled, so no NetCDF file flush will occur.")
+#endif
+        end subroutine
+        
         subroutine check(status)
           integer, intent ( in) :: status
           
