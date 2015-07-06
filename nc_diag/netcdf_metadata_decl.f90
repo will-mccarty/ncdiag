@@ -113,6 +113,13 @@
             ! definitions are locked.
             integer(i_long),    dimension(:), allocatable :: max_str_lens
             
+            ! Relative indexes - for buffer flushing, keep track of the
+            ! relative indexes when we flush data. We store the
+            ! variable count here so that we can reference it when we
+            ! reset our variable counter to zero, allowing us to reuse
+            ! memory while still preserving data order!
+            integer(i_long),    dimension(:), allocatable :: rel_indexes
+            
             ! Total variables
             integer(i_long)                               :: total
             integer(i_long)                               :: prealloc_total

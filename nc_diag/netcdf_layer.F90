@@ -241,6 +241,9 @@ module netcdf_layer
             print *, "Flushing chaninfo:"
             call nc_diag_chaninfo_write_data(.TRUE.)
             
+            print *, "Flushing metadata:"
+            call nc_diag_metadata_write_data(.TRUE.)
+            
 #else
             call warning("NetCDF support is disabled, so no buffer flush will occur.")
 #endif

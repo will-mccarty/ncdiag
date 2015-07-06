@@ -124,7 +124,12 @@
             end if
         end subroutine nc_diag_metadata_write_def
         
-        subroutine nc_diag_metadata_write_data
+        subroutine nc_diag_metadata_write_data(flush_data_only)
+            ! Optional internal flag to only flush data - if this is
+            ! true, data flushing will be performed, and the data will
+            ! NOT be locked.
+            logical, intent(in), optional         :: flush_data_only
+            
             integer(i_byte)                       :: data_type
             character(len=100)                    :: data_name
             
@@ -146,108 +151,132 @@
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
-                        if (data_type == NLAYER_BYTE) then
-                            allocate(byte_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                byte_arr(j) = diag_metadata_store%m_byte(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                byte_arr, &
-                                (/ 1 /) &
-                                ))
-                            
-                            deallocate(byte_arr)
-                        else if (data_type == NLAYER_SHORT) then
-                            allocate(short_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                short_arr(j) = diag_metadata_store%m_short(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                short_arr, &
-                                (/ 1 /) &
-                                ))
-                            
-                            deallocate(short_arr)
-                        else if (data_type == NLAYER_LONG) then
-                            allocate(long_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                long_arr(j) = diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                long_arr, &
-                                (/ 1 /) &
-                                ))
-                            
-                            deallocate(long_arr)
-                        else if (data_type == NLAYER_FLOAT) then
-                            allocate(rsingle_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            !write (*, "(A, A, A, I0)") "start queue: ", trim(data_name), " - length ", diag_metadata_store%stor_i_arr(curdatindex)%icount
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                !errcode = nf90_put_var(&
-                                !    ncid, diag_metadata_store%var_ids(curdatindex), &
-                                !    diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
-                                !    (/ j /) &
-                                !    )
-                                rsingle_arr(j) = diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                                !print *, asdf(j)
-                            end do
-                            !print *, "end queue / start put"
-                            call check(nf90_put_var(&
+                        ! Make sure we have data to write in the first place!
+                        if (diag_metadata_store%stor_i_arr(curdatindex)%icount > 0) then
+                            if (data_type == NLAYER_BYTE) then
+                                allocate(byte_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    byte_arr(j) = diag_metadata_store%m_byte(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                call check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
-                                    rsingle_arr, &
-                                    (/ 1 /) &
+                                    byte_arr, &
+                                    (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
                                     ))
-                            !call check(nf90_sync(ncid))
-                            deallocate(rsingle_arr)
-                            !print *, "end put"
-                            
-                        else if (data_type == NLAYER_DOUBLE) then
-                            allocate(rdouble_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                rdouble_arr(j) = diag_metadata_store%m_rdouble(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                rdouble_arr, &
-                                (/ 1 /) &
-                                ))
-                            deallocate(rdouble_arr)
-                        else if (data_type == NLAYER_STRING) then
-                            ! Only get maximum if we haven't already done that in the define step!
-                            if (diag_metadata_store%max_str_lens(curdatindex) == -1) then
-                                allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                
+                                deallocate(byte_arr)
+                            else if (data_type == NLAYER_SHORT) then
+                                allocate(short_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    short_arr(j) = diag_metadata_store%m_short(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    short_arr, &
+                                    (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
+                                    ))
+                                
+                                deallocate(short_arr)
+                            else if (data_type == NLAYER_LONG) then
+                                allocate(long_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    long_arr(j) = diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    long_arr, &
+                                    (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
+                                    ))
+                                
+                                deallocate(long_arr)
+                            else if (data_type == NLAYER_FLOAT) then
+                                allocate(rsingle_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                !write (*, "(A, A, A, I0)") "start queue: ", trim(data_name), " - length ", diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    !errcode = nf90_put_var(&
+                                    !    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    !    diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j)), &
+                                    !    (/ j /) &
+                                    !    )
+                                    rsingle_arr(j) = diag_metadata_store%m_rsingle(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                    !print *, asdf(j)
+                                end do
+                                !print *, "end queue / start put"
+                                call check(nf90_put_var(&
+                                        ncid, diag_metadata_store%var_ids(curdatindex), &
+                                        rsingle_arr, &
+                                        (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                !call check(nf90_sync(ncid))
+                                deallocate(rsingle_arr)
+                                !print *, "end put"
+                                
+                            else if (data_type == NLAYER_DOUBLE) then
+                                allocate(rdouble_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    rdouble_arr(j) = diag_metadata_store%m_rdouble(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    rdouble_arr, &
+                                    (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
+                                    ))
+                                deallocate(rdouble_arr)
+                            else if (data_type == NLAYER_STRING) then
+                                ! Only get maximum if we haven't already done that in the define step!
+                                if (diag_metadata_store%max_str_lens(curdatindex) == -1) then
+                                    allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                    do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                        string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                    end do
+                                    
+                                    string_arr_maxlen = max_len_string_array(string_arr)
+                                    
+                                    deallocate(string_arr)
+                                else
+                                    string_arr_maxlen = diag_metadata_store%max_str_lens(curdatindex)
+                                end if
+                                
+                                allocate(character(string_arr_maxlen) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
                                 do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
                                     string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
                                 
-                                string_arr_maxlen = max_len_string_array(string_arr)
-                                
+                                call check(nf90_put_var(&
+                                    ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    string_arr, &
+                                    (/ 1, 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
+                                    ))
                                 deallocate(string_arr)
-                            else
-                                string_arr_maxlen = diag_metadata_store%max_str_lens(curdatindex)
                             end if
                             
-                            allocate(character(string_arr_maxlen) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
+                            ! Check for data flushing, and if so, update the relative indexes
+                            ! and set icount to 0.
+                            if (present(flush_data_only) .AND. flush_data_only) then
+                                diag_metadata_store%rel_indexes(curdatindex) = &
+                                    diag_metadata_store%rel_indexes(curdatindex) + &
+                                    diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                diag_metadata_store%stor_i_arr(curdatindex)%icount = 0
+                                
+                                print *, "diag_metadata_store%stor_i_arr(curdatindex)%icount is now:"
+                                print *, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                            end if
                             
-                            call check(nf90_put_var(&
-                                ncid, diag_metadata_store%var_ids(curdatindex), &
-                                string_arr, &
-                                (/ 1, 1 /) &
-                                ))
-                            deallocate(string_arr)
                         end if
                     end do
                     
-                    ! Lock data writing
-                    diag_chaninfo_store%data_lock = .TRUE.
+                    if (present(flush_data_only) .AND. flush_data_only) then
+                        print *, "In buffer flush mode!"
+                        
+                        ! We need to reset all array counts to zero!
+                        diag_metadata_store%acount = 0
+                    else
+                        ! Lock data writing
+                        diag_metadata_store%data_lock = .TRUE.
+                        print *, "In data lock mode!"
+                    end if
                 else
                     call error("Can't write data - data have already been written and locked!")
                 end if
@@ -447,6 +476,15 @@
                     diag_metadata_store%max_str_lens = -1
                 end if
                 
+                if (allocated(diag_metadata_store%rel_indexes)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%rel_indexes)) then
+                        call nc_diag_realloc(diag_metadata_store%rel_indexes, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_metadata_store%rel_indexes(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_metadata_store%rel_indexes = 0
+                end if
+                
                 diag_metadata_store%prealloc_total = diag_metadata_store%prealloc_total + num_of_addl_vars
             else
                 call error("NetCDF4 layer not initialized yet!")
@@ -593,6 +631,16 @@
                 else
                     allocate(diag_metadata_store%max_str_lens(NLAYER_DEFAULT_ENT))
                     diag_metadata_store%max_str_lens = -1
+                end if
+                
+                if (allocated(diag_metadata_store%rel_indexes)) then
+                    if (diag_metadata_store%total >= size(diag_metadata_store%rel_indexes)) then
+                        call nc_diag_realloc(diag_metadata_store%rel_indexes, addl_fields)
+                        meta_realloc = .TRUE.
+                    end if
+                else
+                    allocate(diag_metadata_store%rel_indexes(NLAYER_DEFAULT_ENT))
+                    diag_metadata_store%rel_indexes = 0
                 end if
                 
                 if (meta_realloc) then
