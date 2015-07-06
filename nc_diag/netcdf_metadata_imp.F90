@@ -166,7 +166,7 @@
                             call check(nf90_put_var(&
                                 ncid, diag_metadata_store%var_ids(curdatindex), &
                                 short_arr, &
-                                (/ j /) &
+                                (/ 1 /) &
                                 ))
                             
                             deallocate(short_arr)
