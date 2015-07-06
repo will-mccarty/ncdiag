@@ -260,8 +260,8 @@
                                     diag_metadata_store%stor_i_arr(curdatindex)%icount
                                 diag_metadata_store%stor_i_arr(curdatindex)%icount = 0
                                 
-                                print *, "diag_metadata_store%stor_i_arr(curdatindex)%icount is now:"
-                                print *, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                print *, "diag_metadata_store%rel_indexes(curdatindex) is now:"
+                                print *, diag_metadata_store%rel_indexes(curdatindex)
                             end if
                             
                         end if
