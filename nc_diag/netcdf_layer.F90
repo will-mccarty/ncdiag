@@ -230,6 +230,23 @@ module netcdf_layer
             print *, "All done!"
         end subroutine nc_diag_write
         
+        subroutine nc_diag_flush_buffer
+#ifndef NO_NETCDF
+            if ((.NOT. diag_chaninfo_store%def_lock) .OR. &
+                (.NOT. diag_metadata_store%def_lock) .OR. &
+                (.NOT. diag_data2d_store%def_lock)) &
+                call error("Definitions must be locked in order to flush the buffer!")
+            
+            ! Perform writes with the buffer flag set!
+            print *, "Flushing chaninfo:"
+            call nc_diag_chaninfo_write_data(.TRUE.)
+            
+#else
+            call warning("NetCDF support is disabled, so no buffer flush will occur.")
+#endif
+            print *, "Flushing done!"
+        end subroutine nc_diag_flush_buffer
+        
         subroutine nc_diag_flush_to_file
 #ifndef NO_NETCDF
             call check(nf90_sync(ncid))

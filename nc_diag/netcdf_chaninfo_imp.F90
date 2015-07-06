@@ -149,7 +149,12 @@
             end if
         end subroutine nc_diag_chaninfo_write_def
         
-        subroutine nc_diag_chaninfo_write_data
+        subroutine nc_diag_chaninfo_write_data(flush_data_only)
+            ! Optional internal flag to only flush data - if this is
+            ! true, data flushing will be performed, and the data will
+            ! NOT be locked.
+            logical, intent(in), optional         :: flush_data_only
+            
             integer(i_byte)                       :: data_type
             integer(i_long)                       :: data_type_index
             character(len=100)                    :: data_name
@@ -171,10 +176,14 @@
                                 ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                             
                             ! Warn about low data filling
-                            if (diag_chaninfo_store%var_usage(curdatindex) < diag_chaninfo_store%nchans) then
+                            if ((.NOT. (present(flush_data_only) .AND. flush_data_only)) .AND. &
+                                ((diag_chaninfo_store%var_usage(curdatindex) + &
+                                    diag_chaninfo_store%rel_indexes(curdatindex)) < diag_chaninfo_store%nchans)) then
                                 ! NOTE - I0 and TRIM are Fortran 95 specs
                                 write (warning_str, "(A, A, A, I0, A, I0, A)") "Amount of data written in ", &
-                                    trim(data_name), " (", diag_chaninfo_store%var_usage(curdatindex), &
+                                    trim(data_name), " (", &
+                                    diag_chaninfo_store%var_usage(curdatindex) + &
+                                        diag_chaninfo_store%rel_indexes(curdatindex), &
                                     ") is less than nchans (", diag_chaninfo_store%nchans, ")!"
                                 call warning(trim(warning_str))
                                 !call warning("Amount of data written in XXXX (N) is less than nchans (N)!")
@@ -198,77 +207,112 @@
                                         diag_chaninfo_store%var_usage(curdatindex) - 1)
 #endif
                             
-                            if (data_type == NLAYER_BYTE) then
+                            if (diag_chaninfo_store%var_usage(curdatindex) > 0) then
+                                if (data_type == NLAYER_BYTE) then
 #ifdef _DEBUG_MEM_
-                                print *, "Resulting data to be stored:"
-                                print *, diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
+                                    print *, "Resulting data to be stored:"
+                                    print *, diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
+                                                diag_chaninfo_store%var_usage(curdatindex) - 1))
+#endif
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1)), &
+                                        start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                else if (data_type == NLAYER_SHORT) then
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_short(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1)), &
+                                        start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                else if (data_type == NLAYER_LONG) then
+#ifdef _DEBUG_MEM_
+                                    print *, "Resulting data to be stored:"
+                                    print *, diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
+                                                diag_chaninfo_store%var_usage(curdatindex) - 1))
+#endif
+                                    print *, "start index:"
+                                    print *, 1 + diag_chaninfo_store%rel_indexes(curdatindex)
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1)), &
+                                        start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                else if (data_type == NLAYER_FLOAT) then
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_rsingle(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1)), &
+                                        start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                else if (data_type == NLAYER_DOUBLE) then
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1)), &
+                                        start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
+                                        ))
+                                else if (data_type == NLAYER_STRING) then
+                                    allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                    
+                                    string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                             diag_chaninfo_store%var_usage(curdatindex) - 1))
-#endif
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
-                            else if (data_type == NLAYER_SHORT) then
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_short(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
-                            else if (data_type == NLAYER_LONG) then
+                                    
+                                    string_arr_maxlen = max_len_string_array(string_arr)
+                                    
+                                    deallocate(string_arr)
+                                    
+                                    allocate(character(string_arr_maxlen) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                    do j = data_type_index, data_type_index + &
+                                            diag_chaninfo_store%var_usage(curdatindex) - 1
+                                        string_arr(j - data_type_index + 1) = trim(diag_chaninfo_store%ci_string(j))
+                                    end do
+                                    
+                                    !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                    !        diag_chaninfo_store%var_usage(curdatindex) - 1))
+                                    
+                                    do j = 1, diag_chaninfo_store%var_usage(curdatindex)
+                                        write (*, "(A, A, A)") "String: '", string_arr(j), "'"
+                                    end do
+                                    
 #ifdef _DEBUG_MEM_
-                                print *, "Resulting data to be stored:"
-                                print *, diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
-                                            diag_chaninfo_store%var_usage(curdatindex) - 1))
-#endif
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
-                            else if (data_type == NLAYER_FLOAT) then
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_rsingle(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
-                            else if (data_type == NLAYER_DOUBLE) then
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))))
-                            else if (data_type == NLAYER_STRING) then
-                                allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
-                                
-                                string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1))
-                                
-                                string_arr_maxlen = max_len_string_array(string_arr)
-                                
-                                deallocate(string_arr)
-                                
-                                allocate(character(string_arr_maxlen) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
-                                do j = data_type_index, data_type_index + &
-                                        diag_chaninfo_store%var_usage(curdatindex) - 1
-                                    string_arr(j - data_type_index + 1) = trim(diag_chaninfo_store%ci_string(j))
-                                end do
-                                
-                                !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                !        diag_chaninfo_store%var_usage(curdatindex) - 1))
-                                
-                                do j = 1, diag_chaninfo_store%var_usage(curdatindex)
-                                    write (*, "(A, A, A)") "String: '", string_arr(j), "'"
-                                end do
-                                
-#ifdef _DEBUG_MEM_
-                                write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
-                                write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
+                                    write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
+                                    write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
 #endif
                                 
-                                call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    string_arr, &
-                                    start = (/ 1, 1 /), &
-                                    count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
+                                    call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        string_arr, &
+                                        start = (/ 1, 1 /), &
+                                        count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
+                                    
+                                    deallocate(string_arr)
+                                else
+                                    call error("Critical error - unknown variable type!")
+                                end if
                                 
-                                deallocate(string_arr)
-                            else
-                                call error("Critical error - unknown variable type!")
+                                
+                                
+                                ! Check!!!!
+                                if (present(flush_data_only) .AND. flush_data_only) then
+                                    diag_chaninfo_store%rel_indexes(curdatindex) = &
+                                        diag_chaninfo_store%rel_indexes(curdatindex) + &
+                                        diag_chaninfo_store%var_usage(curdatindex)
+                                    diag_chaninfo_store%var_usage(curdatindex) = 0
+                                    
+                                    print *, "diag_chaninfo_store%rel_indexes(curdatindex) is now:"
+                                    print *, diag_chaninfo_store%rel_indexes(curdatindex)
+                                end if
                             end if
-                            
+                        end do
+                        
+                        if (present(flush_data_only) .AND. flush_data_only) then
+                            ! Set flag for buffer flush... but don't
+                            ! lock any data.
+                            diag_chaninfo_store%buf_flush = .TRUE.
+                            print *, "In buffer flush mode!"
+                        else
                             ! Lock data writing
                             diag_chaninfo_store%data_lock = .TRUE.
-                        end do
+                            print *, "In data lock mode!"
+                        end if
                     else
                         call error("Can't write data - data have already been written and locked!")
                     end if
@@ -335,6 +379,15 @@
                 else
                     allocate(diag_chaninfo_store%max_str_lens(NLAYER_DEFAULT_ENT + num_of_addl_vars))
                     diag_chaninfo_store%max_str_lens = -1
+                end if
+                
+                if (allocated(diag_chaninfo_store%rel_indexes)) then
+                    if (diag_chaninfo_store%total >= size(diag_chaninfo_store%rel_indexes)) then
+                        call nc_diag_realloc(diag_chaninfo_store%rel_indexes, num_of_addl_vars)
+                    end if
+                else
+                    allocate(diag_chaninfo_store%rel_indexes(NLAYER_DEFAULT_ENT + num_of_addl_vars))
+                    diag_chaninfo_store%rel_indexes = 0
                 end if
             else
                 call error("NetCDF4 layer not initialized yet!")
@@ -434,6 +487,16 @@
                         diag_chaninfo_store%max_str_lens = -1
                     end if
                     
+                    if (allocated(diag_chaninfo_store%rel_indexes)) then
+                        if (diag_chaninfo_store%total >= size(diag_chaninfo_store%rel_indexes)) then
+                            call nc_diag_realloc(diag_chaninfo_store%rel_indexes, addl_fields)
+                            meta_realloc = .TRUE.
+                        end if
+                    else
+                        allocate(diag_chaninfo_store%rel_indexes(NLAYER_DEFAULT_ENT))
+                        diag_chaninfo_store%rel_indexes = 0
+                    end if
+                    
                     if (meta_realloc) then
                         diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                     end if
@@ -513,7 +576,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
@@ -596,7 +660,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
@@ -686,7 +751,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
 #ifdef _DEBUG_MEM_
                     print *, "!!!! diag_chaninfo_store%var_usage(var_index)"
                     print *, diag_chaninfo_store%var_usage(var_index)
@@ -795,7 +861,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
@@ -893,7 +960,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
@@ -982,7 +1050,8 @@
                 var_index = diag_chaninfo_store%total
             else
                 ! entry already exists!
-                if (diag_chaninfo_store%var_usage(var_index) >= diag_chaninfo_store%nchans) then
+                if (diag_chaninfo_store%var_usage(var_index) + &
+                    diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
