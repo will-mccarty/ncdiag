@@ -218,15 +218,19 @@
                                 ))
                             deallocate(rdouble_arr)
                         else if (data_type == NLAYER_STRING) then
-                            !max_len_string_array(
-                            allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            
-                            string_arr_maxlen = max_len_string_array(string_arr)
-                            
-                            deallocate(string_arr)
+                            ! Only get maximum if we haven't already done that in the define step!
+                            if (diag_metadata_store%max_str_lens(curdatindex) == -1) then
+                                allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                
+                                string_arr_maxlen = max_len_string_array(string_arr)
+                                
+                                deallocate(string_arr)
+                            else
+                                string_arr_maxlen = diag_metadata_store%max_str_lens(curdatindex)
+                            end if
                             
                             allocate(character(string_arr_maxlen) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
                             do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
