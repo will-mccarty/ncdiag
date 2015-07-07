@@ -34,6 +34,8 @@ module netcdf_layer
     logical :: init_done = .FALSE.
     logical :: header_locked = .FALSE.
     
+    logical :: enable_info = .FALSE.
+    
 #ifndef IGNORE_VERSION
     logical :: NLAYER_STRING_BROKEN = .FALSE.
 #endif
@@ -178,21 +180,15 @@ module netcdf_layer
         !end subroutine nc_diag_data
         
         subroutine nc_diag_lock_def
-            print *, " **** Locking all variable definitions!"
+            call info("Locking all variable definitions!")
 #ifndef NO_NETCDF
-#ifdef _DEBUG_MEM_
-            print *, "Defining chaninfo:"
-#endif
+            call info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def
             
-#ifdef _DEBUG_MEM_
-            print *, "Defining metadata:"
-#endif
+            call info("Defining metadata:")
             call nc_diag_metadata_write_def
             
-#ifdef _DEBUG_MEM_
-            print *, "Defining data2d:"
-#endif
+            call info("Defining data2d:")
             call nc_diag_data2d_write_def
 #else
             call warning("NetCDF support is disabled, so defintions will not be" &
@@ -201,19 +197,15 @@ module netcdf_layer
                     // char(10) &
                     // "             not work!")
 #endif
-            print *, " **** All variable definitions locked!"
+            call info("All variable definitions locked!")
         end subroutine nc_diag_lock_def
         
         subroutine nc_diag_write
 #ifndef NO_NETCDF
-#ifdef _DEBUG_MEM_
-            print *, "Defining chaninfo:"
-#endif
+            call info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def(.TRUE.)
             
-#ifdef _DEBUG_MEM_
-            print *, "Defining metadata:"
-#endif
+            call info("Defining metadata:")
             call nc_diag_metadata_write_def(.TRUE.)
             
 #ifdef _DEBUG_MEM_
@@ -224,32 +216,21 @@ module netcdf_layer
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
             
-#ifdef _DEBUG_MEM_
-            print *, "Writing chaninfo:"
-#endif
+            call info("Writing chaninfo:")
             call nc_diag_chaninfo_write_data
             
-#ifdef _DEBUG_MEM_
-            print *, "Writing metadata:"
-#endif
+            call info("Writing metadata:")
             call nc_diag_metadata_write_data
             
-#ifdef _DEBUG_MEM_
-            print *, "Writing data2d:"
-#endif
+            call info("Writing data2d:")
             call nc_diag_data2d_write_data
             
-#ifdef _DEBUG_MEM_
-            print *, "All done queuing in data, letting NetCDF take over!"
-#endif
-            
+            call info("All done queuing in data, letting NetCDF take over!")
             call check(nf90_close(ncid))
 #else
             call warning("NetCDF support is disabled, so no writing will occur.")
 #endif
-#ifdef _DEBUG_MEM_
-            print *, "All done!"
-#endif
+            call info("All done!")
         end subroutine nc_diag_write
         
         subroutine nc_diag_flush_buffer
@@ -260,22 +241,17 @@ module netcdf_layer
                 call error("Definitions must be locked in order to flush the buffer!")
             
             ! Perform writes with the buffer flag set!
-#ifdef _DEBUG_MEM_
-            print *, "Flushing chaninfo:"
-#endif
+            call info("Flushing chaninfo:")
             call nc_diag_chaninfo_write_data(.TRUE.)
             
-#ifdef _DEBUG_MEM_
-            print *, "Flushing metadata:"
-#endif
+            call info("Flushing metadata:")
             call nc_diag_metadata_write_data(.TRUE.)
             
 #else
             call warning("NetCDF support is disabled, so no buffer flush will occur.")
 #endif
-#ifdef _DEBUG_MEM_
-            print *, "Flushing done!"
-#endif
+            
+            call info("Flushing done!")
         end subroutine nc_diag_flush_buffer
         
         subroutine nc_diag_flush_to_file
@@ -300,11 +276,11 @@ module netcdf_layer
             integer                      :: div0
 #endif
 #ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m"
-#endif
-            write(*, "(A, A)") " ** ERROR: ", err
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[0m"
+            write(*, "(A)") CHAR(27) // "[31m" // &
+                            " ** ERROR: " // err // &
+                            CHAR(27) // "[0m"
+#else
+            write(*, "(A)") " ** ERROR: " // err
 #endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
@@ -318,13 +294,30 @@ module netcdf_layer
         subroutine warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[33m"
-#endif
-            write(*, "(A, A)") " ** WARNING: ", warn
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[0m"
+            write(*, "(A)") CHAR(27) // "[33m" // &
+                            " ** WARNING: " // warn // &
+                            CHAR(27) // "[0m"
+#else
+            write(*, "(A)") " ** WARNING: " // warn
 #endif
         end subroutine warning
+        
+        subroutine nc_set_info_display(info_on_off)
+            logical :: info_on_off
+            enable_info = info_on_off
+        end subroutine nc_set_info_display
+        
+        subroutine info(ifo)
+            character(len=*), intent(in) :: ifo
+            if (enable_info) &
+#ifdef ANSI_TERM_COLORS
+                write(*, "(A)") CHAR(27) // "[34m" // &
+                                " ** INFO: " // ifo // &
+                                CHAR(27) // "[0m"
+#else
+                write(*, "(A)") " ** INFO: " // ifo
+#endif
+        end subroutine info
         
 #ifdef _DEBUG_MEM_
         subroutine debug(dbg)

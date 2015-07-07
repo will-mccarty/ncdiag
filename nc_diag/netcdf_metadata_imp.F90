@@ -171,6 +171,8 @@
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
+                        call info("metadata: writing " // data_name)
+                        
                         ! Make sure we have data to write in the first place!
                         if (diag_metadata_store%stor_i_arr(curdatindex)%icount > 0) then
                             if (data_type == NLAYER_BYTE) then
