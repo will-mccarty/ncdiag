@@ -89,7 +89,9 @@
                             if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
                             if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
                             
+#ifdef _DEBUG_MEM_
                             print *, "chaninfo part 1"
+#endif
                             
                             if (data_type == NLAYER_STRING) then
                                 write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
@@ -104,11 +106,15 @@
                                 diag_chaninfo_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
                                 
                                 call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+#ifdef _DEBUG_MEM_
                                 print *, "Defining char var type..."
+#endif
                                 call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                     nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
                                     diag_chaninfo_store%var_ids(curdatindex)))
+#ifdef _DEBUG_MEM_
                                 print *, "Done defining char var type..."
+#endif
                                 deallocate(string_arr)
                             else
                                 call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
@@ -116,7 +122,9 @@
                                     diag_chaninfo_store%var_ids(curdatindex)))
                             end if
                             
+#ifdef _DEBUG_MEM_
                             print *, "chaninfo part 2"
+#endif
                             
                             call nc_diag_varattr_add_var(diag_chaninfo_store%names(curdatindex), &
                                 diag_chaninfo_store%var_ids(curdatindex))
@@ -230,9 +238,9 @@
                                     print *, "Resulting data to be stored:"
                                     print *, diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1))
-#endif
                                     print *, "start index:"
                                     print *, 1 + diag_chaninfo_store%rel_indexes(curdatindex)
+#endif
                                     call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                         diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
                                             diag_chaninfo_store%var_usage(curdatindex) - 1)), &
@@ -269,11 +277,11 @@
                                     !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                     !        diag_chaninfo_store%var_usage(curdatindex) - 1))
                                     
+#ifdef _DEBUG_MEM_
                                     do j = 1, diag_chaninfo_store%var_usage(curdatindex)
                                         write (*, "(A, A, A)") "String: '", string_arr(j), "'"
                                     end do
                                     
-#ifdef _DEBUG_MEM_
                                     write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
                                     write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
 #endif
@@ -296,18 +304,24 @@
                                         diag_chaninfo_store%var_usage(curdatindex)
                                     diag_chaninfo_store%var_usage(curdatindex) = 0
                                     
+#ifdef _DEBUG_MEM_
                                     print *, "diag_chaninfo_store%rel_indexes(curdatindex) is now:"
                                     print *, diag_chaninfo_store%rel_indexes(curdatindex)
+#endif
                                 end if
                             end if
                         end do
                         
                         if (present(flush_data_only) .AND. flush_data_only) then
+#ifdef _DEBUG_MEM_
                             print *, "In buffer flush mode!"
+#endif
                         else
                             ! Lock data writing
                             diag_chaninfo_store%data_lock = .TRUE.
+#ifdef _DEBUG_MEM_
                             print *, "In data lock mode!"
+#endif
                         end if
                     else
                         call error("Can't write data - data have already been written and locked!")

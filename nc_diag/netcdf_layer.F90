@@ -180,13 +180,19 @@ module netcdf_layer
         subroutine nc_diag_lock_def
             print *, " **** Locking all variable definitions!"
 #ifndef NO_NETCDF
+#ifdef _DEBUG_MEM_
             print *, "Defining chaninfo:"
+#endif
             call nc_diag_chaninfo_write_def
             
+#ifdef _DEBUG_MEM_
             print *, "Defining metadata:"
+#endif
             call nc_diag_metadata_write_def
             
+#ifdef _DEBUG_MEM_
             print *, "Defining data2d:"
+#endif
             call nc_diag_data2d_write_def
 #else
             call warning("NetCDF support is disabled, so defintions will not be" &
@@ -200,34 +206,50 @@ module netcdf_layer
         
         subroutine nc_diag_write
 #ifndef NO_NETCDF
+#ifdef _DEBUG_MEM_
             print *, "Defining chaninfo:"
+#endif
             call nc_diag_chaninfo_write_def(.TRUE.)
             
+#ifdef _DEBUG_MEM_
             print *, "Defining metadata:"
+#endif
             call nc_diag_metadata_write_def(.TRUE.)
             
+#ifdef _DEBUG_MEM_
             print *, "Defining data2d:"
+#endif
             call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
             
+#ifdef _DEBUG_MEM_
             print *, "Writing chaninfo:"
+#endif
             call nc_diag_chaninfo_write_data
             
+#ifdef _DEBUG_MEM_
             print *, "Writing metadata:"
+#endif
             call nc_diag_metadata_write_data
             
+#ifdef _DEBUG_MEM_
             print *, "Writing data2d:"
+#endif
             call nc_diag_data2d_write_data
             
+#ifdef _DEBUG_MEM_
             print *, "All done queuing in data, letting NetCDF take over!"
+#endif
             
             call check(nf90_close(ncid))
 #else
             call warning("NetCDF support is disabled, so no writing will occur.")
 #endif
+#ifdef _DEBUG_MEM_
             print *, "All done!"
+#endif
         end subroutine nc_diag_write
         
         subroutine nc_diag_flush_buffer
@@ -238,16 +260,22 @@ module netcdf_layer
                 call error("Definitions must be locked in order to flush the buffer!")
             
             ! Perform writes with the buffer flag set!
+#ifdef _DEBUG_MEM_
             print *, "Flushing chaninfo:"
+#endif
             call nc_diag_chaninfo_write_data(.TRUE.)
             
+#ifdef _DEBUG_MEM_
             print *, "Flushing metadata:"
+#endif
             call nc_diag_metadata_write_data(.TRUE.)
             
 #else
             call warning("NetCDF support is disabled, so no buffer flush will occur.")
 #endif
+#ifdef _DEBUG_MEM_
             print *, "Flushing done!"
+#endif
         end subroutine nc_diag_flush_buffer
         
         subroutine nc_diag_flush_to_file

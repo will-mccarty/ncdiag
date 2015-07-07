@@ -142,7 +142,9 @@
                         data_name = diag_data2d_store%names(curdatindex)
                         data_type = diag_data2d_store%types(curdatindex)
                         
+#ifdef _DEBUG_MEM_
                         write (*, "(A, A, A, I0, A)") "Data name: ", trim(data_name), " (type: ", data_type, ")"
+#endif
                         
                         if (diag_data2d_store%stores(curdatindex)%acount > 0) then
                             if (data_type == NLAYER_BYTE) then
@@ -457,7 +459,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
+#ifdef _DEBUG_MEM_
             print *, "CALL: nc_diag_data2d_byte"
+#endif
             
             if (.NOT. nc_diag_data2d_check_var(data_name)) then
                 ! First, check to make sure we can still define new variables.
