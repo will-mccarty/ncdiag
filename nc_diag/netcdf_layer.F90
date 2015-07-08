@@ -106,19 +106,19 @@ module netcdf_layer
 #endif
                 
                 if (allocated(diag_chaninfo_store)) then
-                    call error("BUG! diag_chaninfo_store is allocated, but init_done is set!")
+                    call error("BUG! diag_chaninfo_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_metadata_store)) then
-                    call error("BUG! diag_metadata_store is allocated, but init_done is set!")
+                    call error("BUG! diag_metadata_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_data2d_store)) then
-                    call error("BUG! diag_data2d_store is allocated, but init_done is set!")
+                    call error("BUG! diag_data2d_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_varattr_store)) then
-                    call error("BUG! diag_data2d_store is allocated, but init_done is set!")
+                    call error("BUG! diag_data2d_store is allocated, but init_done is not set!")
                 end if
                 
                 allocate(diag_chaninfo_store)
@@ -246,7 +246,47 @@ module netcdf_layer
             call warning("NetCDF support is disabled, so no writing will occur.")
 #endif
             call info("All done!")
+            
+            call nc_diag_finish
         end subroutine nc_diag_write
+        
+        subroutine nc_diag_finish
+            integer :: i,j
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_finish()")
+            end if
+#endif
+            if (init_done) then
+                call info("Cleaning up...")
+                if (.NOT. allocated(diag_chaninfo_store)) then
+                    call error("BUG! diag_chaninfo_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_metadata_store)) then
+                    call error("BUG! diag_metadata_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_data2d_store)) then
+                    call error("BUG! diag_data2d_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_varattr_store)) then
+                    call error("BUG! diag_data2d_store is not allocated, but init_done is set!")
+                end if
+                
+                call nc_diag_data2d_deallocate
+                
+                deallocate(diag_chaninfo_store)
+                deallocate(diag_metadata_store)
+                deallocate(diag_data2d_store)
+                deallocate(diag_varattr_store)
+                
+                init_done = .FALSE.
+            else
+                call error("Attempted to deallocate without initializing!")
+            end if
+        end subroutine nc_diag_finish
         
         subroutine nc_diag_flush_buffer
 #ifndef NO_NETCDF

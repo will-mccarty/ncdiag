@@ -21,6 +21,19 @@
         ! referred to by the interface. It also provides support
         ! subroutines for data writing and allocation setup.
         
+        subroutine nc_diag_data2d_deallocate
+            integer(i_long)                       :: curdatindex
+            if (init_done .AND. allocated(diag_data2d_store)) then
+                do curdatindex = 1, diag_data2d_store%total
+                    deallocate(diag_data2d_store%stores(curdatindex)%storage)
+                    diag_data2d_store%stores(curdatindex)%asize = 0
+                end do
+                diag_data2d_store%total = 0
+            else
+                call error("Can't deallocate data2d - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_data2d_deallocate
+        
         subroutine nc_diag_data2d_write_def(internal)
             logical, intent(in), optional         :: internal
             
