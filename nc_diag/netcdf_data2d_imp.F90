@@ -47,6 +47,8 @@
                         data_name = diag_data2d_store%names(curdatindex)
                         data_type = diag_data2d_store%types(curdatindex)
                         
+                        call info("data2d: defining " // trim(data_name))
+                        
                         if (data_type == NLAYER_BYTE)   nc_data_type = nf90_byte
                         if (data_type == NLAYER_SHORT)  nc_data_type = nf90_short
                         if (data_type == NLAYER_LONG)   nc_data_type = nf90_int

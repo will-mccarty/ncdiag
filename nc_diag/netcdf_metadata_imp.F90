@@ -59,6 +59,8 @@
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
+                        call info("metadata: defining " // trim(data_name))
+                        
                         if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                         if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
                         if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT

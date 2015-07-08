@@ -82,6 +82,8 @@
                             data_type_index = 1 + &
                                 ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                             
+                            call info("chaninfo: defining " // trim(data_name))
+                                                        
                             if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                             if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
                             if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
