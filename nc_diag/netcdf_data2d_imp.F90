@@ -142,7 +142,7 @@
                         data_name = diag_data2d_store%names(curdatindex)
                         data_type = diag_data2d_store%types(curdatindex)
                         
-                        call info("data2d: writing " // data_name)
+                        call info("data2d: writing " // trim(data_name))
                         
 #ifdef _DEBUG_MEM_
                         write (*, "(A, A, A, I0, A)") "Data name: ", trim(data_name), " (type: ", data_type, ")"

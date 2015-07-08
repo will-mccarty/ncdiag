@@ -183,7 +183,7 @@
                             data_type_index = 1 + &
                                 ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                             
-                            call info("chaninfo: writing " // data_name)
+                            call info("chaninfo: writing " // trim(data_name))
                             
                             ! Warn about low data filling
                             if ((.NOT. (present(flush_data_only) .AND. flush_data_only)) .AND. &
