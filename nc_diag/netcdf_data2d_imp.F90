@@ -39,6 +39,19 @@
             integer(i_long)                       :: max_str_len, msl_tmp
             character(len=:), allocatable         :: string_arr(:)
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                if (present(internal)) then
+                    write(action_str, "(A, L, A)") "nc_diag_data2d_write_def(internal = ", internal, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_data2d_write_def(internal = (not specified))"
+                end if
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (init_done) then
                 if (.NOT. diag_data2d_store%def_lock) then
                     call check(nf90_def_dim(ncid, "nobs_data2d", NF90_UNLIMITED, diag_data2d_store%nobs_dim_id))
@@ -137,6 +150,15 @@
             integer(i_long)                       :: max_str_len, acount
             
             character(len=:), allocatable :: string_arr(:)
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A)") "nc_diag_data2d_write_data()"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (init_done .AND. allocated(diag_data2d_store)) then
                 if (.NOT. diag_data2d_store%data_lock) then
@@ -459,6 +481,26 @@
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
+                    "nc_diag_data2d_byte(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [", &
+                    data_value(1), &
+                    " ... ", &
+                    data_value(data_value_size), &
+                    "]"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -512,6 +554,26 @@
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
+                    "nc_diag_data2d_short(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [", &
+                    data_value(1), &
+                    " ... ", &
+                    data_value(data_value_size), &
+                    "]"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -560,6 +622,26 @@
             
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
+                    "nc_diag_data2d_long(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [", &
+                    data_value(1), &
+                    " ... ", &
+                    data_value(data_value_size), &
+                    "]"
+                call actionm(trim(action_str))
+            end if
+#endif
             
 #ifdef _DEBUG_MEM_
             write (*, "(A, A, A, I0)") " ***** nc_diag_data2d_long: data_name = ", data_name, "; data_index = ", data_index
@@ -624,6 +706,26 @@
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A, F0.5, A, F0.5, A)") &
+                    "nc_diag_data2d_rsingle(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [", &
+                    data_value(1), &
+                    " ... ", &
+                    data_value(data_value_size), &
+                    "]"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -672,6 +774,26 @@
 
             integer(i_llong)                 :: var_index
             integer(i_llong)                 :: input_size
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A, F0.5, A, F0.5, A)") &
+                    "nc_diag_data2d_rdouble(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [", &
+                    data_value(1), &
+                    " ... ", &
+                    data_value(data_value_size), &
+                    "]"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -723,6 +845,26 @@
             integer(i_llong)                 :: input_size
             
             integer(i_long)                            :: max_str_len
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            integer(i_llong)                      :: data_value_size
+            
+            if (enable_action) then
+                data_value_size = size(data_value)
+                write(action_str, "(A, I0, A, I0, A)") &
+                    "nc_diag_data2d_string(data2d_name = " // data_name // ", data_index = ", &
+                    data_index, &
+                    ", data2d_value = array with length of ", &
+                    data_value_size, &
+                    " [" // &
+                        trim(data_value(1)) // &
+                        " ... " // &
+                        trim(data_value(data_value_size)) // &
+                        "]"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_data2d_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")

@@ -20,6 +20,14 @@
         
         subroutine nc_diag_chaninfo_dim_set(nchans)
             integer(i_long), intent(in) :: nchans
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_dim_set(nchans = ", nchans, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (nchans < 1) then
                     call error("Critical error - specified a nchan < 1!")
@@ -37,6 +45,14 @@
         
         subroutine nc_diag_chaninfo_allocmulti(multiplier)
             integer(i_long), intent(in)    :: multiplier
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_allocmulti(multiplier = ", multiplier, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             if (init_done) then
                 ! # of times we needed to realloc simple metadata
                 ! also the multiplier factor for allocation (2^x)
@@ -67,6 +83,19 @@
             character(len=120)            :: data_dim_name
             
             character(len=:), allocatable :: string_arr(:)
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                if (present(internal)) then
+                    write(action_str, "(A, L, A)") "nc_diag_chaninfo_write_def(internal = ", internal, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_chaninfo_write_def(internal = (not specified))"
+                end if
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (diag_chaninfo_store%nchans /= -1) then
@@ -175,6 +204,19 @@
             integer(i_long)                :: string_arr_maxlen
             
             character(len=:), allocatable :: string_arr(:)
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                if (present(flush_data_only)) then
+                    write(action_str, "(A, L, A)") "nc_diag_chaninfo_write_data(flush_data_only = ", flush_data_only, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_chaninfo_write_data(flush_data_only = (not specified))"
+                end if
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (diag_chaninfo_store%nchans /= -1) then
@@ -342,6 +384,14 @@
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_chaninfo_prealloc_vars(num_of_addl_vars)
             integer(i_llong), intent(in)           :: num_of_addl_vars
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_prealloc_vars(num_of_addl_vars = ", num_of_addl_vars, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (allocated(diag_chaninfo_store%names)) then
                     if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
@@ -412,6 +462,15 @@
         subroutine nc_diag_chaninfo_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
             integer(i_byte), intent(in)           :: nclayer_type
             integer(i_llong), intent(in)          :: num_of_addl_slots
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A, I0, A)") "nc_diag_chaninfo_prealloc_vars_storage(nclayer_type = ", nclayer_type, ", num_of_addl_slots = ", num_of_addl_slots, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (nclayer_type == NLAYER_BYTE) then
                 call nc_diag_chaninfo_resize_byte(num_of_addl_slots, .FALSE.)
@@ -530,6 +589,15 @@
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_byte(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -614,6 +682,15 @@
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_short(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -697,6 +774,15 @@
             integer(i_long), intent(in)     :: chaninfo_value
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_chaninfo_long(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -808,6 +894,15 @@
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, F0.5, A)") "nc_diag_chaninfo_rsingle(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -914,6 +1009,15 @@
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, F0.5, A)") "nc_diag_chaninfo_rdouble(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -997,6 +1101,15 @@
             character(len=*), intent(in)    :: chaninfo_value
             
             integer(i_long) :: i, var_index, var_rel_index, type_index
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A)") "nc_diag_chaninfo_string(chaninfo_name = " // chaninfo_name // ", chaninfo_value = " // trim(chaninfo_value) // ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
 #ifndef IGNORE_VERSION
             if (NLAYER_STRING_BROKEN) then

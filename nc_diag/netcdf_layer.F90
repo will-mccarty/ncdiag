@@ -35,6 +35,7 @@ module netcdf_layer
     logical :: header_locked = .FALSE.
     
     logical :: enable_info = .FALSE.
+    logical :: enable_action = .FALSE.
     
 #ifndef IGNORE_VERSION
     logical :: NLAYER_STRING_BROKEN = .FALSE.
@@ -71,6 +72,12 @@ module netcdf_layer
             character(len=:), allocatable  :: version_num
             
             integer                        :: bsize = 16777216;
+            
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_init(filename = " // trim(filename) // ")")
+            end if
+#endif
             
 #ifndef NO_NETCDF
             !print *,'Initializing netcdf layer library, version ...'
@@ -180,6 +187,11 @@ module netcdf_layer
         !end subroutine nc_diag_data
         
         subroutine nc_diag_lock_def
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_lock_def()")
+            end if
+#endif
             call info("Locking all variable definitions!")
 #ifndef NO_NETCDF
             call info("Defining chaninfo:")
@@ -201,6 +213,11 @@ module netcdf_layer
         end subroutine nc_diag_lock_def
         
         subroutine nc_diag_write
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_write()")
+            end if
+#endif
 #ifndef NO_NETCDF
             call info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def(.TRUE.)
@@ -208,9 +225,7 @@ module netcdf_layer
             call info("Defining metadata:")
             call nc_diag_metadata_write_def(.TRUE.)
             
-#ifdef _DEBUG_MEM_
-            print *, "Defining data2d:"
-#endif
+            call info("Defining data2d:")
             call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
@@ -235,6 +250,11 @@ module netcdf_layer
         
         subroutine nc_diag_flush_buffer
 #ifndef NO_NETCDF
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_flush_buffer()")
+            end if
+#endif
             if ((.NOT. diag_chaninfo_store%def_lock) .OR. &
                 (.NOT. diag_metadata_store%def_lock) .OR. &
                 (.NOT. diag_data2d_store%def_lock)) &
@@ -255,6 +275,11 @@ module netcdf_layer
         end subroutine nc_diag_flush_buffer
         
         subroutine nc_diag_flush_to_file
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_flush_to_file()")
+            end if
+#endif
 #ifndef NO_NETCDF
             call check(nf90_sync(ncid))
 #else
@@ -302,8 +327,43 @@ module netcdf_layer
 #endif
         end subroutine warning
         
+        subroutine nc_set_action_display(action_on_off)
+            logical :: action_on_off
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            enable_action = action_on_off
+        end subroutine nc_set_action_display
+        
+#ifdef ENABLE_ACTION_MSGS
+        subroutine actionm(act)
+            character(len=*), intent(in) :: act
+            if (enable_action) &
+#ifdef ANSI_TERM_COLORS
+                write(*, "(A)") CHAR(27) // "[36m" // &
+                                " ** ACTION: " // act // &
+                                CHAR(27) // "[0m"
+#else
+                write(*, "(A)") " ** ACTION: " // act
+#endif
+        end subroutine actionm
+#endif
+        
         subroutine nc_set_info_display(info_on_off)
             logical :: info_on_off
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, L, A)") "nc_set_info_display(info_on_off = ", info_on_off, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             enable_info = info_on_off
         end subroutine nc_set_info_display
         
