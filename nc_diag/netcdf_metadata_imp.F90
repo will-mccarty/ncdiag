@@ -659,22 +659,6 @@
             
         end subroutine nc_diag_metadata_expand
         
-        function nc_diag_metadata_check_var(metadata_name) result(found)
-            character(len=*), intent(in)    :: metadata_name
-            integer :: i
-            logical :: found
-            found = .FALSE.
-            
-            if (init_done .AND. allocated(diag_metadata_store)) then
-                do i = 1, diag_metadata_store%total
-                    if (diag_metadata_store%names(i) == metadata_name) then
-                        found = .TRUE.
-                        exit
-                    end if
-                end do
-            end if
-        end function nc_diag_metadata_check_var
-        
         function nc_diag_metadata_lookup_var(metadata_name) result(ind)
             character(len=*), intent(in)    :: metadata_name
             integer :: i, ind
@@ -703,7 +687,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -717,10 +703,6 @@
                 diag_metadata_store%types(diag_metadata_store%total) = NLAYER_BYTE
                 
                 var_index = diag_metadata_store%total
-            else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
             end if
             
             ! We just need to add one entry...
@@ -745,7 +727,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -759,10 +743,6 @@
                 diag_metadata_store%types(diag_metadata_store%total) = NLAYER_SHORT
                 
                 var_index = diag_metadata_store%total
-            else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
             end if
             
             ! We just need to add one entry...
@@ -787,7 +767,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -801,10 +783,6 @@
                 diag_metadata_store%types(diag_metadata_store%total) = NLAYER_LONG
                 
                 var_index = diag_metadata_store%total
-            else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
             end if
             
 #ifdef _DEBUG_MEM_
@@ -835,7 +813,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -849,10 +829,6 @@
                 diag_metadata_store%types(diag_metadata_store%total) = NLAYER_FLOAT
                 
                 var_index = diag_metadata_store%total
-            else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
             end if
             
             ! We just need to add one entry...
@@ -877,7 +853,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -891,10 +869,6 @@
                 diag_metadata_store%types(diag_metadata_store%total) = NLAYER_DOUBLE
                 
                 var_index = diag_metadata_store%total
-            else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
             end if
             
             ! We just need to add one entry...
@@ -919,7 +893,9 @@
                 call error("Can't add new data - data have already been written and locked!")
             end if
             
-            if (.NOT. nc_diag_metadata_check_var(metadata_name)) then
+            var_index = nc_diag_metadata_lookup_var(metadata_name)
+            
+            if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
@@ -934,10 +910,6 @@
                 
                 var_index = diag_metadata_store%total
             else
-                var_index = nc_diag_metadata_lookup_var(metadata_name)
-                
-                if (var_index == -1) call error("Bug! Variable exists but could not lookup index!")
-                
                 ! Check max string length
 #ifdef _DEBUG_MEM_
                 print *, "len_trim(metadata_value) = ", len_trim(metadata_value)
