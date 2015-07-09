@@ -62,6 +62,11 @@
             if (allocated(diag_metadata_store%m_byte)) then
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_byte: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_byte, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_byte)
                     
@@ -111,6 +116,11 @@
             if (allocated(diag_metadata_store%m_short)) then
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_short: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_short, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_short)
                     
@@ -180,6 +190,11 @@
                     call debug("acount < asize, reallocating.")
                     print *, "Start long realloc..."
 #endif
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_long: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_long, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_long)
                     
@@ -234,8 +249,15 @@
             if (allocated(diag_metadata_store%m_rsingle)) then
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+#ifdef _DEBUG_MEM_
                     print *, "realloc needed for metadata rsingle!"
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%acount(sc_index), " / ", diag_metadata_store%asize(sc_index), ")"
+#endif
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_rsingle: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_rsingle, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_rsingle)
                     
@@ -284,6 +306,11 @@
             if (allocated(diag_metadata_store%m_rdouble)) then
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_rdouble: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_rdouble, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_rdouble)
                     
@@ -332,6 +359,11 @@
             if (allocated(diag_metadata_store%m_string)) then
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_string: doing reallocation!")
+                    end if
+#endif
                     call nc_diag_realloc(diag_metadata_store%m_string, int8(addl_num_entries  + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
                     diag_metadata_store%asize(sc_index) = size(diag_metadata_store%m_string)
                     
@@ -348,6 +380,12 @@
             integer(i_llong), intent(in)    :: addl_num_entries
             
             type(diag_md_iarr), dimension(:), allocatable   :: tmp_stor_i_arr
+            
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_metadata_resize_iarr_type: doing reallocation!")
+            end if
+#endif
             
             ! We need to realloc ourselves here...
             allocate(tmp_stor_i_arr(size(diag_metadata_store%stor_i_arr) + addl_num_entries))
@@ -389,10 +427,17 @@
                 if (update_icount) diag_metadata_store%stor_i_arr(iarr_index)%icount = &
                     diag_metadata_store%stor_i_arr(iarr_index)%icount + addl_num_entries
                 if (diag_metadata_store%stor_i_arr(iarr_index)%icount >= diag_metadata_store%stor_i_arr(iarr_index)%isize) then
+#ifdef _DEBUG_MEM_
                     print *, "realloc needed for metadata iarr!"
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize, ")"
                     print *, diag_metadata_store%alloc_sia_multi(iarr_index)
                     print *, int8(NLAYER_MULTI_BASE ** int8(diag_metadata_store%alloc_sia_multi(iarr_index)))
+#endif
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_metadata_resize_iarr: doing reallocation!")
+                    end if
+#endif
                     !print *, int8(diag_metadata_store%stor_i_arr(iarr_index)%isize) ! *0.5 for 1.5x
                     if (update_icount) then
                         addl_num_entries_r = addl_num_entries + (int8(NLAYER_DEFAULT_ENT) * (NLAYER_MULTI_BASE ** int8(diag_metadata_store%alloc_sia_multi(iarr_index))))
@@ -400,10 +445,15 @@
                     else
                         addl_num_entries_r = addl_num_entries + NLAYER_DEFAULT_ENT
                     end if
+#ifdef _DEBUG_MEM_
                     print *, " ** addl_num_entries_r = "
                     print *, addl_num_entries_r
+#endif
                     call nc_diag_realloc(diag_metadata_store%stor_i_arr(iarr_index)%index_arr, addl_num_entries_r)
+                    
+#ifdef _DEBUG_MEM_
                     print *, " ** realloc done"
+#endif
                     diag_metadata_store%stor_i_arr(iarr_index)%isize = size(diag_metadata_store%stor_i_arr(iarr_index)%index_arr)
                     
                     if (update_icount) diag_metadata_store%alloc_sia_multi(iarr_index) = diag_metadata_store%alloc_sia_multi(iarr_index) + 1

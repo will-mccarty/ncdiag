@@ -54,7 +54,7 @@ endif
 #                        
 #                        NOTE - this is set automatically if
 #                        DISABLE_NETCDF is set.
-COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK
+COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
 
 NETCDF_LAYER_DEPS+=Makefile \
 	netcdf_realloc_decl.f90 \

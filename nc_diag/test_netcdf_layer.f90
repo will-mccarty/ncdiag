@@ -20,6 +20,10 @@ program test_netcdf_layer
     f = 1.234
     d = 2.34567890
     
+    ! Enable info messages
+    call nc_set_action_display(.TRUE.)
+    call nc_set_info_display(.TRUE.)
+    
     call nc_diag_init("test.nc")
     
 #ifndef IGNORE_VERSION

@@ -67,12 +67,16 @@
             if (nc_diag_varattr_check_var(var_name)) then
                 call error("Variable already exists for variable attributes!")
             else
+#ifdef _DEBUG_MEM_
                 print *, "adding var!"
+#endif
                 call nc_diag_varattr_expand(1)
                 diag_varattr_store%total = diag_varattr_store%total + 1
                 diag_varattr_store%names(diag_varattr_store%total) = var_name
                 diag_varattr_store%var_ids(diag_varattr_store%total) = var_id
+#ifdef _DEBUG_MEM_
                 print *, "done adding var!"
+#endif
             end if
         end subroutine nc_diag_varattr_add_var
         

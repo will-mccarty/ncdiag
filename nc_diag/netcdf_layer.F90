@@ -34,6 +34,9 @@ module netcdf_layer
     logical :: init_done = .FALSE.
     logical :: header_locked = .FALSE.
     
+    logical :: enable_info = .FALSE.
+    logical :: enable_action = .FALSE.
+    
 #ifndef IGNORE_VERSION
     logical :: NLAYER_STRING_BROKEN = .FALSE.
 #endif
@@ -70,6 +73,12 @@ module netcdf_layer
             
             integer                        :: bsize = 16777216;
             
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_init(filename = " // trim(filename) // ")")
+            end if
+#endif
+            
 #ifndef NO_NETCDF
             !print *,'Initializing netcdf layer library, version ...'
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
@@ -97,19 +106,19 @@ module netcdf_layer
 #endif
                 
                 if (allocated(diag_chaninfo_store)) then
-                    call error("BUG! diag_chaninfo_store is allocated, but init_done is set!")
+                    call error("BUG! diag_chaninfo_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_metadata_store)) then
-                    call error("BUG! diag_metadata_store is allocated, but init_done is set!")
+                    call error("BUG! diag_metadata_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_data2d_store)) then
-                    call error("BUG! diag_data2d_store is allocated, but init_done is set!")
+                    call error("BUG! diag_data2d_store is allocated, but init_done is not set!")
                 end if
                 
                 if (allocated(diag_varattr_store)) then
-                    call error("BUG! diag_data2d_store is allocated, but init_done is set!")
+                    call error("BUG! diag_data2d_store is allocated, but init_done is not set!")
                 end if
                 
                 allocate(diag_chaninfo_store)
@@ -178,15 +187,20 @@ module netcdf_layer
         !end subroutine nc_diag_data
         
         subroutine nc_diag_lock_def
-            print *, " **** Locking all variable definitions!"
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_lock_def()")
+            end if
+#endif
+            call info("Locking all variable definitions!")
 #ifndef NO_NETCDF
-            print *, "Defining chaninfo:"
+            call info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def
             
-            print *, "Defining metadata:"
+            call info("Defining metadata:")
             call nc_diag_metadata_write_def
             
-            print *, "Defining data2d:"
+            call info("Defining data2d:")
             call nc_diag_data2d_write_def
 #else
             call warning("NetCDF support is disabled, so defintions will not be" &
@@ -195,62 +209,117 @@ module netcdf_layer
                     // char(10) &
                     // "             not work!")
 #endif
-            print *, " **** All variable definitions locked!"
+            call info("All variable definitions locked!")
         end subroutine nc_diag_lock_def
         
         subroutine nc_diag_write
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_write()")
+            end if
+#endif
 #ifndef NO_NETCDF
-            print *, "Defining chaninfo:"
+            call info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def(.TRUE.)
             
-            print *, "Defining metadata:"
+            call info("Defining metadata:")
             call nc_diag_metadata_write_def(.TRUE.)
             
-            print *, "Defining data2d:"
+            call info("Defining data2d:")
             call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
             call check(nf90_enddef(ncid))
             
-            print *, "Writing chaninfo:"
+            call info("Writing chaninfo:")
             call nc_diag_chaninfo_write_data
             
-            print *, "Writing metadata:"
+            call info("Writing metadata:")
             call nc_diag_metadata_write_data
             
-            print *, "Writing data2d:"
+            call info("Writing data2d:")
             call nc_diag_data2d_write_data
             
-            print *, "All done queuing in data, letting NetCDF take over!"
-            
+            call info("All done queuing in data, letting NetCDF take over!")
             call check(nf90_close(ncid))
 #else
             call warning("NetCDF support is disabled, so no writing will occur.")
 #endif
-            print *, "All done!"
+            call info("All done!")
+            
+            call nc_diag_finish
         end subroutine nc_diag_write
+        
+        subroutine nc_diag_finish
+            integer :: i,j
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_finish()")
+            end if
+#endif
+            if (init_done) then
+                call info("Cleaning up...")
+                if (.NOT. allocated(diag_chaninfo_store)) then
+                    call error("BUG! diag_chaninfo_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_metadata_store)) then
+                    call error("BUG! diag_metadata_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_data2d_store)) then
+                    call error("BUG! diag_data2d_store is not allocated, but init_done is set!")
+                end if
+                
+                if (.NOT. allocated(diag_varattr_store)) then
+                    call error("BUG! diag_data2d_store is not allocated, but init_done is set!")
+                end if
+                
+                call nc_diag_data2d_deallocate
+                
+                deallocate(diag_chaninfo_store)
+                deallocate(diag_metadata_store)
+                deallocate(diag_data2d_store)
+                deallocate(diag_varattr_store)
+                
+                init_done = .FALSE.
+            else
+                call error("Attempted to deallocate without initializing!")
+            end if
+        end subroutine nc_diag_finish
         
         subroutine nc_diag_flush_buffer
 #ifndef NO_NETCDF
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_flush_buffer()")
+            end if
+#endif
             if ((.NOT. diag_chaninfo_store%def_lock) .OR. &
                 (.NOT. diag_metadata_store%def_lock) .OR. &
                 (.NOT. diag_data2d_store%def_lock)) &
                 call error("Definitions must be locked in order to flush the buffer!")
             
             ! Perform writes with the buffer flag set!
-            print *, "Flushing chaninfo:"
+            call info("Flushing chaninfo:")
             call nc_diag_chaninfo_write_data(.TRUE.)
             
-            print *, "Flushing metadata:"
+            call info("Flushing metadata:")
             call nc_diag_metadata_write_data(.TRUE.)
             
 #else
             call warning("NetCDF support is disabled, so no buffer flush will occur.")
 #endif
-            print *, "Flushing done!"
+            
+            call info("Flushing done!")
         end subroutine nc_diag_flush_buffer
         
         subroutine nc_diag_flush_to_file
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_flush_to_file()")
+            end if
+#endif
 #ifndef NO_NETCDF
             call check(nf90_sync(ncid))
 #else
@@ -272,11 +341,11 @@ module netcdf_layer
             integer                      :: div0
 #endif
 #ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m"
-#endif
-            write(*, "(A, A)") " ** ERROR: ", err
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[0m"
+            write(*, "(A)") CHAR(27) // "[31m" // &
+                            " ** ERROR: " // err // &
+                            CHAR(27) // "[0m"
+#else
+            write(*, "(A)") " ** ERROR: " // err
 #endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
@@ -290,13 +359,65 @@ module netcdf_layer
         subroutine warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[33m"
-#endif
-            write(*, "(A, A)") " ** WARNING: ", warn
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[0m"
+            write(*, "(A)") CHAR(27) // "[33m" // &
+                            " ** WARNING: " // warn // &
+                            CHAR(27) // "[0m"
+#else
+            write(*, "(A)") " ** WARNING: " // warn
 #endif
         end subroutine warning
+        
+        subroutine nc_set_action_display(action_on_off)
+            logical :: action_on_off
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            enable_action = action_on_off
+        end subroutine nc_set_action_display
+        
+#ifdef ENABLE_ACTION_MSGS
+        subroutine actionm(act)
+            character(len=*), intent(in) :: act
+            if (enable_action) &
+#ifdef ANSI_TERM_COLORS
+                write(*, "(A)") CHAR(27) // "[36m" // &
+                                " ** ACTION: " // act // &
+                                CHAR(27) // "[0m"
+#else
+                write(*, "(A)") " ** ACTION: " // act
+#endif
+        end subroutine actionm
+#endif
+        
+        subroutine nc_set_info_display(info_on_off)
+            logical :: info_on_off
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, L, A)") "nc_set_info_display(info_on_off = ", info_on_off, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            enable_info = info_on_off
+        end subroutine nc_set_info_display
+        
+        subroutine info(ifo)
+            character(len=*), intent(in) :: ifo
+            if (enable_info) &
+#ifdef ANSI_TERM_COLORS
+                write(*, "(A)") CHAR(27) // "[34m" // &
+                                " ** INFO: " // ifo // &
+                                CHAR(27) // "[0m"
+#else
+                write(*, "(A)") " ** INFO: " // ifo
+#endif
+        end subroutine info
         
 #ifdef _DEBUG_MEM_
         subroutine debug(dbg)

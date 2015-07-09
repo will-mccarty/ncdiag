@@ -51,6 +51,19 @@
             
             character(len=:),         allocatable :: string_arr(:)
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                if (present(internal)) then
+                    write(action_str, "(A, L, A)") "nc_diag_metadata_write_def(internal = ", internal, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_metadata_write_ddef(internal = (not specified))"
+                end if
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (init_done) then
                 if (.NOT. diag_metadata_store%def_lock) then
                     call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
@@ -59,6 +72,8 @@
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
+                        call info("metadata: defining " // trim(data_name))
+                        
                         if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                         if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
                         if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
@@ -66,7 +81,9 @@
                         if (data_type == NLAYER_DOUBLE) nc_data_type = NF90_DOUBLE
                         if (data_type == NLAYER_STRING) nc_data_type = NF90_CHAR
                         
+#ifdef _DEBUG_MEM_
                         print *, "metadata part 1"
+#endif
                         
                         if (data_type == NLAYER_STRING) then
                             write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
@@ -81,25 +98,36 @@
                             diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
                             
                             call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                            
+#ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
+#endif
+                            
                             call check(nf90_def_var(ncid, data_name, nc_data_type, &
                                 (/ tmp_dim_id, diag_metadata_store%nobs_dim_id /), &
                                 diag_metadata_store%var_ids(curdatindex)))
+                            
+#ifdef _DEBUG_MEM_
                             print *, "Done defining char var type..."
+#endif
                             deallocate(string_arr)
                         else
                             call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
                                 diag_metadata_store%var_ids(curdatindex)))
                         end if
                         
+#ifdef _DEBUG_MEM_
                         print *, "metadata part 2"
+#endif
                         
                         call nc_diag_varattr_add_var(diag_metadata_store%names(curdatindex), &
                                     diag_metadata_store%var_ids(curdatindex))
                         
                         ! Enable compression
                         ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+#ifdef _DEBUG_MEM_
                         print *, "Defining compression 1 (chunking)..."
+#endif
                         
                         if (data_type == NLAYER_STRING) then
                             call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
@@ -109,10 +137,15 @@
                                 NF90_CHUNKED, (/ 1024 /)))
                         end if
                         
+#ifdef _DEBUG_MEM_
                         print *, "Defining compression 2 (gzip)..."
+#endif
                         call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
                             1, 1, NLAYER_COMPRESSION))
+                        
+#ifdef _DEBUG_MEM_
                         print *, "Done defining compression..."
+#endif
                         
                         ! Lock the definitions!
                         diag_metadata_store%def_lock = .TRUE.
@@ -144,12 +177,28 @@
             
             integer(i_llong)                           :: string_arr_maxlen
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                if (present(flush_data_only)) then
+                    write(action_str, "(A, L, A)") "nc_diag_metadata_write_data(flush_data_only = ", flush_data_only, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_metadata_write_data(flush_data_only = (not specified))"
+                end if
+                call actionm(trim(action_str))
+            end if
+#endif
             if (init_done .AND. allocated(diag_metadata_store)) then
                 if (.NOT. diag_metadata_store%data_lock) then
                     do curdatindex = 1, diag_metadata_store%total
+#ifdef _DEBUG_MEM_
                         print *, curdatindex
+#endif
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
+                        
+                        call info("metadata: writing " // trim(data_name))
                         
                         ! Make sure we have data to write in the first place!
                         if (diag_metadata_store%stor_i_arr(curdatindex)%icount > 0) then
@@ -260,22 +309,28 @@
                                     diag_metadata_store%stor_i_arr(curdatindex)%icount
                                 diag_metadata_store%stor_i_arr(curdatindex)%icount = 0
                                 
+#ifdef _DEBUG_MEM_
                                 print *, "diag_metadata_store%rel_indexes(curdatindex) is now:"
                                 print *, diag_metadata_store%rel_indexes(curdatindex)
+#endif
                             end if
                             
                         end if
                     end do
                     
                     if (present(flush_data_only) .AND. flush_data_only) then
+#ifdef _DEBUG_MEM_
                         print *, "In buffer flush mode!"
+#endif
                         
                         ! We need to reset all array counts to zero!
                         diag_metadata_store%acount = 0
                     else
                         ! Lock data writing
                         diag_metadata_store%data_lock = .TRUE.
-                        print *, "In data lock mode!"
+#ifdef _DEBUG_MEM_
+                        print *, "In data lock mode!"'
+#endif
                     end if
                 else
                     call error("Can't write data - data have already been written and locked!")
@@ -283,7 +338,10 @@
             else
                 call error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
+            
+#ifdef _DEBUG_MEM_
             print *, "All done writing metadata data"
+#endif
         end subroutine nc_diag_metadata_write_data
         
         !subroutine nc_diag_metadata_write
@@ -424,6 +482,14 @@
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_metadata_prealloc_vars(num_of_addl_vars)
             integer(i_llong), intent(in)          :: num_of_addl_vars
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_metadata_prealloc_vars(num_of_addl_vars = ", num_of_addl_vars, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             if (init_done .AND. allocated(diag_metadata_store)) then
                 if (allocated(diag_metadata_store%names)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%names)) then
@@ -496,6 +562,15 @@
             integer(i_byte), intent(in)           :: nclayer_type
             integer(i_llong), intent(in)          :: num_of_addl_slots
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A, I0, A)") "nc_diag_metadata_prealloc_vars_storage(nclayer_type = ", nclayer_type, ", num_of_addl_slots = ", num_of_addl_slots, ")"
+                call actionm(trim(action_str))
+            end if
+#endif            
+            
             if (nclayer_type == NLAYER_BYTE) then
                 call nc_diag_metadata_resize_byte(num_of_addl_slots, .FALSE.)
             else if (nclayer_type == NLAYER_SHORT) then
@@ -520,6 +595,15 @@
         subroutine nc_diag_metadata_prealloc_vars_storage_all(num_of_addl_slots)
             integer(i_llong), intent(in)          :: num_of_addl_slots
             integer(i_long)                       :: i
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_metadata_prealloc_vars_storage_all(num_of_addl_slots = ", num_of_addl_slots, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             !print *, "PREALLOC IARR: "
             !print *, num_of_addl_slots
@@ -683,6 +767,15 @@
             
             integer(i_long)                 :: var_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_metadata_byte(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -723,6 +816,15 @@
             
             integer(i_long)                 :: var_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_metadata_short(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -762,6 +864,15 @@
             integer(i_long), intent(in)     :: metadata_value
             
             integer(i_long)                 :: var_index
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, I0, A)") "nc_diag_metadata_long(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -809,6 +920,15 @@
 
             integer(i_long)                 :: var_index
             
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, F0.5, A)") "nc_diag_metadata_rsingle(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
+            
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if
@@ -820,7 +940,9 @@
                 if (diag_metadata_store%def_lock) then
                     call error("Can't add new variable - definitions have already been written and locked!")
                 end if
+#ifdef _DEBUG_MEM_
                 write (*, "(A, A, A, F)") "NEW METADATA: ", metadata_name, " | First value: ", metadata_value
+#endif
                 call nc_diag_metadata_expand
                 
                 diag_metadata_store%total = diag_metadata_store%total + 1
@@ -848,6 +970,15 @@
             real(r_double), intent(in)      :: metadata_value
 
             integer(i_long)                 :: var_index
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A, F0.5, A)") "nc_diag_metadata_rdouble(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
@@ -888,6 +1019,15 @@
             character(len=*), intent(in)    :: metadata_value
 
             integer(i_long)                 :: var_index
+            
+#ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
+            if (enable_action) then
+                write(action_str, "(A)") "nc_diag_metadata_string(metadata_name = " // metadata_name // ", metadata_value = " // trim(metadata_value) // ")"
+                call actionm(trim(action_str))
+            end if
+#endif
             
             if (diag_metadata_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")

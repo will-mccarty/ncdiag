@@ -32,6 +32,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_byte: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%byte) * 0.5
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%byte, new_size)
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = new_size
@@ -57,6 +62,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_short: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%short) * 0.5
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%short, new_size)
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = new_size
@@ -90,7 +100,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
-                    
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_long: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%long) * 0.5
                     
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%long, new_size)
@@ -122,6 +136,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_rsingle: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%rsingle) * 0.5
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%rsingle, new_size)
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = new_size
@@ -147,6 +166,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_rdouble: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%rdouble) * 0.5
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%rdouble, new_size)
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = new_size
@@ -178,6 +202,11 @@
                 
                 if (diag_data2d_store%stores(var_index)%storage(data_index)%acount >= &
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize) then
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_string: doing reallocation!")
+                    end if
+#endif
                     new_size = size(diag_data2d_store%stores(var_index)%storage(data_index)%string) * 0.5
                     call nc_diag_realloc(diag_data2d_store%stores(var_index)%storage(data_index)%string, new_size)
                     diag_data2d_store%stores(var_index)%storage(data_index)%asize = new_size
@@ -195,6 +224,12 @@
             integer(i_llong), intent(in)    :: addl_num_entries
             
             type(diag_d_storage), dimension(:), allocatable   :: tmp_stor_arr
+            
+#ifdef ENABLE_ACTION_MSGS
+            if (enable_action) then
+                call actionm("nc_diag_data2d_resize_storage: doing reallocation!")
+            end if
+#endif
             
             ! We need to realloc ourselves here...
             allocate(tmp_stor_arr(size(diag_data2d_store%stores) + addl_num_entries))
@@ -225,6 +260,11 @@
                 if (current_index > diag_data2d_store%stores(var_index)%asize) then
 #ifdef _DEBUG_MEM_
                     print *, "resize needed for data2d internal storage!"
+#endif
+#ifdef ENABLE_ACTION_MSGS
+                    if (enable_action) then
+                        call actionm("nc_diag_data2d_resize_internal_storage: doing reallocation!")
+                    end if
 #endif
                     ! We need to realloc ourselves here...
                     allocate(tmp_stor_arr(int8(current_index * 2)))
