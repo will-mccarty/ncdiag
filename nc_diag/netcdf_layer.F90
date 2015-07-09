@@ -251,7 +251,6 @@ module netcdf_layer
         end subroutine nc_diag_write
         
         subroutine nc_diag_finish
-            integer :: i,j
 #ifdef ENABLE_ACTION_MSGS
             if (enable_action) then
                 call actionm("nc_diag_finish()")
