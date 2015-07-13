@@ -81,7 +81,7 @@
             integer(i_long),     dimension(6)             :: acount_v
             
             ! Total variables stored
-            integer(i_long)                               :: total
+            integer(i_long)                               :: total = 0
             
             ! Array size for each type array
             integer(i_long),     dimension(6)             :: asize

@@ -121,8 +121,8 @@
             integer(i_long),    dimension(:), allocatable :: rel_indexes
             
             ! Total variables
-            integer(i_long)                               :: total
-            integer(i_long)                               :: prealloc_total
+            integer(i_long)                               :: total = 0
+            integer(i_long)                               :: prealloc_total = 0
             
             ! Array sizes
             integer(i_long),  dimension(6)                :: asize
