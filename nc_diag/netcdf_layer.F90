@@ -274,8 +274,6 @@ module netcdf_layer
                     call error("BUG! diag_data2d_store is not allocated, but init_done is set!")
                 end if
                 
-                call nc_diag_data2d_deallocate
-                
                 deallocate(diag_chaninfo_store)
                 deallocate(diag_metadata_store)
                 deallocate(diag_data2d_store)
@@ -305,6 +303,9 @@ module netcdf_layer
             
             call info("Flushing metadata:")
             call nc_diag_metadata_write_data(.TRUE.)
+            
+            call info("Flushing data2d:")
+            call nc_diag_data2d_write_data(.TRUE.)
             
 #else
             call warning("NetCDF support is disabled, so no buffer flush will occur.")

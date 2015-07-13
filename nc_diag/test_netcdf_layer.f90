@@ -8,7 +8,6 @@ program test_netcdf_layer
     implicit none
     
     integer :: i
-    integer(i_llong) :: index_llong
     real(r_single) :: f
     real(r_double) :: d
     
@@ -39,7 +38,6 @@ program test_netcdf_layer
     call nc_diag_chaninfo_dim_set(10)
     
     do i = 1, 10
-        index_llong = i
         call nc_diag_chaninfo("chaninfosimple1", i)
         call nc_diag_chaninfo("chaninfosimple2", i*2)
         call nc_diag_chaninfo("chaninfosimple4_float", f + 1.00)
@@ -51,11 +49,11 @@ program test_netcdf_layer
         !call nc_diag_metadata("metadatasimple4_float2", f + 2.00 + i)
         !call nc_diag_metadata("metadatasimple5_double", d + 1.00 + i)
         
-        call nc_diag_data2d("data2dsimple1", index_llong, (/ i, i+1, i+2 /))
-        call nc_diag_data2d("data2dsimple2", index_llong, (/ i*2, i*3, i*4 /))
-        call nc_diag_data2d("data2dsimple4_float", index_llong, (/ f + 1.00 + i, f + 2.00 + i, f + 3.00 + i, f + 4.00 + i /))
-        call nc_diag_data2d("data2dsimple4_float2", index_llong, (/ f + 2.00 + i, f + 4.00 + i /))
-        call nc_diag_data2d("data2dsimple5_double", index_llong, (/ d + 1.00 + i /))
+        call nc_diag_data2d("data2dsimple1", (/ i, i+1, i+2 /))
+        call nc_diag_data2d("data2dsimple2", (/ i*2, i*3, i*4 /))
+        call nc_diag_data2d("data2dsimple4_float", (/ f + 1.00 + i, f + 2.00 + i, f + 3.00 + i, f + 4.00 + i /))
+        call nc_diag_data2d("data2dsimple4_float2", (/ f + 2.00 + i, f + 4.00 + i /))
+        call nc_diag_data2d("data2dsimple5_double", (/ d + 1.00 + i /))
         
         write(str_chaninfo, "(A, I0)") "ci6_", i
         call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
@@ -78,7 +76,6 @@ program test_netcdf_layer
     
     !do i = 1, 10000000
     do i = 1, 10000!000
-        index_llong = i
         call nc_diag_header("headertestsimple", 123)
         
         call nc_diag_header("headertestsimple2_float", f)
@@ -91,18 +88,17 @@ program test_netcdf_layer
     end do
     
     do i = 1, 10!0000
-        index_llong = i
         write(str_metadata, "(A, I0)") "morehellometa_", i
         call nc_diag_metadata("metadatasimple8_str", str_metadata)
         
         write(str_data2d, "(A, I0)") "data2d_", i
-        call nc_diag_data2d("data2dsimple6_str", index_llong, (/ str_data2d, "fill1", "fill2" /))
+        call nc_diag_data2d("data2dsimple6_str", (/ str_data2d, "fill1", "fill2" /))
         
         ! This is broken... but it's an interesting testcase, as it breaks
         ! a LOT of stuff!
         ! index_llong = i needs to be commented out
         !call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
-        call nc_diag_data2d("data2dsimple7", index_llong, (/ i, i+1, i+2 /))
+        call nc_diag_data2d("data2dsimple7", (/ i, i+1, i+2 /))
     end do
     
     ! Add one entry... so we can test out valid/invalid data adding
@@ -135,8 +131,8 @@ program test_netcdf_layer
     ! variable length (the array input length).
     
     ! This is fine:
-    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "data2d_11", "fill1", "fill2" /))
-    call nc_diag_data2d("data2dsimple7", int8(11), (/ -1, -2, -3 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "data2d_11", "fill1", "fill2" /))
+    call nc_diag_data2d("data2dsimple7", (/ -1, -2, -3 /))
     call nc_diag_metadata("metadatasimple8_str", "morehellometa_11")
     call nc_diag_chaninfo("chaninfosimple8_str", "test5678")
     
@@ -163,14 +159,14 @@ program test_netcdf_layer
     call nc_diag_metadata("metadatasimple8_str", "morehellometa_b2")
     call nc_diag_metadata("metadatasimple6_str", "meta_b2")
     
-    call nc_diag_data2d("data2dsimple1", int8(11), (/ 1000, 2000, 3000 /))
-    call nc_diag_data2d("data2dsimple1", int8(12), (/ 2000, 4000, 6000 /))
-    call nc_diag_data2d("data2dsimple2", int8(11), (/ 1111, 2222, 3333 /))
-    call nc_diag_data2d("data2dsimple2", int8(12), (/ 2222, 4444, 6666 /))
-    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
-    call nc_diag_data2d("data2dsimple6_str", int8(12), (/ "boink", "kabam", "peekaboo" /))
-    call nc_diag_data2d("data2dsimple7", int8(11), (/ 20, 40, 60 /))
-    call nc_diag_data2d("data2dsimple7", int8(12), (/ 40, 80, 120 /))
+    call nc_diag_data2d("data2dsimple1", (/ 1000, 2000, 3000 /))
+    call nc_diag_data2d("data2dsimple1", (/ 2000, 4000, 6000 /))
+    call nc_diag_data2d("data2dsimple2", (/ 1111, 2222, 3333 /))
+    call nc_diag_data2d("data2dsimple2", (/ 2222, 4444, 6666 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "boink", "kabam", "peekaboo" /))
+    call nc_diag_data2d("data2dsimple7", (/ 20, 40, 60 /))
+    call nc_diag_data2d("data2dsimple7", (/ 40, 80, 120 /))
     
     print *, "Attempting to flush buf 1:"
     call nc_diag_flush_buffer
@@ -187,9 +183,9 @@ program test_netcdf_layer
     call nc_diag_metadata("metadatasimple1", 200)
     
     ! We can add something in the future!
-    call nc_diag_data2d("data2dsimple1", int8(14), (/ -1000, -2000, -3000 /))
-    call nc_diag_data2d("data2dsimple6_str", int8(14), (/ "aaaaaaaaa", "bbbbbbbb", "ccccccccc" /))
-    call nc_diag_data2d("data2dsimple7", int8(14), (/ 4000, 8000, 12000 /))
+    call nc_diag_data2d("data2dsimple1", (/ -1000, -2000, -3000 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "aaaaaaaaa", "bbbbbbbb", "ccccccccc" /))
+    call nc_diag_data2d("data2dsimple7", (/ 4000, 8000, 12000 /))
     
     print *, "Attempting to flush buf 2:"
     call nc_diag_flush_buffer
@@ -205,24 +201,24 @@ program test_netcdf_layer
     call nc_diag_metadata("metadatasimple8_str", "morehellometa_b6")
     
     ! We can still change an old value at the end!
-    call nc_diag_data2d("data2dsimple1", int8(11), (/ 2000, 4000, 6000 /))
-    call nc_diag_data2d("data2dsimple2", int8(11), (/ 1111, 2222, 3333 /))
+    call nc_diag_data2d("data2dsimple1", (/ 2000, 4000, 6000 /))
+    call nc_diag_data2d("data2dsimple2", (/ 1111, 2222, 3333 /))
     
-    call nc_diag_data2d("data2dsimple1", int8(12), (/ 4000, 6000, 8000 /))
-    call nc_diag_data2d("data2dsimple2", int8(12), (/ 2222, 4444, 6666 /))
+    call nc_diag_data2d("data2dsimple1", (/ 4000, 6000, 8000 /))
+    call nc_diag_data2d("data2dsimple2", (/ 2222, 4444, 6666 /))
     
-    call nc_diag_data2d("data2dsimple1", int8(13), (/ 6000, 8000, 10000 /))
-    call nc_diag_data2d("data2dsimple2", int8(13), (/ 3333, 6666, 9999 /))
+    call nc_diag_data2d("data2dsimple1", (/ 6000, 8000, 10000 /))
+    call nc_diag_data2d("data2dsimple2", (/ 3333, 6666, 9999 /))
     
     ! Out of order is fine too!
-    call nc_diag_data2d("data2dsimple6_str", int8(12), (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
-    call nc_diag_data2d("data2dsimple7", int8(12), (/ 20, 40, 60 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "mwahahaha", "arrrrrgh", "grrrrowwl" /))
+    call nc_diag_data2d("data2dsimple7", (/ 20, 40, 60 /))
     
-    call nc_diag_data2d("data2dsimple7", int8(13), (/ 200, 400, 600 /))
-    call nc_diag_data2d("data2dsimple6_str", int8(13), (/ "asdfghjk", "zxcvbnm", "qwerty" /))
+    call nc_diag_data2d("data2dsimple7", (/ 200, 400, 600 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "asdfghjk", "zxcvbnm", "qwerty" /))
     
-    call nc_diag_data2d("data2dsimple6_str", int8(11), (/ "boink", "kabam", "peekaboo" /))
-    call nc_diag_data2d("data2dsimple7", int8(11), (/ 40, 80, 120 /))
+    call nc_diag_data2d("data2dsimple6_str", (/ "boink", "kabam", "peekaboo" /))
+    call nc_diag_data2d("data2dsimple7", (/ 40, 80, 120 /))
     
     ! Even with buffering, you still can't overwrite nchans...
     ! (The following line, if uncommented, should result in an error!)
