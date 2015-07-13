@@ -20,13 +20,14 @@ endif
 ifeq ($(DISABLE_NETCDF), 1)
 	NETCDF_FLAGS=
 	COMPILE_FLAGS+=-DNO_NETCDF
-	F90FLAGS+=-static -fpp -g -pg -check bounds -warn all -traceback
+	F90FLAGS+=-O0 -static -fpp -g -check all -warn all -traceback \
+		-ftrapuv -debug all -fpe0 -warn all -traceback -debug extended
 	NETCDF_LAYER_DEPS+=netcdf_nonetcdf_decl.F90 \
 		netcdf_nonetcdf_imp.F90 \
 		netcdf_nonetcdf_putvar.F90
 else
-	F90FLAGS+=-fpp -g -pg -check bounds -fstack-protector -check all \
-		-fpe0 -warn all -traceback -debug extended
+	F90FLAGS+=-O0 -fpp -g -fstack-protector -check all \
+		-ftrapuv -debug all -fpe0 -warn all -traceback -debug extended
 	NETCDF_FLAGS+=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 		-lnetcdff -lnetcdf -lhdf5 -lcurl -lz -lrt -lmpi -lhdf5_hl -lhdf5 \
 		-lz -lsz -lgpfs -lmfhdf -ldf -ljpeg
