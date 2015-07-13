@@ -135,9 +135,12 @@
                                             diag_chaninfo_store%var_usage(curdatindex) - 1))
                                     
                                     ! Save the max string len
-                                    diag_chaninfo_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
+                                    diag_chaninfo_store%max_str_lens(curdatindex) = &
+                                        max_len_string_array(string_arr, diag_chaninfo_store%var_usage(curdatindex))
                                     
-                                    call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                                    call check(nf90_def_dim(ncid, data_dim_name, &
+                                        max_len_string_array(string_arr, &
+                                            diag_chaninfo_store%var_usage(curdatindex)), tmp_dim_id))
 #ifdef _DEBUG_MEM_
                                     print *, "Defining char var type..."
 #endif
@@ -313,7 +316,8 @@
                                         string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1))
                                         
-                                        string_arr_maxlen = max_len_string_array(string_arr)
+                                        string_arr_maxlen = max_len_string_array(string_arr, &
+                                            diag_chaninfo_store%var_usage(curdatindex))
                                         
                                         deallocate(string_arr)
                                         

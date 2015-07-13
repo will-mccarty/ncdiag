@@ -201,15 +201,24 @@ module utils
             end do
         end subroutine string_array_dump
         
-        function max_len_string_array(str_arr) result(max_len)
+        function max_len_string_array(str_arr, arr_length) result(max_len)
             character(len=*), intent(in) :: str_arr(:)
+            integer         , intent(in) :: arr_length
             
             integer :: i, max_len
             
             max_len = -1
             
-            do i = 1, size(str_arr)
+#ifdef _DEBUG_MEM_
+            write (*, "(A, I0)") " ** max_len_string_array: size(str_arr) is ", size(str_arr)
+#endif
+            
+            do i = 1, arr_length
                 if (len_trim(str_arr(i)) > max_len) max_len = len_trim(str_arr(i))
+#ifdef _DEBUG_MEM_
+                write (*, "(A, I0, A, I0)") "max_len_string_array: str_arr(", i, ") is " // trim(str_arr(i)) // ", size is ", len_trim(str_arr(i))
+                write (*, "(A, I0)") "max_len_string_array: max_len is ", max_len
+#endif
             end do
         end function max_len_string_array
         

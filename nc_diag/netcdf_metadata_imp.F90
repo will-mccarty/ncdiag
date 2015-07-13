@@ -95,9 +95,11 @@
                             end do
                             
                             ! Save the max string len
-                            diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr)
+                            diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr, &
+                                diag_metadata_store%stor_i_arr(curdatindex)%icount)
                             
-                            call check(nf90_def_dim(ncid, data_dim_name, max_len_string_array(string_arr), tmp_dim_id))
+                            call check(nf90_def_dim(ncid, data_dim_name, &
+                                diag_metadata_store%max_str_lens(curdatindex), tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
@@ -281,7 +283,8 @@
                                         string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                     end do
                                     
-                                    string_arr_maxlen = max_len_string_array(string_arr)
+                                    string_arr_maxlen = max_len_string_array(string_arr, &
+                                        diag_metadata_store%stor_i_arr(curdatindex)%icount)
                                     
                                     deallocate(string_arr)
                                 else
