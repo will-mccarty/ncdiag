@@ -125,7 +125,9 @@
                                         : diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
                                             diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
                                 
+#ifdef _DEBUG_MEM_
                                 write(*, "(A, I0)") "DEBUG DATA2D: tmp array size is: ", diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)
+#endif
                                 
                                 ! Now we can calculate the length!
                                 msl_tmp = max_len_string_array(string_arr, &
