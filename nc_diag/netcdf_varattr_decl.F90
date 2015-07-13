@@ -19,6 +19,7 @@
         ! and includes the variable storage type.
         type diag_varattr
             character(len=100), dimension(:), allocatable :: names
+            integer(i_byte),    dimension(:), allocatable :: types
             integer(i_long),    dimension(:), allocatable :: var_ids
             
             integer(i_llong)                              :: total

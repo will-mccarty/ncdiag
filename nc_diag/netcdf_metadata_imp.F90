@@ -123,6 +123,7 @@
 #endif
                         
                         call nc_diag_varattr_add_var(diag_metadata_store%names(curdatindex), &
+                                    diag_metadata_store%types(curdatindex), &
                                     diag_metadata_store%var_ids(curdatindex))
                         
                         ! Enable compression

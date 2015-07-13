@@ -44,6 +44,16 @@
                     allocate(diag_varattr_store%names(NLAYER_DEFAULT_ENT))
                 end if
                 
+                if (allocated(diag_varattr_store%types)) then
+                    if (diag_varattr_store%total >= size(diag_varattr_store%types)) then
+                        size_add = (size(diag_varattr_store%types) * 0.5) + addl_fields
+                        call nc_diag_realloc(diag_varattr_store%types, size_add)
+                    end if
+                else
+                    allocate(diag_varattr_store%types(NLAYER_DEFAULT_ENT))
+                    diag_varattr_store%types = -1
+                end if
+                
                 if (allocated(diag_varattr_store%var_ids)) then
                     if (diag_varattr_store%total >= size(diag_varattr_store%var_ids)) then
                         size_add = (size(diag_varattr_store%var_ids) * 0.5) + addl_fields
@@ -60,8 +70,9 @@
             
         end subroutine nc_diag_varattr_expand
         
-        subroutine nc_diag_varattr_add_var(var_name, var_id)
+        subroutine nc_diag_varattr_add_var(var_name, var_type, var_id)
             character(len=*), intent(in)    :: var_name
+            integer(i_byte),  intent(in)    :: var_type
             integer(i_long)                 :: var_id
             
             if (nc_diag_varattr_check_var(var_name)) then
@@ -73,6 +84,7 @@
                 call nc_diag_varattr_expand(1)
                 diag_varattr_store%total = diag_varattr_store%total + 1
                 diag_varattr_store%names(diag_varattr_store%total) = var_name
+                diag_varattr_store%types(diag_varattr_store%total) = var_type
                 diag_varattr_store%var_ids(diag_varattr_store%total) = var_id
 #ifdef _DEBUG_MEM_
                 print *, "done adding var!"

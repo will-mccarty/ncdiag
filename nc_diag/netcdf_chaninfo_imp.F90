@@ -162,6 +162,7 @@
 #endif
                                 
                                 call nc_diag_varattr_add_var(diag_chaninfo_store%names(curdatindex), &
+                                    diag_chaninfo_store%types(curdatindex), &
                                     diag_chaninfo_store%var_ids(curdatindex))
                                 
                                 if (data_type == NLAYER_STRING) then
