@@ -36,3 +36,19 @@
                 nc_diag_varattr_long_v, nc_diag_varattr_rsingle_v, &
                 nc_diag_varattr_rdouble_v
         end interface nc_diag_varattr
+        
+#ifdef NO_NETCDF
+        integer(i_byte), parameter :: NLAYER_FILL_BYTE   = -254
+        integer(i_short),parameter :: NLAYER_FILL_SHORT  = -254
+        integer(i_long), parameter :: NLAYER_FILL_LONG   = -254
+        real(r_single),  parameter :: NLAYER_FILL_FLOAT  = -254.567
+        real(r_double),  parameter :: NLAYER_FILL_DOUBLE = -254.56789
+        character,       parameter :: NLAYER_FILL_CHAR   = CHAR(0)
+#else
+        integer(i_byte), parameter :: NLAYER_FILL_BYTE   = NF90_FILL_BYTE
+        integer(i_short),parameter :: NLAYER_FILL_SHORT  = NF90_FILL_SHORT
+        integer(i_long), parameter :: NLAYER_FILL_LONG   = NF90_FILL_INT
+        real(r_single),  parameter :: NLAYER_FILL_FLOAT  = NF90_FILL_FLOAT
+        real(r_double),  parameter :: NLAYER_FILL_DOUBLE = NF90_FILL_DOUBLE
+        character,       parameter :: NLAYER_FILL_CHAR   = NF90_FILL_CHAR
+#endif
