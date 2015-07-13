@@ -253,7 +253,6 @@
                 call actionm(trim(action_str))
             end if
 #endif
-            print *, "Hello data2d data write!"
             if (init_done .AND. allocated(diag_data2d_store)) then
                 if (.NOT. diag_data2d_store%data_lock) then
                     do curdatindex = 1, diag_data2d_store%total
@@ -388,21 +387,10 @@
                                     ))
                                 deallocate(rdouble_arr)
                             else if (data_type == NLAYER_STRING) then
-                                print *, "curdatindex: ", curdatindex
-                                print *, "DUMMY: ", diag_data2d_store%max_str_lens(curdatindex)
-                                print *, "DUMMY2: ", diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                print *, "DUMMY3: ", diag_data2d_store%max_lens(curdatindex)
-                                
-                                
-                                print *, "ALLOCATING!"
-                                
                                 allocate(character(diag_data2d_store%max_str_lens(curdatindex)) :: &
                                     string_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
                                     diag_data2d_store%max_lens(curdatindex) &
                                     ))
-                                
-                                print *, "ALLOCATION DONE!"
-                                
                                 
                                 string_arr = NLAYER_FILL_CHAR
                                 
@@ -422,10 +410,7 @@
                                         diag_data2d_store%stor_i_arr(curdatindex)%icount /) &
                                     ))
                                 
-                                print *, "DEALLOCATING!"
                                 deallocate(string_arr)
-                                
-                                print *, "DEALLOCATION DONE!"
                             end if
                             
                             ! Check for data flushing, and if so, update the relative indexes
