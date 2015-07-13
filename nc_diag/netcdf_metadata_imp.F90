@@ -58,7 +58,7 @@
                 if (present(internal)) then
                     write(action_str, "(A, L, A)") "nc_diag_metadata_write_def(internal = ", internal, ")"
                 else
-                    write(action_str, "(A)") "nc_diag_metadata_write_ddef(internal = (not specified))"
+                    write(action_str, "(A)") "nc_diag_metadata_write_def(internal = (not specified))"
                 end if
                 call actionm(trim(action_str))
             end if
@@ -332,7 +332,7 @@
                         ! Lock data writing
                         diag_metadata_store%data_lock = .TRUE.
 #ifdef _DEBUG_MEM_
-                        print *, "In data lock mode!"'
+                        print *, "In data lock mode!"
 #endif
                     end if
                 else
@@ -910,7 +910,6 @@
             
             ! Now add the actual entry!
             diag_metadata_store%m_long(diag_metadata_store%acount(3)) = metadata_value
-            
             diag_metadata_store%stor_i_arr(var_index)%index_arr(diag_metadata_store%stor_i_arr(var_index)%icount) = &
                 diag_metadata_store%acount(3)
         end subroutine nc_diag_metadata_long
