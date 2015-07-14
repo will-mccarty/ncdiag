@@ -235,6 +235,10 @@
             ! an undefined variable occurs... even though it's set
             ! by the DO loop...
             integer(i_long)                       :: curdatindex = 1, j
+#ifdef _DEBUG_MEM_
+            ! Index counter for inner loop (intermediate) array debug
+            integer(i_long)                       :: i
+#endif
             
             integer(i_byte), dimension(:, :), allocatable :: byte_arr
             integer(i_short),dimension(:, :), allocatable :: short_arr
@@ -268,17 +272,29 @@
                         
                         ! Make sure we have data to write in the first place!
                         if (diag_data2d_store%stor_i_arr(curdatindex)%icount > 0) then
+                            ! MAJOR GOTCHA:
+                            ! Fortran is weird... and by weird, we mean Fortran's indexing
+                            ! system! Fortran uses a column-major system, which means that
+                            ! we MUST allocate and store in a column-major format! Each
+                            ! column needs to store a single array of data. Before, with
+                            ! single dimensions, this didn't matter since the data itself
+                            ! was automatically stored into a column. With 2D data,
+                            ! we MUST be aware of the reversed dimensions!
+                            ! (NetCDF4 respects the Fortran way, and takes in a "row" of
+                            ! data via columns!)
+                            
                             if (data_type == NLAYER_BYTE) then
-                                allocate(byte_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex)))
+                                allocate(byte_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount))
                                 
                                 byte_arr = NLAYER_FILL_BYTE
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    byte_arr(j, :) = diag_data2d_store%m_byte( &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    byte_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_byte( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
                                 call check(nf90_put_var(&
@@ -291,16 +307,17 @@
                                 
                                 deallocate(byte_arr)
                             else if (data_type == NLAYER_SHORT) then
-                                allocate(short_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex)))
+                                allocate(short_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount))
                                 
                                 short_arr = NLAYER_FILL_SHORT
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    short_arr(j, :) = diag_data2d_store%m_short( &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    short_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_short( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
                                 call check(nf90_put_var(&
@@ -313,16 +330,47 @@
                                 
                                 deallocate(short_arr)
                             else if (data_type == NLAYER_LONG) then
-                                allocate(long_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex)))
+                                !allocate(long_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
+                                !    diag_data2d_store%max_lens(curdatindex)))
+                                
+                                allocate(long_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount))
+                                
+#ifdef _DEBUG_MEM_
+                                write (*, "(A, I0)") "NLAYER_FILL_LONG = ", NLAYER_FILL_LONG
+#endif
                                 
                                 long_arr = NLAYER_FILL_LONG
                                 
+#ifdef _DEBUG_MEM_
+                                write (*, "(A)") "************ DEBUG: INITIAL var array for " // trim(data2d_name)
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    long_arr(j, :) = diag_data2d_store%m_long( &
+                                    print *, long_arr(:, j)
+                                end do
+#endif
+                                
+                                do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+#ifdef _DEBUG_MEM_
+                                    write (*, "(A, I0, A)") "Adding to long_arr, index ", j, ":"
+                                    print *, diag_data2d_store%m_long( &
                                         diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
                                         diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
+                                    write (*, "(A, I0)") " -> length of subarr: ", diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)
+#endif
+                                    
+                                    long_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_long( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
+                                    
+#ifdef _DEBUG_MEM_
+                                    write (*, "(A)") "************ DEBUG: INTERMEDIATE var array for " // trim(data2d_name)
+                                    do i = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                        print *, long_arr(:, i)
+                                    end do
+#endif
                                 end do
                                 
 #ifdef _DEBUG_MEM_
@@ -331,6 +379,15 @@
                                     1 + diag_data2d_store%rel_indexes(curdatindex), &
                                     "), count = (", diag_data2d_store%stor_i_arr(curdatindex)%icount, &
                                     ", ", 1, ")"
+                                
+                                write (*, "(A, I0, A, I0)") "************ DEBUG: dim for " // trim(data2d_name) // ": ", &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount, " by ", &
+                                    diag_data2d_store%max_lens(curdatindex)
+                                write (*, "(A)") "************ DEBUG: var array for " // trim(data2d_name)
+                                
+                                do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    print *, long_arr(:, j)
+                                end do
 #endif
                                 
                                 call check(nf90_put_var(&
@@ -343,16 +400,17 @@
                                 
                                 deallocate(long_arr)
                             else if (data_type == NLAYER_FLOAT) then
-                                allocate(rsingle_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex)))
+                                allocate(rsingle_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount))
                                 
                                 rsingle_arr = NLAYER_FILL_FLOAT
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    rsingle_arr(j, :) = diag_data2d_store%m_rsingle( &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    rsingle_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_rsingle( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
                                 !print *, "end queue / start put"
@@ -368,16 +426,17 @@
                                 !print *, "end put"
                                 
                             else if (data_type == NLAYER_DOUBLE) then
-                                allocate(rdouble_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex)))
+                                allocate(rdouble_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount))
                                 
                                 rdouble_arr = NLAYER_FILL_DOUBLE
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    rdouble_arr(j, :) = diag_data2d_store%m_rdouble( &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    rdouble_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_rdouble( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
                                 call check(nf90_put_var(&
@@ -390,17 +449,18 @@
                                 deallocate(rdouble_arr)
                             else if (data_type == NLAYER_STRING) then
                                 allocate(character(diag_data2d_store%max_str_lens(curdatindex)) :: &
-                                    string_arr(diag_data2d_store%stor_i_arr(curdatindex)%icount, &
-                                    diag_data2d_store%max_lens(curdatindex) &
+                                    string_arr(diag_data2d_store%max_lens(curdatindex), &
+                                    diag_data2d_store%stor_i_arr(curdatindex)%icount &
                                     ))
                                 
                                 string_arr = NLAYER_FILL_CHAR
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                    string_arr(j, :) = diag_data2d_store%m_string( &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    string_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
+                                        diag_data2d_store%m_string( &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
                                 call check(nf90_put_var(&
