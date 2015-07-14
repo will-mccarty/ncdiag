@@ -342,10 +342,10 @@ module netcdf_layer
 #endif
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[31m" // &
-                            " ** ERROR: " // err // &
+                            " **   ERROR: " // err // &
                             CHAR(27) // "[0m"
 #else
-            write(*, "(A)") " ** ERROR: " // err
+            write(*, "(A)") " **   ERROR: " // err
 #endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
@@ -386,10 +386,10 @@ module netcdf_layer
             if (enable_action) &
 #ifdef ANSI_TERM_COLORS
                 write(*, "(A)") CHAR(27) // "[36m" // &
-                                " ** ACTION: " // act // &
+                                " **  ACTION: " // act // &
                                 CHAR(27) // "[0m"
 #else
-                write(*, "(A)") " ** ACTION: " // act
+                write(*, "(A)") " **  ACTION: " // act
 #endif
         end subroutine actionm
 #endif
@@ -412,10 +412,10 @@ module netcdf_layer
             if (enable_info) &
 #ifdef ANSI_TERM_COLORS
                 write(*, "(A)") CHAR(27) // "[34m" // &
-                                " ** INFO: " // ifo // &
+                                " **    INFO: " // ifo // &
                                 CHAR(27) // "[0m"
 #else
-                write(*, "(A)") " ** INFO: " // ifo
+                write(*, "(A)") " **    INFO: " // ifo
 #endif
         end subroutine info
         
