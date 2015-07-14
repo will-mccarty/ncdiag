@@ -149,6 +149,10 @@
             logical                                       :: def_lock
             logical                                       :: data_lock
             
+            ! Strict checking for bounds?
+            ! (Making sure that the sizes are consistent!)
+            logical                                       :: strict_check
+            
             integer(i_byte),     dimension(:),allocatable :: m_byte
             integer(i_short),    dimension(:),allocatable :: m_short
             integer(i_long),     dimension(:),allocatable :: m_long

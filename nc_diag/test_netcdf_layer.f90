@@ -25,6 +25,14 @@ program test_netcdf_layer
     
     call nc_diag_init("test.nc")
     
+    ! Uncomment below line to enable strict mode, aka strict
+    ! variable bounds checking. When strict mode is enabled, if any
+    ! variables have different lengths from each other, or if there are
+    ! any differences between the variable rows (e.g. an uneven array),
+    ! an error will occur and the program will halt.
+    
+    ! call nc_diag_set_strict(.TRUE.)
+    
 #ifndef IGNORE_VERSION
     write (*, "(A, L)") "Is NetCDF layer string handling broken? (T for yes, F for no): ", NLAYER_STRING_BROKEN
 #endif
@@ -111,6 +119,14 @@ program test_netcdf_layer
     ! Invalid buffered write test - we can't do any buffered write
     ! until we lock definitions:
     !call nc_diag_flush_buffer
+    
+    ! This, combined with nc_diag_set_strict(.TRUE.), will result in
+    ! an error. We can also add 4 elements instead of 2 to achieve the
+    ! same error. Note that after definition locking, adding more than 3
+    ! elements (assuming we didn't add 4 elements here) won't work,
+    ! since it violates the length check. (That means we won't even
+    ! see the strict bounds checking error!)
+    call nc_diag_data2d("data2dsimple1", (/ 2000, 4000 /))
     
     !------------------------------------------------------------------
     ! Variable attribute test! (With definition locking on the side!)

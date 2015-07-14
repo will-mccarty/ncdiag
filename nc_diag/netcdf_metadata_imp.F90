@@ -180,6 +180,11 @@
             
             integer(i_llong)                           :: string_arr_maxlen
             
+            integer(i_llong)                           :: data_length_counter = -1
+            character(len=100)                         :: counter_data_name
+            integer(i_llong)                           :: current_length_count = -1
+            character(len=1000)                        :: data_uneven_msg
+            
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
@@ -202,6 +207,34 @@
                         data_type = diag_metadata_store%types(curdatindex)
                         
                         call info("metadata: writing " // trim(data_name))
+                        
+                        ! Warn about data inconsistencies
+                        if (.NOT. (present(flush_data_only) .AND. flush_data_only)) then
+                            current_length_count = diag_metadata_store%stor_i_arr(curdatindex)%icount + &
+                                diag_metadata_store%rel_indexes(curdatindex)
+                            
+                            if (data_length_counter == -1) then
+                                data_length_counter = current_length_count
+                                counter_data_name = data_name
+                            else
+                                if (data_length_counter /= current_length_count) then
+                                    ! Show message!
+                                    ! NOTE - I0 and TRIM are Fortran 95 specs
+                                    write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                        trim(data_name) // " (", &
+                                        current_length_count, &
+                                        ")" // char(10) // &
+                                        "             differs from variable " // trim(counter_data_name) // &
+                                        " (", data_length_counter, ")!"
+                                    
+                                    if (diag_metadata_store%strict_check) then
+                                        call error(trim(data_uneven_msg))
+                                    else
+                                        call warning(trim(data_uneven_msg))
+                                    end if
+                                end if
+                            end if
+                        end if
                         
                         ! Make sure we have data to write in the first place!
                         if (diag_metadata_store%stor_i_arr(curdatindex)%icount > 0) then
@@ -347,6 +380,16 @@
             print *, "All done writing metadata data"
 #endif
         end subroutine nc_diag_metadata_write_data
+        
+        subroutine nc_diag_metadata_set_strict(enable_strict)
+            logical, intent(in) :: enable_strict
+            
+            if (init_done .AND. allocated(diag_metadata_store)) then
+                diag_metadata_store%strict_check = enable_strict
+            else
+                call error("Can't set strictness level for metadata - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_metadata_set_strict
         
         !subroutine nc_diag_metadata_write
         !    integer(i_byte)                       :: data_type

@@ -43,9 +43,34 @@
             
             integer :: i, max_len
             
+            character(len=1000)                        :: data_uneven_msg
+            
             max_len = -1
             
             do i = 1, diag_data2d_store%stor_i_arr(var_index)%icount
+                ! Only show a message if strict checking is enabled.
+                ! Otherwise, show the message later in data writing.
+                if (diag_data2d_store%strict_check .AND. &
+                    (diag_data2d_store%stor_i_arr(var_index)%length_arr(i) /= max_len) .AND. &
+                    (max_len /= -1)) then
+                    ! Show message!
+                    ! NOTE - I0 and TRIM are Fortran 95 specs
+                    write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                        trim(diag_data2d_store%names(var_index)) // " (", &
+                        diag_data2d_store%stor_i_arr(var_index)%length_arr(i), &
+                        ")" // char(10) // &
+                        "             does not match the variable length" // &
+                        " (", max_len, ")!"
+                    
+                    ! Probably not needed, since this only triggers on a
+                    ! strict check... but just in case...
+                    if (diag_data2d_store%strict_check) then
+                        call error(trim(data_uneven_msg))
+                    else
+                        call warning(trim(data_uneven_msg))
+                    end if
+                end if
+                
                 if (diag_data2d_store%stor_i_arr(var_index)%length_arr(i) > max_len) &
                     max_len = diag_data2d_store%stor_i_arr(var_index)%length_arr(i)
             end do
@@ -247,6 +272,11 @@
             real(r_double),  dimension(:, :), allocatable :: rdouble_arr
             character(len=:),dimension(:, :), allocatable :: string_arr
             
+            integer(i_llong)                              :: data_length_counter = -1
+            character(len=100)                            :: counter_data_name
+            integer(i_llong)                              :: current_length_count = -1
+            character(len=1000)                           :: data_uneven_msg
+            
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
@@ -270,6 +300,34 @@
                         
                         call info("data2d: writing " // trim(data2d_name))
                         
+                        ! Warn about data inconsistencies
+                        if (.NOT. (present(flush_data_only) .AND. flush_data_only)) then
+                            current_length_count = diag_data2d_store%stor_i_arr(curdatindex)%icount + &
+                                diag_data2d_store%rel_indexes(curdatindex)
+                            
+                            if (data_length_counter == -1) then
+                                data_length_counter = current_length_count
+                                counter_data_name = data2d_name
+                            else
+                                if (data_length_counter /= current_length_count) then
+                                    ! Show message!
+                                    ! NOTE - I0 and TRIM are Fortran 95 specs
+                                    write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                        trim(data2d_name) // " (", &
+                                        current_length_count, &
+                                        ")" // char(10) // &
+                                        "             differs from variable " // trim(counter_data_name) // &
+                                        " (", data_length_counter, ")!"
+                                    
+                                    if (diag_data2d_store%strict_check) then
+                                        call error(trim(data_uneven_msg))
+                                    else
+                                        call warning(trim(data_uneven_msg))
+                                    end if
+                                end if
+                            end if
+                        end if
+                        
                         ! Make sure we have data to write in the first place!
                         if (diag_data2d_store%stor_i_arr(curdatindex)%icount > 0) then
                             ! MAJOR GOTCHA:
@@ -290,6 +348,25 @@
                                 byte_arr = NLAYER_FILL_BYTE
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
                                     byte_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
                                         diag_data2d_store%m_byte( &
                                             diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
@@ -313,6 +390,25 @@
                                 short_arr = NLAYER_FILL_SHORT
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
                                     short_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
                                         diag_data2d_store%m_short( &
                                             diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
@@ -350,6 +446,25 @@
 #endif
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
 #ifdef _DEBUG_MEM_
                                     write (*, "(A, I0, A)") "Adding to long_arr, index ", j, ":"
                                     print *, diag_data2d_store%m_long( &
@@ -406,6 +521,25 @@
                                 rsingle_arr = NLAYER_FILL_FLOAT
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
                                     rsingle_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
                                         diag_data2d_store%m_rsingle( &
                                             diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
@@ -432,6 +566,25 @@
                                 rdouble_arr = NLAYER_FILL_DOUBLE
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
                                     rdouble_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
                                         diag_data2d_store%m_rdouble( &
                                             diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
@@ -456,6 +609,25 @@
                                 string_arr = NLAYER_FILL_CHAR
                                 
                                 do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    ! Just in case our definition checks failed...
+                                    if (diag_data2d_store%max_lens(curdatindex) /= &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)) then
+                                        ! Show message!
+                                        ! NOTE - I0 and TRIM are Fortran 95 specs
+                                        write (data_uneven_msg, "(A, I0, A, I0, A)") "Amount of data written in " // &
+                                            trim(data2d_name) // " (", &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), &
+                                            ")" // char(10) // &
+                                            "             does not match the variable length" // &
+                                            " (", diag_data2d_store%max_lens(curdatindex), ")!"
+                                        
+                                        if (diag_data2d_store%strict_check) then
+                                            call error(trim(data_uneven_msg))
+                                        else
+                                            call warning(trim(data_uneven_msg))
+                                        end if
+                                    end if
+                                    
                                     string_arr(1 : diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j), j) = &
                                         diag_data2d_store%m_string( &
                                             diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) : &
@@ -517,6 +689,17 @@
             print *, "All done writing data2d data"
 #endif
         end subroutine nc_diag_data2d_write_data
+        
+        ! Set strict checking
+        subroutine nc_diag_data2d_set_strict(enable_strict)
+            logical, intent(in) :: enable_strict
+            
+            if (init_done .AND. allocated(diag_data2d_store)) then
+                diag_data2d_store%strict_check = enable_strict
+            else
+                call error("Can't set strictness level for data2d - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_data2d_set_strict
         
         !subroutine nc_diag_data2d_write
         !    integer(i_byte)                       :: data_type

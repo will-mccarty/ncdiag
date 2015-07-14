@@ -204,7 +204,7 @@
             integer(i_long)                       :: data_type_index
             character(len=100)                    :: data_name
             
-            character(len=1000)                   :: warning_str
+            character(len=1000)                   :: nchan_empty_msg
             
             integer(i_llong)               :: curdatindex, j
             integer(i_long)                :: string_arr_maxlen
@@ -241,12 +241,19 @@
                                     ((diag_chaninfo_store%var_usage(curdatindex) + &
                                         diag_chaninfo_store%rel_indexes(curdatindex)) < diag_chaninfo_store%nchans)) then
                                     ! NOTE - I0 and TRIM are Fortran 95 specs
-                                    write (warning_str, "(A, A, A, I0, A, I0, A)") "Amount of data written in ", &
+                                    write (nchan_empty_msg, "(A, A, A, I0, A, I0, A)") "Amount of data written in ", &
                                         trim(data_name), " (", &
                                         diag_chaninfo_store%var_usage(curdatindex) + &
                                             diag_chaninfo_store%rel_indexes(curdatindex), &
-                                        ") is less than nchans (", diag_chaninfo_store%nchans, ")!"
-                                    call warning(trim(warning_str))
+                                        ")"  // char(10) // &
+                                        "             is less than nchans (", diag_chaninfo_store%nchans, ")!"
+                                    
+                                    if (diag_chaninfo_store%strict_check) then
+                                        call error(trim(nchan_empty_msg))
+                                    else
+                                        call warning(trim(nchan_empty_msg))
+                                    end if
+                                    
                                     !call warning("Amount of data written in XXXX (N) is less than nchans (N)!")
                                 end if
                                 
@@ -389,6 +396,17 @@
             end if
             
         end subroutine nc_diag_chaninfo_write_data
+        
+        ! Set strict checking
+        subroutine nc_diag_chaninfo_set_strict(enable_strict)
+            logical, intent(in) :: enable_strict
+            
+            if (init_done .AND. allocated(diag_chaninfo_store)) then
+                diag_chaninfo_store%strict_check = enable_strict
+            else
+                call error("Can't set strictness level for chaninfo - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_chaninfo_set_strict
         
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_chaninfo_prealloc_vars(num_of_addl_vars)

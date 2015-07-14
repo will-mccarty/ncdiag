@@ -327,6 +327,18 @@ module netcdf_layer
 #endif
         end subroutine
         
+        subroutine nc_diag_set_strict(enable_strict)
+            logical, intent(in) :: enable_strict
+            
+            if (init_done) then
+                call nc_diag_chaninfo_set_strict(enable_strict)
+                call nc_diag_metadata_set_strict(enable_strict)
+                call nc_diag_data2d_set_strict(enable_strict)
+            else
+                call error("Can't set strictness level - NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_set_strict
+        
         subroutine check(status)
           integer, intent ( in) :: status
           

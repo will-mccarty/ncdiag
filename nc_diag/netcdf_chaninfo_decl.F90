@@ -30,6 +30,10 @@
             logical                                       :: def_lock
             logical                                       :: data_lock
             
+            ! Strict checking for bounds?
+            ! (Making sure that the sizes are consistent!)
+            logical                                       :: strict_check
+            
             !-----------------------------------------------------------
             ! Variable storage
             !-----------------------------------------------------------
