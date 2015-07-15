@@ -30,6 +30,16 @@
             end if
         end function nc_diag_varattr_lookup_var
         
+        subroutine nc_diag_varattr_make_nobs_dim
+            if (init_done .AND. allocated(diag_varattr_store)) then
+                if (diag_varattr_store%nobs_dim_id == -1) then
+                    call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_varattr_store%nobs_dim_id))
+                end if
+            else
+                call error("NetCDF4 layer not initialized yet!")
+            end if
+        end subroutine nc_diag_varattr_make_nobs_dim
+        
         subroutine nc_diag_varattr_expand(addl_fields)
             integer(i_llong), intent(in) :: addl_fields
             integer(i_llong)             :: size_add

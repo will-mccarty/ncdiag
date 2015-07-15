@@ -160,7 +160,6 @@
             real(r_double),      dimension(:),allocatable :: m_rdouble
             character(len=1000), dimension(:),allocatable :: m_string
             
-            integer(i_long)                               :: nobs_dim_id
             integer(i_long),    dimension(:), allocatable :: var_dim_ids
             integer(i_long),    dimension(:), allocatable :: var_ids
         end type diag_data2d

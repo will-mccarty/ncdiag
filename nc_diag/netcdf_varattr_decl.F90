@@ -23,6 +23,9 @@
             integer(i_long),    dimension(:), allocatable :: var_ids
             
             integer(i_llong)                              :: total
+            
+            ! Global nobs dimension ID
+            integer(i_long)                               :: nobs_dim_id = -1
         end type diag_varattr
         
         type(diag_varattr), allocatable :: diag_varattr_store

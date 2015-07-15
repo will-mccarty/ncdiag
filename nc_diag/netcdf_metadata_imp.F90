@@ -66,7 +66,9 @@
             
             if (init_done) then
                 if (.NOT. diag_metadata_store%def_lock) then
-                    call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_metadata_store%nobs_dim_id))
+                    ! Use global nobs ID!
+                    ! Call subroutine to ensure the nobs dim is created already...
+                    call nc_diag_varattr_make_nobs_dim
                     
                     do curdatindex = 1, diag_metadata_store%total
                         data_name = diag_metadata_store%names(curdatindex)
@@ -106,7 +108,7 @@
 #endif
                             
                             call check(nf90_def_var(ncid, data_name, nc_data_type, &
-                                (/ tmp_dim_id, diag_metadata_store%nobs_dim_id /), &
+                                (/ tmp_dim_id, diag_varattr_store%nobs_dim_id /), &
                                 diag_metadata_store%var_ids(curdatindex)))
                             
 #ifdef _DEBUG_MEM_
@@ -114,7 +116,7 @@
 #endif
                             deallocate(string_arr)
                         else
-                            call check(nf90_def_var(ncid, data_name, nc_data_type, diag_metadata_store%nobs_dim_id, &
+                            call check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
                                 diag_metadata_store%var_ids(curdatindex)))
                         end if
                         

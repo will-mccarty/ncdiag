@@ -107,7 +107,9 @@
             
             if (init_done) then
                 if (.NOT. diag_data2d_store%def_lock) then
-                    call check(nf90_def_dim(ncid, "nobs_data2d", NF90_UNLIMITED, diag_data2d_store%nobs_dim_id))
+                    ! Use global nobs ID!
+                    ! Call subroutine to ensure the nobs dim is created already...
+                    call nc_diag_varattr_make_nobs_dim
                     
                     do curdatindex = 1, diag_data2d_store%total
                         data2d_name = diag_data2d_store%names(curdatindex)
@@ -186,7 +188,7 @@
 #endif
                             
                             call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
-                                (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
+                                (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
                                 diag_data2d_store%var_ids(curdatindex)))
                             
 #ifdef _DEBUG_MEM_
@@ -204,7 +206,7 @@
                             print *, diag_data2d_store%max_lens(curdatindex), "x unlimited (NetCDF order)"
 #endif
                             call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
-                                (/ diag_data2d_store%var_dim_ids(curdatindex), diag_data2d_store%nobs_dim_id /), &
+                                (/ diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
                                 diag_data2d_store%var_ids(curdatindex)))
                         end if
                         
