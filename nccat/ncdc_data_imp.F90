@@ -6,6 +6,8 @@
             integer, dimension(:), allocatable :: cur_out_dim_sizes
             integer, dimension(:), allocatable :: cur_dim_sizes
             
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_in_dim_names(:)
+            
             call info("Concatenating data to output file...")
             
 #ifdef DEBUG
@@ -33,6 +35,13 @@
                     ! Get top level info about the file!
                     call check(nf90_inquire(ncid_input, nDimensions = input_ndims, &
                         nVariables = input_nvars, nAttributes = input_nattrs))
+                    
+                    ! Dimensions
+                    allocate(tmp_in_dim_names(input_ndims))
+                    do tmp_dim_index = 1, input_ndims
+                        call check(nf90_inquire_dimension(ncid_input, tmp_dim_index, &
+                            tmp_in_dim_names(tmp_dim_index)))
+                    end do
                     
                     ! Variables
 #ifdef DEBUG
@@ -284,9 +293,12 @@
                     if (any(dim_sizes == -1)) then
                         do i = 1, dim_arr_total
                             ! Check for -1 - unlimited indicator
-                            if (dim_sizes(i) == -1) then
+                            if ((dim_sizes(i) == -1) .AND. (any(tmp_in_dim_names == dim_names(i)))) then
                                 ! We got one! But... we need to find this dimension in the file.
                                 ! First, lookup dimension name to get dimension ID.
+#ifdef DEBUG
+                                print *, "Unlimited dimension name: ", trim(dim_names(i))
+#endif
                                 call check(nf90_inq_dimid(ncid_input, dim_names(i), cur_dim_id))
                                 
                                 ! Then, grab the current unlimited dimension length!
@@ -303,6 +315,7 @@
                     !deallocate(unlim_dims)
                     !deallocate(tmp_input_dimids)
                     deallocate(tmp_input_varids)
+                    deallocate(tmp_in_dim_names)
                 end if
             end do
         end subroutine nc_diag_cat_data_pass
