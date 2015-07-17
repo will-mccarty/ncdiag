@@ -48,10 +48,6 @@
                     write (*, "(A, I0)") "Number of variables: ", input_nvars
 #endif
                     
-                    if (cached_nvars == -1) cached_nvars = input_nvars
-                    if (cached_nvars /= input_nvars) &
-                        call warning("Number of variables in " // trim(input_file) // "does not match first input file.")
-                    
                     allocate(tmp_input_varids(input_nvars))
                     
                     ! Loop through each variable!
