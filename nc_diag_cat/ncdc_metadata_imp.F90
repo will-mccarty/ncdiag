@@ -317,19 +317,24 @@
             
             if (dim_size /= -1) then
                 ! Add/update size
-                if ((dim_sizes(dim_index) /= 0) .AND. (dim_size /= dim_sizes(dim_index))) then
-                    write (err_string, "(A, I0, A, I0, A)") &
-                        "Fixed dimension length changed between files!" // &
-                        CHAR(10) // "             " // &
-                        "(Fixed dimension '" // trim(dim_name) // "' changed from length ", &
-                        dim_sizes(dim_index), &
-                        CHAR(10) // "             " // &
-                        "to ", &
-                        dim_size, &
-                        "!)"
-                    call error(trim(err_string))
+                if (index(dim_name, "_maxstrlen") /= 0) then
+                    ! Use the maximum as the new size... and skip the check.
+                    if (dim_size > dim_sizes(dim_index)) dim_sizes(dim_index) = dim_size
+                else
+                    if ((dim_sizes(dim_index) /= 0) .AND. (dim_size /= dim_sizes(dim_index))) then
+                        write (err_string, "(A, I0, A, I0, A)") &
+                            "Fixed dimension length changed between files!" // &
+                            CHAR(10) // "             " // &
+                            "(Fixed dimension '" // trim(dim_name) // "' changed from length ", &
+                            dim_sizes(dim_index), &
+                            CHAR(10) // "             " // &
+                            "to ", &
+                            dim_size, &
+                            "!)"
+                        call error(trim(err_string))
+                    end if
+                    dim_sizes(dim_index) = dim_size
                 end if
-                dim_sizes(dim_index) = dim_size
             else
                 if ((dim_sizes(dim_index) /= -1) .AND. (dim_sizes(dim_index) /= 0)) then
                     write (err_string, "(A, I0, A)") &
