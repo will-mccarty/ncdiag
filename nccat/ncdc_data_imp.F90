@@ -8,6 +8,8 @@
             
             character(len=NF90_MAX_NAME) , allocatable :: tmp_in_dim_names(:)
             
+            character(len=1000)                :: err_string
+            
             call info("Concatenating data to output file...")
             
 #ifdef DEBUG
@@ -198,7 +200,14 @@
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     deallocate(string_buffer)
                                 else
-                                    call error("Invalid type detected during write.")
+                                    write (err_string, "(A, I0, A)") &
+                                        "Invalid type detected during write." // &
+                                        CHAR(10) // "             " // &
+                                        "(Variable '" // trim(tmp_var_name) // "' has an type of ", &
+                                        tmp_var_type, "," // &
+                                        CHAR(10) // "             " // &
+                                        "which is invalid!)"
+                                    call error(trim(err_string))
                                 end if
                             else if ((cur_out_var_ndims == 2) .OR. &
                                 ((cur_out_var_ndims == 3) .AND. (tmp_var_type == NF90_CHAR))) then
@@ -260,7 +269,14 @@
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                     deallocate(string_2d_buffer)
                                 else
-                                    call error("Invalid type detected during write.")
+                                    write (err_string, "(A, I0, A)") &
+                                        "Invalid type detected during write." // &
+                                        CHAR(10) // "             " // &
+                                        "(Variable '" // trim(tmp_var_name) // "' has an type of ", &
+                                        tmp_var_type, "," // &
+                                        CHAR(10) // "             " // &
+                                        "which is invalid!)"
+                                    call error(trim(err_string))
                                 end if
                             end if
                             

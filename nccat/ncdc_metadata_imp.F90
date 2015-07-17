@@ -1,4 +1,5 @@
         subroutine nc_diag_cat_metadata_pass
+            character(len=1000) :: err_string
             input_count = cli_arg_count - 2
             
             call info("Scanning NetCDF files for dimensions and variables...")
@@ -28,7 +29,7 @@
                         cached_ndims = input_ndims
                     
                     if (cached_ndims /= input_ndims) &
-                        call warning("Number of dimensions in " // trim(input_file) // "does not match first input file.")
+                        call warning("Number of dimensions in " // trim(input_file) // " does not match first input file.")
                     
                     allocate(tmp_input_dimids(input_ndims))
                     
@@ -83,7 +84,7 @@
                     
                     if (cached_nvars == -1) cached_nvars = input_nvars
                     if (cached_nvars /= input_nvars) &
-                        call warning("Number of variables in " // trim(input_file) // "does not match first input file.")
+                        call warning("Number of variables in " // trim(input_file) // " does not match first input file.")
                     
                     allocate(tmp_input_varids(input_nvars))
                     
@@ -135,7 +136,13 @@
                             
                             call nc_diag_cat_metadata_add_var(tmp_var_name, tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
                         else
-                            call error("Variables with >2 dimensions NOT supported.")
+                            write (err_string, "(A, I0, A)") &
+                                "Variables with >2 dimensions NOT supported." // &
+                                CHAR(10) // "             " // &
+                                "(Variable '" // trim(tmp_var_name) // "' has ", &
+                                tmp_var_ndims, &
+                                " dimensions!)"
+                            call error(trim(err_string))
                         end if
                         ! Deallocate
                         deallocate(tmp_var_dimids)
@@ -266,6 +273,7 @@
             integer,optional, intent(in)    :: dim_ul_size
             
             integer                         :: dim_index
+            character(len=1000)             :: err_string
             
             dim_index = nc_diag_cat_lookup_dim(dim_name)
             
@@ -310,12 +318,31 @@
             if (dim_size /= -1) then
                 ! Add/update size
                 if ((dim_sizes(dim_index) /= 0) .AND. (dim_size /= dim_sizes(dim_index))) then
-                    call error("Fixed dimension length changed between files!")
+                    write (err_string, "(A, I0, A, I0, A)") &
+                        "Fixed dimension length changed between files!" // &
+                        CHAR(10) // "             " // &
+                        "(Fixed dimension '" // trim(dim_name) // "' changed from length ", &
+                        dim_sizes(dim_index), &
+                        CHAR(10) // "             " // &
+                        "to ", &
+                        dim_size, &
+                        "!)"
+                    call error(trim(err_string))
                 end if
                 dim_sizes(dim_index) = dim_size
             else
                 if ((dim_sizes(dim_index) /= -1) .AND. (dim_sizes(dim_index) /= 0)) then
-                    call error("Changed from a fixed dimension length to unlimited dimension length.")
+                    write (err_string, "(A, I0, A)") &
+                        "Changed from a fixed dimension length to unlimited" // &
+                        CHAR(10) // "             " // &
+                        "dimension length. (Fixed dimension '" // &
+                        trim(dim_name) // &
+                        "' had a fixed" // &
+                        CHAR(10) // "             " // &
+                        "length of ", &
+                        dim_sizes(dim_index), &
+                        "!)"
+                    call error(trim(err_string))
                 end if
                 dim_sizes(dim_index) = -1
                 
@@ -350,6 +377,7 @@
             character(len=*), intent(in)    :: var_dims(:)
             
             integer(i_long)                 :: var_index, i
+            character(len=1000)             :: err_string
             
             var_index = nc_diag_cat_lookup_var(trim(var_name))
             
@@ -403,14 +431,38 @@
             if (allocated(var_dim_names(var_index)%dim_names)) then
                 ! Just do a sanity check!
                 if (var_types(var_index) /= var_type) &
-                    call error("Variable type changed!")
+                    call error("Variable type changed!" // &
+                        CHAR(10) // "             " // &
+                        "(Type of variable '" // trim(var_name) // "' changed from " // &
+                        trim(nc_diag_cat_metadata_type_to_str(var_types(var_index))) // &
+                        CHAR(10) // "             " // &
+                        "to " // &
+                        trim(nc_diag_cat_metadata_type_to_str(var_type)) // &
+                        "!)")
                 
-                if (var_dim_names(var_index)%num_names /= var_ndims) &
-                    call error("Variable ndims changed!")
+                if (var_dim_names(var_index)%num_names /= var_ndims) then
+                    write (err_string, "(A, I0, A, I0, A)") &
+                        "Variable ndims changed!" // &
+                        CHAR(10) // "             " // &
+                        "(Variable '" // trim(var_name) // "' changed ndims from ", &
+                        var_dim_names(var_index)%num_names, &
+                        CHAR(10) // "             " // &
+                        "to ", &
+                        var_ndims, &
+                        "!)"
+                    call error(trim(err_string))
+                end if
                 
                 do i = 1, var_ndims
                     if (var_dim_names(var_index)%dim_names(i) /= var_dims(i)) &
-                        call error("Variable dimensions changed!")
+                        call error("Variable dimensions changed!" // &
+                        CHAR(10) // "             " // &
+                        "(Variable '" // trim(var_name) // "' changed dimension from " // &
+                        trim(var_dim_names(var_index)%dim_names(i)) // &
+                        CHAR(10) // "             " // &
+                        "to " // &
+                        trim(var_dims(i)) // &
+                        "!)")
                 end do
             else
                 var_dim_names(var_index)%num_names = var_ndims
@@ -428,3 +480,17 @@
                 
             end if
         end subroutine nc_diag_cat_metadata_add_var
+        
+        function nc_diag_cat_metadata_type_to_str(var_type) result(nc_str)
+            integer(i_long)   :: var_type
+            character(len=11) :: nc_str
+            
+            nc_str = "(invalid)"
+            
+            if (var_type == NF90_BYTE)   nc_str = "NF90_BYTE"
+            if (var_type == NF90_SHORT)  nc_str = "NF90_SHORT"
+            if (var_type == NF90_INT)    nc_str = "NF90_INT (LONG)"
+            if (var_type == NF90_FLOAT)  nc_str = "NF90_FLOAT"
+            if (var_type == NF90_DOUBLE) nc_str = "NF90_DOUBLE"
+            if (var_type == NF90_CHAR)   nc_str = "NF90_CHAR"
+        end function nc_diag_cat_metadata_type_to_str
