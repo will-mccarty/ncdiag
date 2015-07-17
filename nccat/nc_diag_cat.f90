@@ -5,6 +5,7 @@ program nc_diag_cat
     use ncdc_realloc
     use kinds
     
+    ! NCDC = Net CDF Diag Concatenation
 #include "ncdc_cli_decl.F90"
 #include "ncdc_metadata_decl.F90"
 #include "ncdc_data_decl.F90"
