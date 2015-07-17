@@ -13,9 +13,15 @@
             
             call get_command_argument(0, prgm_name)
             print *, "nc_diag_compress v1.0"
+            print *, "NetCDF Diag File Compression Tool"
             print *, "Usage: " // trim(prgm_name) // " -o OUTPUT_FILE INPUT_FILE"
             print *, "    Apply optimized compression on INPUT_FILE, and save into"
-            print *, "    OUTPUT_FILE."
+            print *, "    OUTPUT_FILE. Note that the amount of compression achieved"
+            print *, "    depends on the input file's compression (or lack thereof)."
+            print *, "    If the input file is highly compressed, this tool may not"
+            print *, "    be able to improve the compression any further. If the"
+            print *, "    input file is lightly compressed (or not at all), this tool"
+            print *, "    may be able to help."
             stop
         end subroutine usage
         
