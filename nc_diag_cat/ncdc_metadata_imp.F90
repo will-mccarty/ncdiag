@@ -73,7 +73,7 @@
                                 tmp_dim_size, &
                                 ")"
 #endif
-                            call nc_diag_cat_metadata_add_dim(tmp_dim_name, tmp_dim_size)
+                            call nc_diag_cat_metadata_add_dim(trim(tmp_dim_name), tmp_dim_size)
                         end if
                     end do
                     
@@ -134,7 +134,7 @@
                             write (*, "(A)") ""
 #endif
                             
-                            call nc_diag_cat_metadata_add_var(tmp_var_name, tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
+                            call nc_diag_cat_metadata_add_var(trim(tmp_var_name), tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
                         else
                             write (err_string, "(A, I0, A)") &
                                 "Variables with >2 dimensions NOT supported." // &
@@ -164,6 +164,7 @@
         
         subroutine nc_diag_cat_metadata_define
             integer :: i, j
+            integer(i_long), dimension(3) :: alloc_dim_sizes = 0
             
             call info("Creating new dimensions and variables for output file...")
             
@@ -246,6 +247,84 @@
                     shuffle = 1, deflate = 1, deflate_level = NC_DIAG_CAT_GZIP_COMPRESS))
             end do
             
+            ! Next portion depends on defines/vars in ncdc_data_decl.F90
+            call info(" -> Allocating data storage for variables...")
+            
+            allocate(data_blobs(var_arr_total))
+            
+            do i = 1, var_arr_total
+                if (var_dim_names(i)%num_names == 1) then
+                    alloc_dim_sizes = (/ &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(1))), &
+                        0, &
+                        0 /)
+                    
+                    ! Check for unlimited sizes and replace them!
+                    if (alloc_dim_sizes(1) == -1) &
+                        alloc_dim_sizes(1) = &
+                            dim_unlim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(1)))
+                    
+                    if (var_types(i) == NF90_BYTE)   allocate(data_blobs(i)%byte_buffer(alloc_dim_sizes(1)))
+                    if (var_types(i) == NF90_SHORT)  allocate(data_blobs(i)%short_buffer(alloc_dim_sizes(1)))
+                    if (var_types(i) == NF90_INT)    allocate(data_blobs(i)%long_buffer(alloc_dim_sizes(1)))
+                    if (var_types(i) == NF90_FLOAT)  allocate(data_blobs(i)%rsingle_buffer(alloc_dim_sizes(1)))
+                    if (var_types(i) == NF90_DOUBLE) allocate(data_blobs(i)%rdouble_buffer(alloc_dim_sizes(1)))
+                    if (var_types(i) == NF90_CHAR)   call error("1D character variable type not supported!")
+                    
+                    if (var_types(i) == NF90_BYTE)   data_blobs(i)%byte_buffer    = NF90_FILL_BYTE
+                    if (var_types(i) == NF90_SHORT)  data_blobs(i)%short_buffer   = NF90_FILL_SHORT
+                    if (var_types(i) == NF90_INT)    data_blobs(i)%long_buffer    = NF90_FILL_INT
+                    if (var_types(i) == NF90_FLOAT)  data_blobs(i)%rsingle_buffer = NF90_FILL_FLOAT
+                    if (var_types(i) == NF90_DOUBLE) data_blobs(i)%rdouble_buffer = NF90_FILL_DOUBLE
+                else if (var_dim_names(i)%num_names == 2) then
+                    alloc_dim_sizes = (/ &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(1))), &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(2))), &
+                        0 /)
+                    
+                    ! Check for unlimited sizes and replace them!
+                    if (alloc_dim_sizes(2) == -1) &
+                        alloc_dim_sizes(2) = &
+                            dim_unlim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(2)))
+                    
+                    if (var_types(i) == NF90_BYTE)   allocate(data_blobs(i)%byte_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    if (var_types(i) == NF90_SHORT)  allocate(data_blobs(i)%short_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    if (var_types(i) == NF90_INT)    allocate(data_blobs(i)%long_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    if (var_types(i) == NF90_FLOAT)  allocate(data_blobs(i)%rsingle_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    if (var_types(i) == NF90_DOUBLE) allocate(data_blobs(i)%rdouble_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    if (var_types(i) == NF90_CHAR)   allocate(data_blobs(i)%string_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2)))
+                    
+                    if (var_types(i) == NF90_BYTE)   data_blobs(i)%byte_2d_buffer    = NF90_FILL_BYTE
+                    if (var_types(i) == NF90_SHORT)  data_blobs(i)%short_2d_buffer   = NF90_FILL_SHORT
+                    if (var_types(i) == NF90_INT)    data_blobs(i)%long_2d_buffer    = NF90_FILL_INT
+                    if (var_types(i) == NF90_FLOAT)  data_blobs(i)%rsingle_2d_buffer = NF90_FILL_FLOAT
+                    if (var_types(i) == NF90_DOUBLE) data_blobs(i)%rdouble_2d_buffer = NF90_FILL_DOUBLE
+                    if (var_types(i) == NF90_CHAR)   data_blobs(i)%string_buffer     = NF90_FILL_CHAR
+                    
+                else if (var_dim_names(i)%num_names == 3) then
+                    alloc_dim_sizes = (/ &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(1))), &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(2))), &
+                        dim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(3))) /)
+                    
+                    ! Check for unlimited sizes and replace them!
+                    ! (Though, this should always be the case...)
+                    if (alloc_dim_sizes(3) == -1) &
+                        alloc_dim_sizes(3) = &
+                            dim_unlim_sizes(nc_diag_cat_lookup_dim(var_dim_names(i)%dim_names(3)))
+                    
+                    if (var_types(i) == NF90_CHAR) then
+                        allocate(data_blobs(i)%string_2d_buffer(alloc_dim_sizes(1), alloc_dim_sizes(2), alloc_dim_sizes(3)))
+                        data_blobs(i)%string_2d_buffer = NF90_FILL_CHAR
+                    else
+                        call error("3D non-character variable type not supported!")
+                    end if
+                end if
+                
+                data_blobs(i)%alloc_size = alloc_dim_sizes
+                !print *, trim(var_names(i)), data_blobs(i)%alloc_size
+            end do
+            
 #ifdef DEBUG
             print *, "!! END DEFINITION PASS"
 #endif
@@ -325,7 +404,7 @@
                         write (err_string, "(A, I0, A, I0, A)") &
                             "Fixed dimension length changed between files!" // &
                             CHAR(10) // "             " // &
-                            "(Fixed dimension '" // trim(dim_name) // "' changed from length ", &
+                            "(Fixed dimension '" // dim_name // "' changed from length ", &
                             dim_sizes(dim_index), &
                             CHAR(10) // "             " // &
                             "to ", &
@@ -419,7 +498,7 @@
                 
                 do i = 1, var_arr_total - 1
                     if (i /= 1) write (*, "(A)", advance="NO") ", "
-                    write (*, "(A)", advance="NO") trim(var_names(i))
+                    write (*, "(A)", advance="NO") var_names(i)
                 end do
                 
                 print *, "NEW var_index: ", var_arr_total
@@ -438,7 +517,7 @@
                 if (var_types(var_index) /= var_type) &
                     call error("Variable type changed!" // &
                         CHAR(10) // "             " // &
-                        "(Type of variable '" // trim(var_name) // "' changed from " // &
+                        "(Type of variable '" // var_name // "' changed from " // &
                         trim(nc_diag_cat_metadata_type_to_str(var_types(var_index))) // &
                         CHAR(10) // "             " // &
                         "to " // &
@@ -449,7 +528,7 @@
                     write (err_string, "(A, I0, A, I0, A)") &
                         "Variable ndims changed!" // &
                         CHAR(10) // "             " // &
-                        "(Variable '" // trim(var_name) // "' changed ndims from ", &
+                        "(Variable '" // var_name // "' changed ndims from ", &
                         var_dim_names(var_index)%num_names, &
                         CHAR(10) // "             " // &
                         "to ", &
@@ -462,7 +541,7 @@
                     if (var_dim_names(var_index)%dim_names(i) /= var_dims(i)) &
                         call error("Variable dimensions changed!" // &
                         CHAR(10) // "             " // &
-                        "(Variable '" // trim(var_name) // "' changed dimension from " // &
+                        "(Variable '" // var_name // "' changed dimension from " // &
                         trim(var_dim_names(var_index)%dim_names(i)) // &
                         CHAR(10) // "             " // &
                         "to " // &

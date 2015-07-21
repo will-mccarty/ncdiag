@@ -10,7 +10,7 @@
             
             character(len=1000)                :: err_string
             
-            call info("Concatenating data to output file...")
+            call info("Reading in data from all files...")
             
 #ifdef DEBUG
             print *, " !!! BEGINNING DATA PASS!!"
@@ -32,7 +32,8 @@
                     call info(" -> Skipping " // trim(input_file) // " since it is the output file...")
                 else
                     call info(" -> Opening " // trim(input_file) // " for reading...")
-                    call check(nf90_open(input_file, NF90_NOWRITE, ncid_input))
+                    call check(nf90_open(input_file, NF90_NOWRITE, ncid_input, &
+                        cache_size = 2147483647))
                     
                     ! Get top level info about the file!
                     call check(nf90_inquire(ncid_input, nDimensions = input_ndims, &
@@ -119,6 +120,12 @@
                         print *, " (starting var write)"
 #endif
                         
+                        !print *, "VARIABLE: " // trim(var_names(cur_out_var_ind))
+                        !print *, "ALLOC SIZES:", data_blobs(cur_out_var_ind)%alloc_size
+                        !print *, "CUR POS:", data_blobs(cur_out_var_ind)%cur_pos
+                        !print *, "DIM SIZES:", cur_out_dim_sizes
+                        !print *, "VAR COUNTER:", cur_out_var_counter
+                        
                         ! Check for one-time only vars...
                         if (((.NOT. any(cur_out_dim_sizes == -1)) .AND. (cur_out_var_counter == 0)) &
                             .OR. (any(cur_out_dim_sizes == -1))) then
@@ -139,42 +146,67 @@
                                     byte_buffer = NF90_FILL_BYTE
                                     
                                     call check(nf90_get_var(ncid_input, var_index, byte_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, byte_buffer, &
-                                        start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
-                                        count = (/ cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%byte_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
+                                        = byte_buffer(:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, byte_buffer, &
+                                    !    start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !    count = (/ cur_dim_sizes(1) /) ))
                                     
                                     deallocate(byte_buffer)
                                 else if (tmp_var_type == NF90_SHORT) then
                                     allocate(short_buffer  (cur_dim_sizes(1)))
                                     short_buffer = NF90_FILL_SHORT
                                     call check(nf90_get_var(ncid_input, var_index, short_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, short_buffer, &
-                                        start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
-                                        count = (/ cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%short_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
+                                        = short_buffer(:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, short_buffer, &
+                                    !    start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !    count = (/ cur_dim_sizes(1) /) ))
                                     deallocate(short_buffer)
                                 else if (tmp_var_type == NF90_INT) then
                                     allocate(long_buffer   (cur_dim_sizes(1)))
                                     long_buffer = NF90_FILL_INT
                                     call check(nf90_get_var(ncid_input, var_index, long_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, long_buffer, &
-                                        start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
-                                        count = (/ cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%long_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
+                                        = long_buffer(:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, long_buffer, &
+                                    !    start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !    count = (/ cur_dim_sizes(1) /) ))
                                     deallocate(long_buffer)
                                 else if (tmp_var_type == NF90_FLOAT) then
                                     allocate(rsingle_buffer(cur_dim_sizes(1)))
                                     rsingle_buffer = NF90_FILL_FLOAT
-                                    call check(nf90_get_var(ncid_input, var_index, rsingle_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, rsingle_buffer, &
-                                        start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    call check(nf90_get_var(ncid_input, var_index, rsingle_buffer, &
+                                        start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%rsingle_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
+                                        = rsingle_buffer(:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, rsingle_buffer, &
+                                    !    start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !    count = (/ cur_dim_sizes(1) /) ))
                                     deallocate(rsingle_buffer)
                                 else if (tmp_var_type == NF90_DOUBLE) then
                                     allocate(rdouble_buffer(cur_dim_sizes(1)))
                                     rdouble_buffer = NF90_FILL_DOUBLE
-                                    call check(nf90_get_var(ncid_input, var_index, rdouble_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, rdouble_buffer, &
-                                        start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !print *, cur_dim_sizes(1)
+                                    call check(nf90_get_var(ncid_input, var_index, rdouble_buffer, &
+                                        start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%rdouble_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
+                                        = rdouble_buffer(:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, rdouble_buffer, &
+                                    !    start = (/ 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(1))) /), &
+                                    !    count = (/ cur_dim_sizes(1) /) ))
                                     deallocate(rdouble_buffer)
                                 else if (tmp_var_type == NF90_CHAR) then
 #ifdef DEBUG
@@ -195,9 +227,15 @@
                                     print *, string_buffer
                                     print *, "PUT DIM " // trim(tmp_var_dim_names(2))
 #endif
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, string_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
-                                        count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
+                                    !data_blobs(cur_out_var_ind)%string_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:) &
+                                    !    = string_buffer(:,:)
+                                    data_blobs(cur_out_var_ind)%string_buffer &
+                                        (data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1, :) &
+                                        = string_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, string_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     deallocate(string_buffer)
                                 else
                                     write (err_string, "(A, I0, A)") &
@@ -218,18 +256,30 @@
                                     byte_2d_buffer = NF90_FILL_BYTE
                                     
                                     call check(nf90_get_var(ncid_input, var_index, byte_2d_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, byte_2d_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
-                                        count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
+                                    !data_blobs(cur_out_var_ind)%byte_2d_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:) &
+                                    !    = byte_2d_buffer(:,:)
+                                    data_blobs(cur_out_var_ind)%byte_2d_buffer &
+                                        (1 : cur_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
+                                        = byte_2d_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, byte_2d_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     
                                     deallocate(byte_2d_buffer)
                                 else if (tmp_var_type == NF90_SHORT) then
                                     allocate(short_2d_buffer  (cur_dim_sizes(1), cur_dim_sizes(2)))
                                     short_2d_buffer = NF90_FILL_SHORT
                                     call check(nf90_get_var(ncid_input, var_index, short_2d_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, short_2d_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
-                                        count = (/ cur_dim_sizes(2), cur_dim_sizes(1) /) ))
+                                    data_blobs(cur_out_var_ind)%short_2d_buffer &
+                                        (1 : cur_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
+                                        = short_2d_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, short_2d_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(2), cur_dim_sizes(1) /) ))
                                     deallocate(short_2d_buffer)
                                 else if (tmp_var_type == NF90_INT) then
                                     allocate(long_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
@@ -238,25 +288,46 @@
 #ifdef DEBUG
                                     print *, "Storage place: ", dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2)))
 #endif
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, long_2d_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
-                                        count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
+                                    data_blobs(cur_out_var_ind)%long_2d_buffer &
+                                        (1 : cur_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
+                                        = long_2d_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, long_2d_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     deallocate(long_2d_buffer)
                                 else if (tmp_var_type == NF90_FLOAT) then
                                     allocate(rsingle_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
                                     rsingle_2d_buffer = NF90_FILL_FLOAT
-                                    call check(nf90_get_var(ncid_input, var_index, rsingle_2d_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, rsingle_2d_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    call check(nf90_get_var(ncid_input, var_index, rsingle_2d_buffer, &
+                                        start = (/ 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
+                                    data_blobs(cur_out_var_ind)%rsingle_2d_buffer &
+                                        (1 : cur_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
+                                        = rsingle_2d_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, rsingle_2d_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     deallocate(rsingle_2d_buffer)
                                 else if (tmp_var_type == NF90_DOUBLE) then
                                     allocate(rdouble_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
                                     rdouble_2d_buffer = NF90_FILL_DOUBLE
-                                    call check(nf90_get_var(ncid_input, var_index, rdouble_2d_buffer))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, rdouble_2d_buffer, &
-                                        start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    call check(nf90_get_var(ncid_input, var_index, rdouble_2d_buffer, &
+                                        start = (/ 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
+                                    !print *, "cur_dim_sizes(1)", cur_dim_sizes(1)
+                                    !print *, "cur_dim_sizes(2)", cur_dim_sizes(2)
+                                    data_blobs(cur_out_var_ind)%rdouble_2d_buffer &
+                                        (1 : cur_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
+                                        = rdouble_2d_buffer(:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, rdouble_2d_buffer, &
+                                    !    start = (/ 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     deallocate(rdouble_2d_buffer)
                                 else if (tmp_var_type == NF90_CHAR) then
                                     allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
@@ -264,9 +335,16 @@
                                     call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                         start = (/ 1, 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
-                                    call check(nf90_put_var(ncid_output, cur_out_var_id, string_2d_buffer, &
-                                        start = (/ 1, 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(3))) /), &
-                                        count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
+                                    !data_blobs(cur_out_var_ind)%string_2d_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:,:) &
+                                    !    = string_2d_buffer(:,:,:)
+                                    data_blobs(cur_out_var_ind)%string_2d_buffer &
+                                        (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(3) - 1) & &
+                                        = string_2d_buffer(:,:,:)
+                                    !call check(nf90_put_var(ncid_output, cur_out_var_id, string_2d_buffer, &
+                                    !    start = (/ 1, 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(3))) /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                     deallocate(string_2d_buffer)
                                 else
                                     write (err_string, "(A, I0, A)") &
@@ -279,6 +357,14 @@
                                     call error(trim(err_string))
                                 end if
                             end if
+                            
+                            !print *, "cur_out_var_ndims", cur_out_var_ndims
+                            !print *, "cur_dim_sizes(cur_out_var_ndims)", cur_dim_sizes(cur_out_var_ndims)
+                            !print *, "any(cur_out_dim_sizes == -1)", any(cur_out_dim_sizes == -1)
+                            
+                            if (any(cur_out_dim_sizes == -1)) &
+                                data_blobs(cur_out_var_ind)%cur_pos = &
+                                    data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(cur_out_var_ndims)
                             
                             var_counters(cur_out_var_ind) = &
                                     var_counters(cur_out_var_ind) + 1
@@ -328,6 +414,86 @@
                     !deallocate(tmp_input_dimids)
                     deallocate(tmp_input_varids)
                     deallocate(tmp_in_dim_names)
+                end if
+            end do
+            
+            call info("Doing final data write...")
+            
+            do var_index = 1, var_arr_total
+                call info(" => Writing variable " // trim(var_names(var_index)) // "...")
+                if ((var_dim_names(var_index)%num_names == 1) .OR. &
+                    ((var_dim_names(var_index)%num_names == 1) .AND. (var_types(var_index) == NF90_CHAR)) ) then
+                    if (var_types(var_index) == NF90_BYTE) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%byte_buffer, &
+                            start = (/ 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1) /) ))
+                    if (var_types(var_index) == NF90_SHORT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%short_buffer, &
+                            start = (/ 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1) /) ))
+                    if (var_types(var_index) == NF90_INT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%long_buffer, &
+                            start = (/ 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1) /) ))
+                    if (var_types(var_index) == NF90_FLOAT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%rsingle_buffer, &
+                            start = (/ 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1) /) ))
+                    
+                    if (var_types(var_index) == NF90_DOUBLE) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%rdouble_buffer, &
+                            start = (/ 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1) /) ))
+                    if (var_types(var_index) == NF90_CHAR) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%string_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                else if ((var_dim_names(var_index)%num_names == 2) .OR. &
+                    ((var_dim_names(var_index)%num_names == 3) .AND. (var_types(var_index) == NF90_CHAR)) ) then
+                    if (var_types(var_index) == NF90_BYTE) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%byte_2d_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                    if (var_types(var_index) == NF90_SHORT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%short_2d_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                    if (var_types(var_index) == NF90_INT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%long_2d_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                    if (var_types(var_index) == NF90_FLOAT) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%rsingle_2d_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                    if (var_types(var_index) == NF90_DOUBLE) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%rdouble_2d_buffer, &
+                            start = (/ 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2) /) ))
+                    if (var_types(var_index) == NF90_CHAR) &
+                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                            data_blobs(var_index)%string_2d_buffer, &
+                            start = (/ 1, 1, 1 /), &
+                            count = (/ data_blobs(var_index)%alloc_size(1), &
+                                data_blobs(var_index)%alloc_size(2), &
+                                data_blobs(var_index)%alloc_size(3) /) ))
                 end if
             end do
         end subroutine nc_diag_cat_data_pass
