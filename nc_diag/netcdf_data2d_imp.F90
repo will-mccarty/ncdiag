@@ -274,6 +274,8 @@
             real(r_double),  dimension(:, :), allocatable :: rdouble_arr
             character(len=:),dimension(:, :), allocatable :: string_arr
             
+            integer(i_long)                               :: max_str_len = -1
+            
             integer(i_llong)                              :: data_length_counter = -1
             character(len=100)                            :: counter_data_name
             integer(i_llong)                              :: current_length_count = -1
@@ -603,7 +605,16 @@
                                     ))
                                 deallocate(rdouble_arr)
                             else if (data_type == NLAYER_STRING) then
-                                allocate(character(diag_data2d_store%max_str_lens(curdatindex)) :: &
+                                ! We need to seperate everything because the Intel Fortran compiler loves
+                                ! to optimize... and then assume that I'll try to use an unallocated variable,
+                                ! even with checks.
+                                if (allocated(diag_data2d_store%max_str_lens)) then
+                                    max_str_len = diag_data2d_store%max_str_lens(curdatindex)
+                                else
+                                    call error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
+                                end if
+                                
+                                allocate(character(max_str_len) :: &
                                     string_arr(diag_data2d_store%max_lens(curdatindex), &
                                     diag_data2d_store%stor_i_arr(curdatindex)%icount &
                                     ))
@@ -637,14 +648,18 @@
                                                 diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
-                                call check(nf90_put_var(&
-                                    ncid, diag_data2d_store%var_ids(curdatindex), &
-                                    string_arr, &
-                                    (/ 1, 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
-                                    (/ diag_data2d_store%max_str_lens(curdatindex), &
-                                        diag_data2d_store%max_lens(curdatindex), &
-                                        diag_data2d_store%stor_i_arr(curdatindex)%icount /) &
-                                    ))
+                                if (allocated(diag_data2d_store%max_str_lens)) then
+                                    call check(nf90_put_var(&
+                                        ncid, diag_data2d_store%var_ids(curdatindex), &
+                                        string_arr, &
+                                        (/ 1, 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
+                                        (/ diag_data2d_store%max_str_lens(curdatindex), &
+                                            diag_data2d_store%max_lens(curdatindex), &
+                                            diag_data2d_store%stor_i_arr(curdatindex)%icount /) &
+                                        ))
+                                else
+                                    call error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
+                                end if
                                 
                                 deallocate(string_arr)
                             end if
