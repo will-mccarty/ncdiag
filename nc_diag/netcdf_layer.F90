@@ -40,6 +40,8 @@ module netcdf_layer
     logical :: enable_info = .FALSE.
     logical :: enable_action = .FALSE.
     
+    character(len=200) :: cur_nc_file
+    
 #ifndef IGNORE_VERSION
     logical :: NLAYER_STRING_BROKEN = .FALSE.
 #endif
@@ -131,9 +133,15 @@ module netcdf_layer
                 
                 write (*,"(A, I0, A)") 'NetCDF will use ', bsize, ' bytes of cache.'
                 
+                cur_nc_file = filename
+                
                 init_done = .TRUE.
             else
-                call error("Attempted to initialize without closing previous nc_diag file!")
+                call error("Attempted to initialize without closing previous nc_diag file!" &
+                    // char(10) &
+                    // "             (Previous file: " // trim(cur_nc_file) &
+                    // char(10) &
+                    // "              Attempted to open file: " // trim(filename) // ")")
             end if
         end subroutine nc_diag_init
         
@@ -283,6 +291,7 @@ module netcdf_layer
                 deallocate(diag_varattr_store)
                 
                 init_done = .FALSE.
+                cur_nc_file = ""
             else
                 call error("Attempted to deallocate without initializing!")
             end if
