@@ -221,11 +221,12 @@
 #endif
                         
                         if (data_type == NLAYER_STRING) then
-                            !call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
-                            !    NF90_CHUNKED, (/ 1, 1024, 1024 /)))
+                            call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                NF90_CHUNKED, (/ diag_data2d_store%max_str_lens(curdatindex), &
+                                    diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
                         else
-                            !call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
-                            !    NF90_CHUNKED, (/ 1024, 1024 /)))
+                            call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                NF90_CHUNKED, (/ diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
                         end if
                         
 #ifdef _DEBUG_MEM_

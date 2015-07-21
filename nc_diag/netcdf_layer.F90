@@ -27,6 +27,9 @@ module netcdf_layer
     ! NetCDF zlib (/gzip) compression level
     integer(i_byte), parameter              :: NLAYER_COMPRESSION = 9
     
+    ! NetCDF chunking size
+    integer(i_long), parameter              :: NLAYER_CHUNKING = 16384
+    
     ! Base used when exponentiated.
 #define NLAYER_MULTI_BASE 2
     

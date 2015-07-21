@@ -136,10 +136,10 @@
                         
                         if (data_type == NLAYER_STRING) then
                             call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ 1, 1024 /)))
+                                NF90_CHUNKED, (/ diag_metadata_store%max_str_lens(curdatindex), NLAYER_CHUNKING /)))
                         else
                             call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ 1024 /)))
+                                NF90_CHUNKED, (/ NLAYER_CHUNKING /)))
                         end if
                         
 #ifdef _DEBUG_MEM_
