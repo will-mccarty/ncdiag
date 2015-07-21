@@ -349,7 +349,7 @@
                                     
                                         call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             string_arr, &
-                                            start = (/ 1, 1 /), &
+                                            start = (/ 1, 1 + diag_chaninfo_store%rel_indexes(curdatindex) /), &
                                             count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
                                         
                                         deallocate(string_arr)
