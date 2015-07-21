@@ -337,7 +337,7 @@ module netcdf_layer
 #else
             call warning("NetCDF support is disabled, so no NetCDF file flush will occur.")
 #endif
-        end subroutine
+        end subroutine nc_diag_flush_to_file
         
         subroutine nc_diag_set_strict(enable_strict)
             logical, intent(in) :: enable_strict
