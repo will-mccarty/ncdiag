@@ -10,6 +10,7 @@
             
             character(len=1000)                :: err_string
             
+            character(:), allocatable :: input_file_cut
             call info("Reading in data from all files...")
             
 #ifdef DEBUG
@@ -23,15 +24,18 @@
                 print *, " !!! INPUT FILE STAGE"
 #endif
                 call get_command_argument(2 + arg_index, input_file)
-                if (len_trim(input_file) <= 0) then
+                
+                input_file_cut = trim(input_file)
+                
+                if (len(input_file_cut) <= 0) then
                     call usage("Invalid input file name - likely blank!")
                 end if
                 
-                if (trim(input_file) == output_file) then
+                if (input_file_cut == output_file) then
                     ! No warning here - we've already shown it in metadata.
-                    call info(" -> Skipping " // trim(input_file) // " since it is the output file...")
+                    call info(" -> Skipping " // input_file_cut // " since it is the output file...")
                 else
-                    call info(" -> Opening " // trim(input_file) // " for reading...")
+                    call info(" -> Opening " // input_file_cut // " for reading...")
                     call check(nf90_open(input_file, NF90_NOWRITE, ncid_input, &
                         cache_size = 2147483647))
                     
