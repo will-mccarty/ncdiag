@@ -15,6 +15,12 @@
             character(len=1000)                :: err_string
             
             character(:), allocatable :: input_file_cut
+            
+            if (.NOT. allocated(var_names)) then
+                call warning("No variables found to concatenate.")
+                return
+            end if
+            
             call info("Reading in data from all files...")
             
 #ifdef DEBUG

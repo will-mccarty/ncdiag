@@ -1,5 +1,6 @@
         subroutine nc_diag_cat_metadata_pass
             character(len=1000) :: err_string
+            integer             :: old_dim_arr_total = 0, old_var_arr_total = 0
             
             character(:), allocatable :: input_file_cut
             
@@ -164,6 +165,15 @@
                     deallocate(unlim_dims)
                     deallocate(tmp_input_dimids)
                     deallocate(tmp_input_varids)
+                    
+                    if (input_ndims == 0) &
+                        call warning("No dimensions found in file " // input_file_cut // "!")
+                    
+                    if (input_nvars == 0) &
+                        call warning("No variables found in file " // input_file_cut // "!")
+                    
+                    old_dim_arr_total = dim_arr_total
+                    old_var_arr_total = var_arr_total
                 end if
             end do
         end subroutine nc_diag_cat_metadata_pass
@@ -175,6 +185,10 @@
             call info("Creating new dimensions and variables for output file...")
             
             call info(" -> Defining dimensions...")
+            
+            if (dim_arr_total == 0) &
+                call warning("No dimensions found in input files, so not defining anything.")
+            
             do i = 1, dim_arr_total
                 if (dim_sizes(i) == -1) then
                     call check(nf90_def_dim(ncid_output, dim_names(i), &
@@ -188,6 +202,9 @@
                     dim_output_ids(i), " | size: ", dim_sizes(i)
 #endif
             end do
+            
+            if (var_arr_total == 0) &
+                call warning("No variables found in input files, so not defining anything.")
             
             call info(" -> Defining variables...")
             do i = 1, var_arr_total
