@@ -14,7 +14,7 @@ program nc_diag_cat
     integer(i_long)                    :: ncid_output, ncid_input
     integer(i_long)                    :: bsize = 16777216;
     
-    integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 9
+    integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 6
     integer, parameter                 :: NC_DIAG_CAT_CHUNK_SIZE = 16384
     
     call nc_diag_cat_process_args
