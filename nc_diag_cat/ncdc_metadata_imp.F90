@@ -419,7 +419,7 @@
             
             if (dim_size /= -1) then
                 ! Add/update size
-                if (index(dim_name, "_maxstrlen") /= 0) then
+                if ((index(dim_name, "_maxstrlen") /= 0) .OR. (index(dim_name, "_str_dim") /= 0)) then
                     ! Use the maximum as the new size... and skip the check.
                     if (dim_size > dim_sizes(dim_index)) dim_sizes(dim_index) = dim_size
                 else

@@ -7,6 +7,7 @@
             integer, dimension(:), allocatable :: cur_dim_sizes
             
             character(1) ,dimension(:,:), allocatable :: tmp_string_buffer
+            character(1),dimension(:,:,:),allocatable :: string_2d_buffer
             
             integer :: i, j
             
@@ -210,6 +211,7 @@
                                     !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     
                                     ! ALTERNATIVE USING INDEXING
+                                    ! Note - this is VERY slow and inefficient!
                                     
                                     !do i = data_blobs(cur_out_var_ind)%cur_pos, &
                                     !    data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1
@@ -220,6 +222,16 @@
                                     !        start = (/ 1, 1 /), &
                                     !        count = (/ cur_dim_sizes(1), 1 /) ))
                                     !end do
+                                    
+                                    ! Strangely enough, NetCDF doesn't support storing strings to
+                                    ! an array splice. Even with defined bounds, the strings is not
+                                    ! stored properly, especially when the variable's dimensions
+                                    ! are smaller than the actual target's dimensions. The smaller
+                                    ! strings are stored contiguously within the array, going outside
+                                    ! the given bounds.
+                                    ! 
+                                    ! For example, given [ '1234', '5678' ], placing it into a 5x2 array
+                                    ! yields [ '12345', '678**' ] instead of [ '1234 ', '5678 ' ].
                                     
                                     allocate(tmp_string_buffer (cur_dim_sizes(1), cur_dim_sizes(2)))
                                     tmp_string_buffer = NF90_FILL_CHAR
@@ -298,13 +310,25 @@
                                         start = (/ 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                 else if (tmp_var_type == NF90_CHAR) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
-                                        data_blobs(cur_out_var_ind)%string_2d_buffer &
-                                            (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
-                                                data_blobs(cur_out_var_ind)%cur_pos : &
-                                                data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(3) - 1), &
+                                    ! Use string buffer variable - same issue as before with 1D strings!
+                                    !call check(nf90_get_var(ncid_input, var_index, &
+                                    !    data_blobs(cur_out_var_ind)%string_2d_buffer &
+                                    !        (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
+                                    !            data_blobs(cur_out_var_ind)%cur_pos : &
+                                    !            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(3) - 1), &
+                                    !    start = (/ 1, 1, 1 /), &
+                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
+                                    allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
+                                    string_2d_buffer = NF90_FILL_CHAR
+                                    call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                         start = (/ 1, 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
+                                    data_blobs(cur_out_var_ind)%string_2d_buffer &
+                                        (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(3) - 1) & &
+                                        = string_2d_buffer(:,:,:)
+                                    deallocate(string_2d_buffer)
                                 else
                                     write (err_string, "(A, I0, A)") &
                                         "Invalid type detected during write." // &
