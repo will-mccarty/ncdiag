@@ -72,6 +72,11 @@ nc_diag_cat.x: $(NC_DIAG_CAT_DEPS) ncdc_realloc.mod netcdf_unlimdims.mod nc_diag
 test_nc_unlimdims.x: netcdf_unlimdims.mod ncdc_util.F90 test_nc_unlimdims.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) test_nc_unlimdims.f90 netcdf_unlimdims.o $(NETCDF_FLAGS) -o test_nc_unlimdims.x
 
+gen_diff_size_netcdf.x: gen_diff_size_netcdf.f90
+	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) gen_diff_size_netcdf.f90 \
+		../nc_diag/netcdf_layer.o ../nc_diag/utils.o -I../nc_diag -L../nc_diag \
+		$(NETCDF_FLAGS) -o gen_diff_size_netcdf.x
+
 ncdc_realloc.mod: Makefile kinds.mod ncdc_realloc.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) -c ncdc_realloc.f90
 
