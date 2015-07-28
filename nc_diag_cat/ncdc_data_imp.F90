@@ -399,8 +399,10 @@
                     deallocate(tmp_in_dim_names)
                 end if
             end do
-            
-            call info("Doing final data write...")
+        end subroutine nc_diag_cat_data_pass
+        
+        subroutine nc_diag_cat_data_commit
+            call info("Doing final data commit...")
             
             do var_index = 1, var_arr_total
                 call info(" => Writing variable " // trim(var_names(var_index)) // "...")
@@ -479,6 +481,6 @@
                                 data_blobs(var_index)%alloc_size(3) /) ))
                 end if
             end do
-        end subroutine nc_diag_cat_data_pass
+        end subroutine nc_diag_cat_data_commit
 
 
