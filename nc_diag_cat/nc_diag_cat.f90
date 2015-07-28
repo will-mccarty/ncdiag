@@ -42,9 +42,8 @@ program nc_diag_cat
     print *, "MAIN: trigger data pass!"
 #endif
     
+    call nc_diag_cat_metadata_alloc
     call nc_diag_cat_data_pass
-    
-    call nc_diag_cat_metadata_define
         
 #ifdef DEBUG
     print *, "ALL DONE!"
