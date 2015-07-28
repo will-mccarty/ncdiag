@@ -1,4 +1,3 @@
-all: test_nc_unlimdims.x nc_diag_cat.x
 
 FORT90C=ifort
 
@@ -62,6 +61,8 @@ NC_DIAG_CAT_DEPS+=Makefile \
 	ncdc_cli_decl.F90 ncdc_cli_imp.F90 \
 	ncdc_metadata_decl.F90 ncdc_metadata_imp.F90 \
 	ncdc_data_decl.F90 ncdc_data_imp.F90
+
+all: test_nc_unlimdims.x nc_diag_cat.x
 
 kinds.mod: Makefile kinds.F90
 	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
