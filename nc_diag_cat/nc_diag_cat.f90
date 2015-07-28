@@ -1,5 +1,4 @@
 program nc_diag_cat
-    use iflport
     use netcdf
     use netcdf_unlimdims
     use ncdc_realloc
@@ -12,7 +11,6 @@ program nc_diag_cat
     logical                            :: enable_info = .TRUE.
     
     integer(i_long)                    :: ncid_output, ncid_input
-    integer(i_long)                    :: bsize = 16777216;
     
     integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 6
     integer, parameter                 :: NC_DIAG_CAT_CHUNK_SIZE = 16384
@@ -27,7 +25,7 @@ program nc_diag_cat
     call info("Creating new NetCDF file: " // trim(output_file))
 #ifndef NO_NETCDF
     call check( nf90_create(output_file, OR(NF90_NETCDF4, NF90_CLOBBER), ncid_output, &
-        0, bsize, cache_nelems = 16777216) ) ! Optimization settings
+        0) )
 #endif
     
     ! nc_diag_cat steps:
