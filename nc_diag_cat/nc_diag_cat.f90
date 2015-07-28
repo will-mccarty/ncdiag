@@ -44,6 +44,8 @@ program nc_diag_cat
     
     call nc_diag_cat_data_pass
     
+    call nc_diag_cat_metadata_define
+        
 #ifdef DEBUG
     print *, "ALL DONE!"
 #endif

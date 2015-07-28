@@ -269,6 +269,11 @@
                 call check(nf90_def_var_deflate(ncid_output, var_output_ids(i), &
                     shuffle = 1, deflate = 1, deflate_level = NC_DIAG_CAT_GZIP_COMPRESS))
             end do
+        end subroutine nc_diag_cat_metadata_define
+        
+        subroutine nc_diag_cat_metadata_alloc
+            integer(i_long), dimension(3) :: alloc_dim_sizes = 0
+            integer(i_long)               :: i
             
             ! Next portion depends on defines/vars in ncdc_data_decl.F90
             call info(" -> Allocating data storage for variables...")
@@ -351,7 +356,7 @@
 #ifdef DEBUG
             print *, "!! END DEFINITION PASS"
 #endif
-        end subroutine nc_diag_cat_metadata_define
+        end subroutine nc_diag_cat_metadata_alloc
         
         function nc_diag_cat_lookup_dim(dim_name) result(ind)
             character(len=*), intent(in)    :: dim_name
