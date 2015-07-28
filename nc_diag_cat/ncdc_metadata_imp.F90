@@ -98,7 +98,8 @@
                     ! Loop through each variable!
                     do var_index = 1, input_nvars
                         ! Grab number of dimensions and attributes first
-                        call check(nf90_inquire_variable(ncid_input, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                        call check(nf90_inquire_variable(ncid_input, var_index, name = tmp_var_name, &
+                            ndims = tmp_var_ndims, xtype = tmp_var_type))
                         
                         ! Allocate temporary variable dimids storage!
                         allocate(tmp_var_dimids(tmp_var_ndims))
@@ -180,7 +181,6 @@
         
         subroutine nc_diag_cat_metadata_define
             integer :: i, j
-            integer(i_long), dimension(3) :: alloc_dim_sizes = 0
             
             call info("Creating new dimensions and variables for output file...")
             
