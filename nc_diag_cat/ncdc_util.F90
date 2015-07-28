@@ -11,12 +11,20 @@
 #ifdef ERROR_TRACEBACK
             integer                      :: div0
 #endif
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m" // &
-                            " **   ERROR: " // err // &
-                            CHAR(27) // "[0m"
+#ifdef USE_MPI
+                write(*, "(A, I0, A)") &
 #else
-            write(*, "(A)") " **   ERROR: " // err
+                write(*, "(A)") &
+#endif
+#ifdef ANSI_TERM_COLORS
+                            CHAR(27) // "[31m" // &
+#endif
+#ifdef USE_MPI
+                            "[PROC ", cur_proc, "]" // &
+#endif
+                            " **   ERROR: " // err // &
+#ifdef ANSI_TERM_COLORS
+                            CHAR(27) // "[0m"
 #endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
@@ -29,24 +37,40 @@
         
         subroutine warning(warn)
             character(len=*), intent(in) :: warn
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[33m" // &
-                            " ** WARNING: " // warn // &
-                            CHAR(27) // "[0m"
+#ifdef USE_MPI
+            write(*, "(A, I0, A)") &
 #else
-            write(*, "(A)") " ** WARNING: " // warn
+            write(*, "(A)") &
+#endif
+#ifdef ANSI_TERM_COLORS
+                            CHAR(27) // "[33m" // &
+#endif
+#ifdef USE_MPI
+                            "[PROC ", cur_proc, "]" // &
+#endif
+                            " ** WARNING: " // warn // &
+#ifdef ANSI_TERM_COLORS
+                            CHAR(27) // "[0m"
 #endif
         end subroutine warning
         
         subroutine info(ifo)
             character(len=*), intent(in) :: ifo
             if (enable_info) &
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[34m" // &
-                                " **    INFO: " // ifo // &
-                                CHAR(27) // "[0m"
+#ifdef USE_MPI
+                write(*, "(A, I0, A)") &
 #else
-                write(*, "(A)") " **    INFO: " // ifo
+                write(*, "(A)") &
+#endif
+#ifdef ANSI_TERM_COLORS
+                                CHAR(27) // "[34m" // &
+#endif
+#ifdef USE_MPI
+                                "[PROC ", cur_proc, "]" // &
+#endif
+                                " **    INFO: " // ifo // &
+#ifdef ANSI_TERM_COLORS
+                                CHAR(27) // "[0m"
 #endif
         end subroutine info
         

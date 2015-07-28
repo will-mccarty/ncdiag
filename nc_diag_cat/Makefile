@@ -1,5 +1,14 @@
+ifndef USE_MPI
+	USE_MPI=1
+endif
 
-FORT90C=ifort
+ifeq ($(USE_MPI), 1)
+	FORT90C=mpif90
+	COMPILE_FLAGS+=-DUSE_MPI
+	NC_DIAG_CAT_DEPS+=ncdc_data_imp_MPI.F90
+else
+	FORT90C=ifort
+endif
 
 # DISABLE_NETCDF - if set to 1, remove NetCDF dependency and replace 
 #                  with blank fillers to assist with debugging. (No, 
@@ -67,11 +76,11 @@ all: test_nc_unlimdims.x nc_diag_cat.x
 kinds.mod: Makefile kinds.F90
 	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
 
-nc_diag_cat.x: $(NC_DIAG_CAT_DEPS) ncdc_realloc.mod netcdf_unlimdims.mod nc_diag_cat.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) nc_diag_cat.f90 ncdc_realloc.o netcdf_unlimdims.o $(NETCDF_FLAGS) -o nc_diag_cat.x
+nc_diag_cat.x: $(NC_DIAG_CAT_DEPS) ncdc_realloc.mod netcdf_unlimdims.mod nc_diag_cat.F90
+	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) nc_diag_cat.F90 ncdc_realloc.o netcdf_unlimdims.o $(NETCDF_FLAGS) -o nc_diag_cat.x
 
-test_nc_unlimdims.x: netcdf_unlimdims.mod ncdc_util.F90 test_nc_unlimdims.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) test_nc_unlimdims.f90 netcdf_unlimdims.o $(NETCDF_FLAGS) -o test_nc_unlimdims.x
+test_nc_unlimdims.x: netcdf_unlimdims.mod ncdc_util.F90 test_nc_unlimdims.F90
+	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) test_nc_unlimdims.F90 netcdf_unlimdims.o $(NETCDF_FLAGS) -o test_nc_unlimdims.x
 
 gen_diff_size_netcdf.x: gen_diff_size_netcdf.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) gen_diff_size_netcdf.f90 \

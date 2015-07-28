@@ -6,7 +6,10 @@
             
             input_count = cli_arg_count - 2
             
-            call info("Scanning NetCDF files for dimensions and variables...")
+#ifdef USE_MPI
+            if (cur_proc == 0) &
+#endif
+                call info("Scanning NetCDF files for dimensions and variables...")
             
             do arg_index = 1, input_count
                 call get_command_argument(2 + arg_index, input_file)
@@ -21,7 +24,10 @@
                     call warning(" -> Ignoring output file in input file list.")
                     call info(" -> Skipping " // input_file_cut // " since it is the output file...")
                 else
-                    call info(" -> Opening " // input_file_cut // " for reading...")
+#ifdef USE_MPI
+                    if (cur_proc == 0) &
+#endif
+                        call info(" -> Opening " // input_file_cut // " for reading...")
                     call check(nf90_open(input_file, NF90_NOWRITE, ncid_input))
                     
                     ! Get top level info about the file!

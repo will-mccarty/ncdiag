@@ -2,6 +2,11 @@ program test_nc_unlimdims
     use netcdf
     use netcdf_unlimdims
     
+#ifdef USE_MPI
+! We don't use this option here, and setting it will cause problems
+! with ncdc_util.F90, so let's unset it.
+#undef USE_MPI
+#endif
     logical :: enable_info = .TRUE.
     
     integer :: cli_arg_count, ncid_input, num_unlims, tmp_dim_size, i
