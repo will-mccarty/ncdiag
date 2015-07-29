@@ -134,13 +134,17 @@
                                     string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                             diag_chaninfo_store%var_usage(curdatindex) - 1))
                                     
-                                    ! Save the max string len
-                                    diag_chaninfo_store%max_str_lens(curdatindex) = &
-                                        max_len_string_array(string_arr, diag_chaninfo_store%var_usage(curdatindex))
+                                    ! If trimming is enabled, we haven't found our max_str_len yet.
+                                    ! Go find it!
+                                    if (enable_trim) then
+                                        ! Save the max string len
+                                        diag_chaninfo_store%max_str_lens(curdatindex) = &
+                                            max_len_string_array(string_arr, diag_chaninfo_store%var_usage(curdatindex))
+                                    end if
                                     
                                     call check(nf90_def_dim(ncid, data_dim_name, &
-                                        max_len_string_array(string_arr, &
-                                            diag_chaninfo_store%var_usage(curdatindex)), tmp_dim_id))
+                                        diag_chaninfo_store%max_str_lens(curdatindex), &
+                                        tmp_dim_id))
 #ifdef _DEBUG_MEM_
                                     print *, "Defining char var type..."
 #endif
@@ -319,38 +323,43 @@
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
                                             ))
                                     else if (data_type == NLAYER_STRING) then
-                                        allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
-                                        
-                                        string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                                diag_chaninfo_store%var_usage(curdatindex) - 1))
-                                        
-                                        string_arr_maxlen = max_len_string_array(string_arr, &
-                                            diag_chaninfo_store%var_usage(curdatindex))
-                                        
-                                        deallocate(string_arr)
-                                        
-                                        allocate(character(string_arr_maxlen) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
-                                        do j = data_type_index, data_type_index + &
-                                                diag_chaninfo_store%var_usage(curdatindex) - 1
-                                            string_arr(j - data_type_index + 1) = trim(diag_chaninfo_store%ci_string(j))
-                                        end do
-                                        
-                                        !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                        !        diag_chaninfo_store%var_usage(curdatindex) - 1))
-                                        
+                                        ! Storing to another variable may seem silly, but it's necessary
+                                        ! to avoid "undefined variable" errors, thanks to the compiler's
+                                        ! super optimization insanity...
+                                        string_arr_maxlen = diag_chaninfo_store%max_str_lens(curdatindex)
+                                        allocate(character(string_arr_maxlen) :: &
+                                                string_arr(diag_chaninfo_store%var_usage(curdatindex)))
+                                        if (enable_trim) then
+                                            do j = data_type_index, data_type_index + &
+                                                    diag_chaninfo_store%var_usage(curdatindex) - 1
+                                                string_arr(j - data_type_index + 1) = &
+                                                    trim(diag_chaninfo_store%ci_string(j))
+                                            end do
+                                            
+                                            !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
+                                            !        diag_chaninfo_store%var_usage(curdatindex) - 1))
+                                            
 #ifdef _DEBUG_MEM_
-                                        do j = 1, diag_chaninfo_store%var_usage(curdatindex)
-                                            write (*, "(A, A, A)") "String: '", string_arr(j), "'"
-                                        end do
-                                        
-                                        write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
-                                        write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
+                                            do j = 1, diag_chaninfo_store%var_usage(curdatindex)
+                                                write (*, "(A, A, A)") "String: '", string_arr(j), "'"
+                                            end do
+                                            
+                                            write (*, "(A, I0)") "string_arr_maxlen = ", string_arr_maxlen
+                                            write (*, "(A, I0)") "diag_chaninfo_store%var_usage(curdatindex) = ", diag_chaninfo_store%var_usage(curdatindex)
 #endif
-                                    
+                                        else
+                                            do j = data_type_index, data_type_index + &
+                                                    diag_chaninfo_store%var_usage(curdatindex) - 1
+                                                string_arr(j - data_type_index + 1) = &
+                                                    diag_chaninfo_store%ci_string(j)
+                                            end do
+                                        end if
+                                        
                                         call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             string_arr, &
                                             start = (/ 1, 1 + diag_chaninfo_store%rel_indexes(curdatindex) /), &
-                                            count = (/ string_arr_maxlen, diag_chaninfo_store%var_usage(curdatindex) /) ))
+                                            count = (/ string_arr_maxlen, &
+                                                diag_chaninfo_store%var_usage(curdatindex) /) ))
                                         
                                         deallocate(string_arr)
                                     else
@@ -1216,6 +1225,18 @@
                 
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
+            end if
+            
+            ! If trim isn't enabled, set our maximum string length here!
+            if (.NOT. enable_trim) then
+                if (diag_chaninfo_store%max_str_lens(var_index) == -1) then
+                    diag_chaninfo_store%max_str_lens(var_index) = len(chaninfo_value)
+                else
+                    ! Validate that our non-first value isn't different from
+                    ! the initial string length
+                    if (diag_chaninfo_store%max_str_lens(var_index) /= len(chaninfo_value)) &
+                        call error("Cannot change string size when trimming is disabled!")
+                end if
             end if
             
             ! Now add the actual entry!

@@ -16,12 +16,61 @@ program test_netcdf_layer
     character(len=100) :: str_metadata
     character(len=100) :: str_data2d
     
+    character(len=10)  :: str_chaninfo_fixed
+    character(len=10)  :: str_metadata_fixed
+    character(len=10)  :: str_data2d_fixed(3)
+    
+    character(len=11)  :: str_chaninfo_fixed_bad
+    character(len=11)  :: str_metadata_fixed_bad
+    character(len=11)  :: str_data2d_fixed_bad(3)
+    
     f = 1.234
     d = 2.34567890
     
     ! Enable info messages
     call nc_set_action_display(.TRUE.)
     call nc_set_info_display(.TRUE.)
+    
+    call nc_diag_set_trim(.FALSE.)
+    
+    !-----------------------------------------------------------------
+    ! Fixed checks
+    !-----------------------------------------------------------------
+    call nc_diag_init("test_fixed.nc")
+    
+    call nc_diag_chaninfo_dim_set(5)
+    
+    str_chaninfo_fixed = "one"
+    str_metadata_fixed = "two"
+    str_data2d_fixed   = (/ "three", "four", "five" /)
+    
+    str_chaninfo_fixed_bad = "one"
+    str_metadata_fixed_bad = "two"
+    str_data2d_fixed_bad   = (/ "three", "four", "five" /)
+    
+    call nc_diag_set_trim(.FALSE.)
+    call nc_diag_chaninfo("chaninfo_strfix", str_chaninfo_fixed)
+    str_chaninfo_fixed = "three"
+    call nc_diag_chaninfo("chaninfo_strfix", str_chaninfo_fixed)
+    
+    call nc_diag_metadata("metadata_strfix", str_metadata_fixed)
+    str_metadata_fixed = "four"
+    call nc_diag_metadata("metadata_strfix", str_metadata_fixed)
+    
+    call nc_diag_data2d("data2d_strfix", str_data2d_fixed)
+    str_data2d_fixed   = (/ "six", "seven", "eight" /)
+    call nc_diag_data2d("data2d_strfix", str_data2d_fixed)
+    
+    ! This would cause errors, due to the change in un-trimmed string
+    ! length! (Uncomment to trigger the error!)
+    !call nc_diag_chaninfo("chaninfo_strfix", str_chaninfo_fixed_bad)
+    !call nc_diag_metadata("metadata_strfix", str_metadata_fixed_bad)
+    !call nc_diag_data2d("data2d_strfix", str_data2d_fixed_bad)
+    
+    call nc_diag_write
+    
+    ! Fluid mode
+    call nc_diag_set_trim(.TRUE.)
     
     call nc_diag_init("test.nc")
     

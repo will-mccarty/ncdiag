@@ -40,6 +40,8 @@ module netcdf_layer
     logical :: enable_info = .FALSE.
     logical :: enable_action = .FALSE.
     
+    logical :: enable_trim = .FALSE.
+    
     character(len=200) :: cur_nc_file
     
 #ifndef IGNORE_VERSION
@@ -350,6 +352,12 @@ module netcdf_layer
                 call error("Can't set strictness level - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_set_strict
+        
+        subroutine nc_diag_set_trim(do_trim)
+            logical, intent(in) :: do_trim
+            
+            enable_trim = do_trim
+        end subroutine nc_diag_set_trim
         
         subroutine check(status)
           integer, intent ( in) :: status

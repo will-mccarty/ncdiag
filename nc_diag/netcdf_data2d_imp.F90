@@ -144,40 +144,43 @@
                             max_str_len = 0
                             write (data_dim_name, "(A, A)") trim(data2d_name), "_maxstrlen"
                             
-                            ! Dimension is # of chars by # of obs (unlimited)
-                            do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
-                                allocate(character(10000) :: string_arr(diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)))
-                                string_arr = &
-                                    diag_data2d_store%m_string(diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) &
-                                        : diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
-                                            diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
-                                
+                            ! If trimming is enabled, we haven't found our max_str_len yet.
+                            ! Go find it!
+                            if (enable_trim) then
+                                ! Dimension is # of chars by # of obs (unlimited)
+                                do j = 1, diag_data2d_store%stor_i_arr(curdatindex)%icount
+                                    allocate(character(10000) :: string_arr(diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)))
+                                    string_arr = &
+                                        diag_data2d_store%m_string(diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) &
+                                            : diag_data2d_store%stor_i_arr(curdatindex)%index_arr(j) + &
+                                                diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    
 #ifdef _DEBUG_MEM_
-                                write(*, "(A, I0)") "DEBUG DATA2D: tmp array size is: ", diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)
+                                    write(*, "(A, I0)") "DEBUG DATA2D: tmp array size is: ", diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j)
+#endif
+                                    
+                                    ! Now we can calculate the length!
+                                    msl_tmp = max_len_string_array(string_arr, &
+                                        diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
+                                    
+                                    if (msl_tmp > max_str_len) max_str_len = msl_tmp
+                                    
+#ifdef _DEBUG_MEM_
+                                    write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: at data2d_name ", trim(data2d_name), ", msl_tmp computes to ", msl_tmp, ", max_str_len computes to ", max_str_len
+                                    print *, "DEBUG DATA2D DEF WRITE: string array dump follows:"
+                                    call string_array_dump(string_arr)
+#endif
+                                    
+                                    ! Deallocate right after we're done!
+                                    deallocate(string_arr)
+                                end do
+#ifdef _DEBUG_MEM_
+                                write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data2d_name ", trim(data2d_name), ", FINAL max_str_len computes to ", max_str_len, ", max_len computes to ", max_len
 #endif
                                 
-                                ! Now we can calculate the length!
-                                msl_tmp = max_len_string_array(string_arr, &
-                                    diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j))
-                                
-                                if (msl_tmp > max_str_len) max_str_len = msl_tmp
-                                
-#ifdef _DEBUG_MEM_
-                                write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: at data2d_name ", trim(data2d_name), ", msl_tmp computes to ", msl_tmp, ", max_str_len computes to ", max_str_len
-                                print *, "DEBUG DATA2D DEF WRITE: string array dump follows:"
-                                call string_array_dump(string_arr)
-#endif
-                                
-                                ! Deallocate right after we're done!
-                                deallocate(string_arr)
-                            end do
-                            
-#ifdef _DEBUG_MEM_
-                            write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data2d_name ", trim(data2d_name), ", FINAL max_str_len computes to ", max_str_len, ", max_len computes to ", max_len
-#endif
-                            
-                            ! Save the max string len
-                            diag_data2d_store%max_str_lens(curdatindex) = max_str_len
+                                ! Save the max string len
+                                diag_data2d_store%max_str_lens(curdatindex) = max_str_len
+                            end if
                             
                             ! Create dimension needed!
                             write (data_dim_str_name, "(A, A)") trim(data2d_name), "_str_dim"
@@ -1614,6 +1617,19 @@
             ! We just need to add one entry...
             call nc_diag_data2d_resize_iarr(var_index, 1)
             call nc_diag_data2d_resize_string(input_size)
+            
+            ! If trim isn't enabled, set our maximum string length here!
+            if (.NOT. enable_trim) then
+                if (diag_data2d_store%max_str_lens(var_index) == -1) then
+                    diag_data2d_store%max_str_lens(var_index) = len(data2d_value(1))
+                else
+                    ! Validate that our non-first value isn't different from
+                    ! the initial string length
+                    if (max_len_notrim_string_array(data2d_value, int(input_size)) /= &
+                        diag_data2d_store%max_str_lens(var_index)) &
+                        call error("Cannot change string size when trimming is disabled!")
+                end if
+            end if
             
             ! Now add the actual entry!
             diag_data2d_store%m_string(diag_data2d_store%acount(6) - input_size + 1:diag_data2d_store%acount(6)) = &

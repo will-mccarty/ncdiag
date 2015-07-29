@@ -90,15 +90,21 @@
                         if (data_type == NLAYER_STRING) then
                             write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
                             
-                            ! Dimension is # of chars by # of obs (unlimited)
-                            allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
-                            do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
-                                string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
-                            end do
-                            
-                            ! Save the max string len
-                            diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr, &
-                                diag_metadata_store%stor_i_arr(curdatindex)%icount)
+                            ! If trimming is enabled, we haven't found our max_str_len yet.
+                            ! Go find it!
+                            if (enable_trim) then
+                                ! Dimension is # of chars by # of obs (unlimited)
+                                allocate(character(10000) :: string_arr(diag_metadata_store%stor_i_arr(curdatindex)%icount))
+                                do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
+                                    string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
+                                end do
+                                
+                                ! Save the max string len
+                                diag_metadata_store%max_str_lens(curdatindex) = max_len_string_array(string_arr, &
+                                    diag_metadata_store%stor_i_arr(curdatindex)%icount)
+                                
+                                deallocate(string_arr)
+                            end if
                             
                             call check(nf90_def_dim(ncid, data_dim_name, &
                                 diag_metadata_store%max_str_lens(curdatindex), tmp_dim_id))
@@ -114,7 +120,6 @@
 #ifdef _DEBUG_MEM_
                             print *, "Done defining char var type..."
 #endif
-                            deallocate(string_arr)
                         else
                             call check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
                                 diag_metadata_store%var_ids(curdatindex)))
@@ -1113,6 +1118,18 @@
             ! here.
             call nc_diag_metadata_resize_iarr(var_index, 1)
             call nc_diag_metadata_resize_string(1)
+            
+            ! If trim isn't enabled, set our maximum string length here!
+            if (.NOT. enable_trim) then
+                if (diag_metadata_store%max_str_lens(var_index) == -1) then
+                    diag_metadata_store%max_str_lens(var_index) = len(metadata_value)
+                else
+                    ! Validate that our non-first value isn't different from
+                    ! the initial string length
+                    if (diag_metadata_store%max_str_lens(var_index) /= len(metadata_value)) &
+                        call error("Cannot change string size when trimming is disabled!")
+                end if
+            end if
             
             ! Now add the actual entry!
             diag_metadata_store%m_string(diag_metadata_store%acount(6)) = metadata_value
