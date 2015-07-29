@@ -673,8 +673,6 @@
                 
                 procs_done = 0
                 
-                allocate(mpi_requests(input_count * var_arr_total))
-                
                 !print *, "VAR COUNTERS PROC 2 info: ", var_counters
                 call info("Receiving data from other processes...")
                 !print *, "PROC 2 info | var_counters(1) = ", var_counters(1)
