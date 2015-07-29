@@ -161,6 +161,35 @@ program test_netcdf_layer
     ! ...and another one, for fun with buffered writing!
     call nc_diag_chaninfo("chaninfosimple9_buf", 3)
     
+    ! Appending data variables
+    call nc_diag_chaninfo("chaninfosimple10_notcomplete", 5678)
+    
+    call nc_diag_metadata("metadata_notcomplete", 1234)
+    call nc_diag_metadata("metadata_notcomplete", 2234)
+    call nc_diag_metadata("metadata_notcomplete", 3234)
+    call nc_diag_metadata("metadata_notcomplete", 4234)
+    call nc_diag_metadata("metadata_notcomplete", 5234)
+    call nc_diag_metadata("metadata_notcomplete", 6234)
+    call nc_diag_metadata("metadata_notcomplete", 7234)
+    call nc_diag_metadata("metadata_notcomplete", 8234)
+    call nc_diag_metadata("metadata_notcomplete", 9234)
+    call nc_diag_metadata("metadata_notcomplete", 1234)
+    call nc_diag_metadata("metadata_notcomplete", 2234)
+    call nc_diag_metadata("metadata_notcomplete", 3234)
+    call nc_diag_metadata("metadata_notcomplete", 4234)
+    call nc_diag_metadata("metadata_notcomplete", 5234)
+    call nc_diag_metadata("metadata_notcomplete", 6234)
+    call nc_diag_metadata("metadata_notcomplete", 7234)
+    call nc_diag_metadata("metadata_notcomplete", 8234)
+    
+    call nc_diag_metadata("metadata_str_notcomplete", "abcd")
+    call nc_diag_metadata("metadata_str_notcomplete", "abc2")
+    call nc_diag_metadata("metadata_str_notcomplete", "abc3")
+    call nc_diag_metadata("metadata_str_notcomplete", "abc4")
+    call nc_diag_metadata("metadata_str_notcomplete", "abc5")
+    call nc_diag_metadata("metadata_str_notcomplete", "abc6")
+    call nc_diag_data2d("data2d_notcomplete", (/ 1, 2, 3 /))
+    
     ! Invalid buffered write test - we can't do any buffered write
     ! until we lock definitions:
     !call nc_diag_flush_buffer
@@ -321,6 +350,32 @@ program test_netcdf_layer
     print *, "==============================="
     print *, "Writing resulting NetCDF file:"
     print *, "==============================="
+    
+    call nc_diag_write
+    
+    ! Appending - we can reopen the same file in append mode!
+    print *, "==============================="
+    print *, "Appending to NetCDF file:"
+    print *, "==============================="
+    call nc_diag_init("test.nc", .TRUE.)
+    
+    call nc_diag_chaninfo("chaninfosimple8_str", "test1")
+    call nc_diag_chaninfo("chaninfosimple8_str", "test2")
+    call nc_diag_chaninfo("chaninfosimple10_notcomplete", 1)
+    call nc_diag_chaninfo("chaninfosimple10_notcomplete", 2)
+    
+    call nc_diag_metadata("metadata_notcomplete", 5678)
+    call nc_diag_metadata("metadata_notcomplete", 6789)
+    
+    call nc_diag_metadata("metadata_str_notcomplete", "efgh")
+    
+    ! This will fail due to length constraints...
+    !call nc_diag_metadata("metadata_str_notcomplete", "efghh")
+    
+    call nc_diag_data2d("data2d_notcomplete", (/ 2, 3, 4 /))
+    
+    ! This will also fail due to longer length
+    !call nc_diag_data2d("data2d_notcomplete", (/ 2, 3, 4, 5 /))
     
     call nc_diag_write
 end program test_netcdf_layer

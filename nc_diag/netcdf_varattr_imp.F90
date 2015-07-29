@@ -33,7 +33,12 @@
         subroutine nc_diag_varattr_make_nobs_dim
             if (init_done .AND. allocated(diag_varattr_store)) then
                 if (diag_varattr_store%nobs_dim_id == -1) then
-                    call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_varattr_store%nobs_dim_id))
+                    if (append_only) then
+                        ! Fetch the nobs dimension ID instead!
+                        call check(nf90_inq_dimid(ncid, "nobs", diag_varattr_store%nobs_dim_id))
+                    else
+                        call check(nf90_def_dim(ncid, "nobs", NF90_UNLIMITED, diag_varattr_store%nobs_dim_id))
+                    end if
                 end if
             else
                 call error("NetCDF4 layer not initialized yet!")

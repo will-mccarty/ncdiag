@@ -76,6 +76,140 @@
             end do
         end function nc_diag_data2d_max_len_var
         
+        subroutine nc_diag_data2d_load_def
+            integer(i_long) :: ndims, nvars, var_index, type_index
+            integer(i_long) :: rel_index, i, j, nobs_size
+            
+            character(len=NF90_MAX_NAME)               :: tmp_var_name
+            integer(i_long)                            :: tmp_var_type, tmp_var_ndims
+            
+            integer(i_long), dimension(:), allocatable :: tmp_var_dimids, tmp_var_dim_sizes
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
+            
+            logical                                    :: is_data2d_var
+            
+            integer(i_byte),    dimension(:), allocatable     :: byte_buffer
+            integer(i_short),   dimension(:), allocatable     :: short_buffer
+            integer(i_long),    dimension(:), allocatable     :: long_buffer
+            
+            real(r_single),     dimension(:), allocatable     :: rsingle_buffer
+            real(r_double),     dimension(:), allocatable     :: rdouble_buffer
+            
+            character(1),     dimension(:,:), allocatable     :: string_buffer
+            
+            ! Get top level info about the file!
+            call check(nf90_inquire(ncid, nDimensions = ndims, &
+                nVariables = nvars))
+            
+            ! Now search for variables that use data2d storage!
+            ! Loop through each variable!
+            do var_index = 1, nvars
+                ! Grab number of dimensions and attributes first
+                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                
+                ! Allocate temporary variable dimids storage!
+                allocate(tmp_var_dimids(tmp_var_ndims))
+                allocate(tmp_var_dim_names(tmp_var_ndims))
+                allocate(tmp_var_dim_sizes(tmp_var_ndims))
+                
+                ! Grab the actual dimension IDs and attributes
+                
+                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                    xtype = tmp_var_type))
+                
+                if ((tmp_var_ndims == 2) .OR. &
+                    ((tmp_var_ndims == 3) .AND. (tmp_var_type == NF90_CHAR))) then
+                    is_data2d_var = .FALSE.
+                    
+                    do i = 1, tmp_var_ndims
+                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                            tmp_var_dim_sizes(i)))
+                        
+                        if (tmp_var_dim_names(i) == "nobs") then
+                            nobs_size = tmp_var_dim_sizes(i)
+                            if (tmp_var_type /= NF90_CHAR) then
+                                is_data2d_var = .TRUE.
+                            else if (tmp_var_type == NF90_CHAR) then
+                                if (index(tmp_var_dim_names(1), "_str_dim") /= 0) &
+                                    is_data2d_var = .TRUE.
+                            end if
+                        end if
+                    end do
+                    
+                    if (is_data2d_var) then
+                        ! Expand things first!
+                        call nc_diag_data2d_expand
+                        
+                        ! Add to the total!
+                        diag_data2d_store%total = diag_data2d_store%total + 1
+                        
+                        ! Store name and type!
+                        diag_data2d_store%names(diag_data2d_store%total) = trim(tmp_var_name)
+                        
+                        ! The relative index is the total nobs
+                        rel_index = nobs_size
+                        
+                        if (tmp_var_type == NF90_BYTE) then
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_BYTE
+                            !call nc_diag_data2d_resize_byte(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 1
+                        else if (tmp_var_type == NF90_SHORT) then
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_SHORT
+                            !call nc_diag_data2d_resize_short(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 2
+                        else if (tmp_var_type == NF90_INT) then
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_LONG
+                            !call nc_diag_data2d_resize_long(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 3
+                        else if (tmp_var_type == NF90_FLOAT) then
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_FLOAT
+                            !call nc_diag_data2d_resize_rsingle(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 4
+                        else if (tmp_var_type == NF90_DOUBLE) then
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_DOUBLE
+                            !call nc_diag_data2d_resize_rdouble(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 5
+                        else if (tmp_var_type == NF90_CHAR) then
+                            diag_data2d_store%max_str_lens(diag_metadata_store%total) = tmp_var_dim_sizes(1)
+                            diag_data2d_store%types(diag_data2d_store%total) = NLAYER_STRING
+                            !call nc_diag_data2d_resize_string(int8(diag_data2d_store%nchans), .FALSE.)
+                            type_index = 6
+                        else
+                            call error("NetCDF4 type invalid!")
+                        end if
+                        
+                        if (tmp_var_type == NF90_CHAR) then
+                            diag_data2d_store%max_lens(diag_data2d_store%total) = tmp_var_dim_sizes(2)
+                        else
+                            diag_data2d_store%max_lens(diag_data2d_store%total) = tmp_var_dim_sizes(1)
+                        end if
+                        
+                        print *, trim(tmp_var_name), "rel index", rel_index
+                        
+                        ! Now add a relative position... based on the next position!
+                        
+                        ! First, increment the number of variables stored for this type:
+                        !diag_data2d_store%acount(type_index) = diag_data2d_store%acount(type_index) + 1
+                        
+                        ! Set relative index!
+                        diag_data2d_store%rel_indexes(diag_data2d_store%total) = rel_index
+                        
+                        ! Set variable ID! Note that var_index here is the actual variable ID.
+                        diag_data2d_store%var_ids(diag_data2d_store%total) = var_index
+                    end if
+                    
+                    !call nc_diag_cat_data2d_add_var(trim(tmp_var_name), tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
+                end if
+                
+                ! Deallocate
+                deallocate(tmp_var_dimids)
+                deallocate(tmp_var_dim_names)
+                deallocate(tmp_var_dim_sizes)
+            end do
+            
+            diag_data2d_store%def_lock = .TRUE.
+        end subroutine nc_diag_data2d_load_def
+        
         subroutine nc_diag_data2d_write_def(internal)
             logical, intent(in), optional         :: internal
             
@@ -135,7 +269,8 @@
                         max_len = nc_diag_data2d_max_len_var(curdatindex)
                         
                         ! Create this maximum array length dimension for this variable
-                        call check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
+                        if (.NOT. append_only) &
+                            call check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
                         
                         ! Store maximum length
                         diag_data2d_store%max_lens(curdatindex) = max_len;
@@ -184,15 +319,17 @@
                             
                             ! Create dimension needed!
                             write (data_dim_str_name, "(A, A)") trim(data2d_name), "_str_dim"
-                            call check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
 #endif
                             
-                            call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
-                                (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
-                                diag_data2d_store%var_ids(curdatindex)))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
+                                    (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
+                                    diag_data2d_store%var_ids(curdatindex)))
                             
 #ifdef _DEBUG_MEM_
                             write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data2d_name ", trim(data2d_name), ", result VID is ", diag_data2d_store%var_ids(curdatindex)
@@ -208,9 +345,10 @@
                             print *, "Definition for variable " // trim(data2d_name) // ":"
                             print *, diag_data2d_store%max_lens(curdatindex), "x unlimited (NetCDF order)"
 #endif
-                            call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
-                                (/ diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
-                                diag_data2d_store%var_ids(curdatindex)))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
+                                    (/ diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
+                                    diag_data2d_store%var_ids(curdatindex)))
                         end if
                         
                         call nc_diag_varattr_add_var(diag_data2d_store%names(curdatindex), &
@@ -223,20 +361,22 @@
                         print *, "Defining compression 1 (chunking)..."
 #endif
                         
-                        if (data_type == NLAYER_STRING) then
-                            call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ diag_data2d_store%max_str_lens(curdatindex), &
-                                    diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
-                        else
-                            call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
+                        if (.NOT. append_only) then
+                            if (data_type == NLAYER_STRING) then
+                                call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ diag_data2d_store%max_str_lens(curdatindex), &
+                                        diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
+                            else
+                                call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
+                            end if
                         end if
-                        
 #ifdef _DEBUG_MEM_
                         print *, "Defining compression 2 (gzip)..."
 #endif
-                        call check(nf90_def_var_deflate(ncid, diag_data2d_store%var_ids(curdatindex), &
-                            1, 1, NLAYER_COMPRESSION))
+                        if (.NOT. append_only) &
+                            call check(nf90_def_var_deflate(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                1, 1, NLAYER_COMPRESSION))
                         
 #ifdef _DEBUG_MEM_
                         print *, "Done defining compression..."

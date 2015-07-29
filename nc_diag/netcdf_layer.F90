@@ -35,7 +35,7 @@ module netcdf_layer
     
     integer :: ncid
     logical :: init_done = .FALSE.
-    logical :: header_locked = .FALSE.
+    logical :: append_only = .FALSE.
     
     logical :: enable_info = .FALSE.
     logical :: enable_action = .FALSE.
@@ -70,15 +70,25 @@ module netcdf_layer
 #include "netcdf_data2d_imp.F90"
 #include "netcdf_varattr_imp.F90"
         
-        subroutine nc_diag_init(filename)
+        subroutine nc_diag_init(filename, append)
             character(len=*),intent(in)    :: filename
             character(len=:), allocatable  :: version_num
+            logical, intent(in), optional  :: append
             
             integer                        :: bsize = 16777216;
             
 #ifdef ENABLE_ACTION_MSGS
+            character(len=1000)                   :: action_str
+            
             if (enable_action) then
-                call actionm("nc_diag_init(filename = " // trim(filename) // ")")
+                if (present(append)) then
+                    write(action_str, "(A, L, A)") "nc_diag_init(filename = " // trim(filename) // &
+                        ", append = ", append, ")"
+                else
+                    write(action_str, "(A)") "nc_diag_init(filename = " // trim(filename) // &
+                        ", append = (not specified))"
+                end if
+                call actionm(trim(action_str))
             end if
 #endif
             
@@ -99,8 +109,17 @@ module netcdf_layer
             ! here.
             if (.NOT. init_done) then
 #ifndef NO_NETCDF
-                call check( nf90_create(filename, OR(NF90_NETCDF4, NF90_CLOBBER), ncid, &
-                    0, bsize, cache_nelems = 16777216) ) ! Optimization settings
+                ! Special append mode - that means that we need to
+                ! assume that all definitions are set and locked.
+                if (present(append) .AND. (append == .TRUE.)) then
+                    call check( nf90_open(filename, NF90_WRITE, ncid, &
+                        bsize, cache_nelems = 16777216) ) ! Optimization settings
+                    append_only = .TRUE.
+                    call warning("NetCDF file opened in append mode - definitions will be locked.")
+                else
+                    call check( nf90_create(filename, OR(NF90_NETCDF4, NF90_CLOBBER), ncid, &
+                        0, bsize, cache_nelems = 16777216) ) ! Optimization settings
+                end if
 #endif
                 
                 if (allocated(diag_chaninfo_store)) then
@@ -129,6 +148,21 @@ module netcdf_layer
                 cur_nc_file = filename
                 
                 init_done = .TRUE.
+                
+                ! "Lock" the definitions... or simply ask chaninfo/metadata/data2d
+                ! to read the NetCDF files and build a cache.
+                if (present(append) .AND. (append == .TRUE.)) then
+                    call info("Loading chaninfo variables/dimensions from file:")
+                    call nc_diag_chaninfo_load_def
+                    
+                    call info("Loading metadata variables/dimensions from file:")
+                    call nc_diag_metadata_load_def
+                    
+                    call info("Loading data2d variables/dimensions from file:")
+                    call nc_diag_data2d_load_def
+                    
+                    call check(nf90_redef(ncid))
+                end if
             else
                 call error("Attempted to initialize without closing previous nc_diag file!" &
                     // char(10) &
@@ -240,6 +274,7 @@ module netcdf_layer
                 deallocate(diag_varattr_store)
                 
                 init_done = .FALSE.
+                append_only = .FALSE.
                 cur_nc_file = ""
             else
                 call error("Attempted to deallocate without initializing!")

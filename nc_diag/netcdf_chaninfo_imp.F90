@@ -69,6 +69,214 @@
         !! the amount of data < nchan (since we're expecting a full write)
         !!!!!!
         
+        subroutine nc_diag_chaninfo_load_def
+            integer(i_long) :: ndims, nvars, var_index, type_index
+            integer(i_long) :: rel_index, i, j
+            
+            character(len=NF90_MAX_NAME)               :: tmp_var_name
+            integer(i_long)                            :: tmp_var_type, tmp_var_ndims
+            
+            integer(i_long), dimension(:), allocatable :: tmp_var_dimids, tmp_var_dim_sizes
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
+            
+            logical                                    :: is_nchans_var
+            
+            integer(i_byte),    dimension(:), allocatable     :: byte_buffer
+            integer(i_short),   dimension(:), allocatable     :: short_buffer
+            integer(i_long),    dimension(:), allocatable     :: long_buffer
+            
+            real(r_single),     dimension(:), allocatable     :: rsingle_buffer
+            real(r_double),     dimension(:), allocatable     :: rdouble_buffer
+            
+            character(1),     dimension(:,:), allocatable     :: string_buffer
+            
+            ! Get top level info about the file!
+            call check(nf90_inquire(ncid, nDimensions = ndims, &
+                nVariables = nvars))
+            
+            ! Fetch nchans first!
+            call check(nf90_inq_dimid(ncid, "nchans", diag_chaninfo_store%nchans_dimid))
+            
+            ! Then grab nchans value...
+            call check(nf90_inquire_dimension(ncid, diag_chaninfo_store%nchans_dimid, &
+                len = diag_chaninfo_store%nchans))
+            
+            ! Now search for variables that use nchans!
+            ! Loop through each variable!
+            do var_index = 1, nvars
+                ! Grab number of dimensions and attributes first
+                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                
+                ! Allocate temporary variable dimids storage!
+                allocate(tmp_var_dimids(tmp_var_ndims))
+                allocate(tmp_var_dim_names(tmp_var_ndims))
+                allocate(tmp_var_dim_sizes(tmp_var_ndims))
+                
+                ! Grab the actual dimension IDs and attributes
+                
+                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                    xtype = tmp_var_type))
+                
+                if ((tmp_var_ndims == 1) .OR. &
+                    ((tmp_var_ndims == 2) .AND. (tmp_var_type == NF90_CHAR))) then
+                    is_nchans_var = .FALSE.
+                    
+                    do i = 1, tmp_var_ndims
+                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                            tmp_var_dim_sizes(i)))
+                        
+                        if (tmp_var_dim_names(i) == "nchans") is_nchans_var = .TRUE.
+                    end do
+                    
+                    if (is_nchans_var) then
+                        ! Expand things first!
+                        call nc_diag_chaninfo_expand
+                        
+                        ! Add to the total!
+                        diag_chaninfo_store%total = diag_chaninfo_store%total + 1
+                        
+                        ! Store name and type!
+                        diag_chaninfo_store%names(diag_chaninfo_store%total) = trim(tmp_var_name)
+                        
+                        rel_index = 0
+                        
+                        if (tmp_var_type == NF90_BYTE) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
+                            call nc_diag_chaninfo_resize_byte(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(byte_buffer(diag_chaninfo_store%nchans))
+                            call check(nf90_get_var(ncid, var_index, byte_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (byte_buffer(j) /= NLAYER_FILL_BYTE) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(byte_buffer)
+                            
+                            type_index = 1
+                        else if (tmp_var_type == NF90_SHORT) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
+                            call nc_diag_chaninfo_resize_short(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(short_buffer(diag_chaninfo_store%nchans))
+                            call check(nf90_get_var(ncid, var_index, short_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (short_buffer(j) /= NLAYER_FILL_SHORT) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(short_buffer)
+                            
+                            type_index = 2
+                        else if (tmp_var_type == NF90_INT) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
+                            call nc_diag_chaninfo_resize_long(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(long_buffer(diag_chaninfo_store%nchans))
+                            call check(nf90_get_var(ncid, var_index, long_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (long_buffer(j) /= NLAYER_FILL_LONG) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(long_buffer)
+                            
+                            type_index = 3
+                        else if (tmp_var_type == NF90_FLOAT) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
+                            call nc_diag_chaninfo_resize_rsingle(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(rsingle_buffer(diag_chaninfo_store%nchans))
+                            call check(nf90_get_var(ncid, var_index, rsingle_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (rsingle_buffer(j) /= NLAYER_FILL_FLOAT) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(rsingle_buffer)
+                            
+                            type_index = 4
+                        else if (tmp_var_type == NF90_DOUBLE) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
+                            call nc_diag_chaninfo_resize_rdouble(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(rdouble_buffer(diag_chaninfo_store%nchans))
+                            call check(nf90_get_var(ncid, var_index, rdouble_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (rdouble_buffer(j) /= NLAYER_FILL_DOUBLE) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(rdouble_buffer)
+                            
+                            type_index = 5
+                        else if (tmp_var_type == NF90_CHAR) then
+                            diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
+                            call nc_diag_chaninfo_resize_string(int8(diag_chaninfo_store%nchans), .FALSE.)
+                            allocate(string_buffer(diag_chaninfo_store%nchans, tmp_var_dim_sizes(1)))
+                            call check(nf90_get_var(ncid, var_index, string_buffer))
+                            
+                            do j = 1, diag_chaninfo_store%nchans
+                                if (string_buffer(j, 1) /= NLAYER_FILL_CHAR) then
+                                    rel_index = rel_index + 1
+                                else
+                                    exit
+                                end if
+                            end do
+                            
+                            deallocate(string_buffer)
+                            
+                            type_index = 6
+                        else
+                            call error("NetCDF4 type invalid!")
+                        end if
+                        
+                        print *, trim(tmp_var_name), "rel index", rel_index
+                        
+                        ! Now add a relative position... based on the next position!
+                        
+                        ! First, increment the number of variables stored for this type:
+                        diag_chaninfo_store%acount_v(type_index) = diag_chaninfo_store%acount_v(type_index) + 1
+                        
+                        ! Then, set the next variable's relative positioning,
+                        ! based on the number of variables stored for this type.
+                        diag_chaninfo_store%var_rel_pos(diag_chaninfo_store%total) = diag_chaninfo_store%acount_v(type_index)
+                        
+                        ! Initialize the amount of memory used to 0.
+                        diag_chaninfo_store%var_usage(diag_chaninfo_store%total) = 0
+                        
+                        ! Set relative index!
+                        diag_chaninfo_store%rel_indexes(diag_chaninfo_store%total) = rel_index
+                        
+                        ! Set variable ID! Note that var_index here is the actual variable ID.
+                        diag_chaninfo_store%var_ids(diag_chaninfo_store%total) = var_index
+                    end if
+                    
+                    !call nc_diag_cat_metadata_add_var(trim(tmp_var_name), tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
+                end if
+                
+                ! Deallocate
+                deallocate(tmp_var_dimids)
+                deallocate(tmp_var_dim_names)
+                deallocate(tmp_var_dim_sizes)
+            end do
+        end subroutine nc_diag_chaninfo_load_def
+        
         subroutine nc_diag_chaninfo_write_def(internal)
             logical, intent(in), optional :: internal
             
@@ -101,8 +309,9 @@
                 if (diag_chaninfo_store%total > 0) then
                     if (diag_chaninfo_store%nchans /= -1) then
                         if (.NOT. diag_chaninfo_store%def_lock) then
-                            ! First, set the dimensions!
-                            call check(nf90_def_dim(ncid, "nchans", diag_chaninfo_store%nchans, diag_chaninfo_store%nchans_dimid))
+                            ! First, set the dimensions... if necessary!
+                            if (.NOT. append_only) &
+                                call check(nf90_def_dim(ncid, "nchans", diag_chaninfo_store%nchans, diag_chaninfo_store%nchans_dimid))
                             
                             ! Once we have the dimension, we can start writing
                             ! variable definitions!
@@ -142,23 +351,26 @@
                                             max_len_string_array(string_arr, diag_chaninfo_store%var_usage(curdatindex))
                                     end if
                                     
-                                    call check(nf90_def_dim(ncid, data_dim_name, &
-                                        diag_chaninfo_store%max_str_lens(curdatindex), &
-                                        tmp_dim_id))
+                                    if (.NOT. append_only) &
+                                        call check(nf90_def_dim(ncid, data_dim_name, &
+                                            diag_chaninfo_store%max_str_lens(curdatindex), &
+                                            tmp_dim_id))
 #ifdef _DEBUG_MEM_
                                     print *, "Defining char var type..."
 #endif
-                                    call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
-                                        nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
-                                        diag_chaninfo_store%var_ids(curdatindex)))
+                                    if (.NOT. append_only) &
+                                        call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                            nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
+                                            diag_chaninfo_store%var_ids(curdatindex)))
 #ifdef _DEBUG_MEM_
                                     print *, "Done defining char var type..."
 #endif
                                     deallocate(string_arr)
                                 else
-                                    call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
-                                        nc_data_type, diag_chaninfo_store%nchans_dimid, &
-                                        diag_chaninfo_store%var_ids(curdatindex)))
+                                    if (.NOT. append_only) &
+                                        call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                            nc_data_type, diag_chaninfo_store%nchans_dimid, &
+                                            diag_chaninfo_store%var_ids(curdatindex)))
                                 end if
                                 
 #ifdef _DEBUG_MEM_
@@ -169,18 +381,20 @@
                                     diag_chaninfo_store%types(curdatindex), &
                                     diag_chaninfo_store%var_ids(curdatindex))
                                 
-                                if (data_type == NLAYER_STRING) then
-                                    call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                        NF90_CHUNKED, (/ 1, diag_chaninfo_store%nchans /)))
-                                else
-                                    call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                        NF90_CHUNKED, (/ diag_chaninfo_store%nchans /)))
+                                if (.NOT. append_only) then
+                                    if (data_type == NLAYER_STRING) then
+                                        call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                            NF90_CHUNKED, (/ diag_chaninfo_store%max_str_lens(curdatindex), diag_chaninfo_store%nchans /)))
+                                    else
+                                        call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                            NF90_CHUNKED, (/ diag_chaninfo_store%nchans /)))
+                                    end if
+                                    
+                                    ! Enable compression
+                                    ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+                                    call check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        1, 1, NLAYER_COMPRESSION))
                                 end if
-                                
-                                ! Enable compression
-                                ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
-                                call check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
-                                    1, 1, NLAYER_COMPRESSION))
                             end do
                             
                             ! Lock the definitions!

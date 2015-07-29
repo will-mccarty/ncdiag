@@ -38,6 +38,137 @@
             end if
         end subroutine nc_diag_metadata_allocmulti
         
+        subroutine nc_diag_metadata_load_def
+            integer(i_long) :: ndims, nvars, var_index, type_index
+            integer(i_long) :: rel_index, i, j, nobs_size
+            
+            character(len=NF90_MAX_NAME)               :: tmp_var_name
+            integer(i_long)                            :: tmp_var_type, tmp_var_ndims
+            
+            integer(i_long), dimension(:), allocatable :: tmp_var_dimids, tmp_var_dim_sizes
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
+            
+            logical                                    :: is_metadata_var
+            
+            integer(i_byte),    dimension(:), allocatable     :: byte_buffer
+            integer(i_short),   dimension(:), allocatable     :: short_buffer
+            integer(i_long),    dimension(:), allocatable     :: long_buffer
+            
+            real(r_single),     dimension(:), allocatable     :: rsingle_buffer
+            real(r_double),     dimension(:), allocatable     :: rdouble_buffer
+            
+            character(1),     dimension(:,:), allocatable     :: string_buffer
+            
+            ! Get top level info about the file!
+            call check(nf90_inquire(ncid, nDimensions = ndims, &
+                nVariables = nvars))
+            
+            ! Now search for variables that use metadata storage!
+            ! Loop through each variable!
+            do var_index = 1, nvars
+                ! Grab number of dimensions and attributes first
+                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                
+                ! Allocate temporary variable dimids storage!
+                allocate(tmp_var_dimids(tmp_var_ndims))
+                allocate(tmp_var_dim_names(tmp_var_ndims))
+                allocate(tmp_var_dim_sizes(tmp_var_ndims))
+                
+                ! Grab the actual dimension IDs and attributes
+                
+                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                    xtype = tmp_var_type))
+                
+                if ((tmp_var_ndims == 1) .OR. &
+                    ((tmp_var_ndims == 2) .AND. (tmp_var_type == NF90_CHAR))) then
+                    is_metadata_var = .FALSE.
+                    
+                    do i = 1, tmp_var_ndims
+                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                            tmp_var_dim_sizes(i)))
+                        
+                        if (tmp_var_dim_names(i) == "nobs") then
+                            nobs_size = tmp_var_dim_sizes(i)
+                            if (tmp_var_type /= NF90_CHAR) then
+                                is_metadata_var = .TRUE.
+                            else if (tmp_var_type == NF90_CHAR) then
+                                if (index(tmp_var_dim_names(1), "_maxstrlen") /= 0) &
+                                    is_metadata_var = .TRUE.
+                            end if
+                        end if
+                    end do
+                    
+                    if (is_metadata_var) then
+                        ! Expand things first!
+                        call nc_diag_metadata_expand
+                        
+                        ! Add to the total!
+                        diag_metadata_store%total = diag_metadata_store%total + 1
+                        
+                        ! Store name and type!
+                        diag_metadata_store%names(diag_metadata_store%total) = trim(tmp_var_name)
+                        
+                        ! The relative index is the total nobs
+                        rel_index = nobs_size
+                        
+                        if (tmp_var_type == NF90_BYTE) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_BYTE
+                            !call nc_diag_metadata_resize_byte(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 1
+                        else if (tmp_var_type == NF90_SHORT) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_SHORT
+                            !call nc_diag_metadata_resize_short(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 2
+                        else if (tmp_var_type == NF90_INT) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_LONG
+                            !call nc_diag_metadata_resize_long(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 3
+                        else if (tmp_var_type == NF90_FLOAT) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_FLOAT
+                            !call nc_diag_metadata_resize_rsingle(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 4
+                        else if (tmp_var_type == NF90_DOUBLE) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_DOUBLE
+                            !call nc_diag_metadata_resize_rdouble(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 5
+                        else if (tmp_var_type == NF90_CHAR) then
+                            diag_metadata_store%types(diag_metadata_store%total) = NLAYER_STRING
+                            diag_metadata_store%max_str_lens(diag_metadata_store%total) = tmp_var_dim_sizes(1)
+                            !call nc_diag_metadata_resize_string(int8(diag_metadata_store%nchans), .FALSE.)
+                            type_index = 6
+                        else
+                            call error("NetCDF4 type invalid!")
+                        end if
+                        
+                        print *, trim(tmp_var_name), "rel index", rel_index
+                        
+                        ! Now add a relative position... based on the next position!
+                        
+                        ! First, increment the number of variables stored for this type:
+                        !diag_metadata_store%acount(type_index) = diag_metadata_store%acount(type_index) + 1
+                        
+                        ! Set relative index!
+                        diag_metadata_store%rel_indexes(diag_metadata_store%total) = rel_index
+                        
+                        ! Set variable ID! Note that var_index here is the actual variable ID.
+                        diag_metadata_store%var_ids(diag_metadata_store%total) = var_index
+                        
+                        print *, var_index
+                        print *, diag_metadata_store%var_ids(diag_metadata_store%total)
+                    end if
+                    
+                    !call nc_diag_cat_metadata_add_var(trim(tmp_var_name), tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
+                end if
+                
+                ! Deallocate
+                deallocate(tmp_var_dimids)
+                deallocate(tmp_var_dim_names)
+                deallocate(tmp_var_dim_sizes)
+            end do
+            
+            diag_metadata_store%def_lock = .TRUE.
+        end subroutine nc_diag_metadata_load_def
+        
         subroutine nc_diag_metadata_write_def(internal)
             logical, intent(in), optional         :: internal
             
@@ -106,23 +237,26 @@
                                 deallocate(string_arr)
                             end if
                             
-                            call check(nf90_def_dim(ncid, data_dim_name, &
-                                diag_metadata_store%max_str_lens(curdatindex), tmp_dim_id))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_dim(ncid, data_dim_name, &
+                                    diag_metadata_store%max_str_lens(curdatindex), tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
 #endif
                             
-                            call check(nf90_def_var(ncid, data_name, nc_data_type, &
-                                (/ tmp_dim_id, diag_varattr_store%nobs_dim_id /), &
-                                diag_metadata_store%var_ids(curdatindex)))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                                    (/ tmp_dim_id, diag_varattr_store%nobs_dim_id /), &
+                                    diag_metadata_store%var_ids(curdatindex)))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Done defining char var type..."
 #endif
                         else
-                            call check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
-                                diag_metadata_store%var_ids(curdatindex)))
+                            if (.NOT. append_only) &
+                                call check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
+                                    diag_metadata_store%var_ids(curdatindex)))
                         end if
                         
 #ifdef _DEBUG_MEM_
@@ -139,23 +273,25 @@
                         print *, "Defining compression 1 (chunking)..."
 #endif
                         
-                        if (data_type == NLAYER_STRING) then
-                            call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ diag_metadata_store%max_str_lens(curdatindex), NLAYER_CHUNKING /)))
-                        else
-                            call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
-                                NF90_CHUNKED, (/ NLAYER_CHUNKING /)))
+                        if (.NOT. append_only) then
+                            if (data_type == NLAYER_STRING) then
+                                call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ diag_metadata_store%max_str_lens(curdatindex), NLAYER_CHUNKING /)))
+                            else
+                                call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                    NF90_CHUNKED, (/ NLAYER_CHUNKING /)))
+                            end if
+                            
+#ifdef _DEBUG_MEM_
+                            print *, "Defining compression 2 (gzip)..."
+#endif
+                            call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                1, 1, NLAYER_COMPRESSION))
+                            
+#ifdef _DEBUG_MEM_
+                            print *, "Done defining compression..."
+#endif
                         end if
-                        
-#ifdef _DEBUG_MEM_
-                        print *, "Defining compression 2 (gzip)..."
-#endif
-                        call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
-                            1, 1, NLAYER_COMPRESSION))
-                        
-#ifdef _DEBUG_MEM_
-                        print *, "Done defining compression..."
-#endif
                         
                         ! Lock the definitions!
                         diag_metadata_store%def_lock = .TRUE.
