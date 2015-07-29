@@ -28,6 +28,32 @@
             character(1),   dimension(:,:,:), allocatable     :: string_2d_buffer
             character(1),   dimension(:,:,:), allocatable     :: string_2d_expanded_buffer
             
+            type temp_storage
+                integer(i_byte),    dimension(:), allocatable     :: byte_buffer
+                integer(i_short),   dimension(:), allocatable     :: short_buffer
+                integer(i_long),    dimension(:), allocatable     :: long_buffer
+                
+                real(r_single),     dimension(:), allocatable     :: rsingle_buffer
+                real(r_double),     dimension(:), allocatable     :: rdouble_buffer
+                
+                !character(len=1000),dimension(:), allocatable     :: string_buffer
+                character(1)     ,dimension(:,:), allocatable     :: string_buffer
+                character(1)     ,dimension(:,:), allocatable     :: string_expanded_buffer
+                character(1)     ,dimension(:),   allocatable     :: string_1d_buffer
+                
+                integer(i_byte),  dimension(:,:), allocatable     :: byte_2d_buffer
+                integer(i_short), dimension(:,:), allocatable     :: short_2d_buffer
+                integer(i_long),  dimension(:,:), allocatable     :: long_2d_buffer
+                
+                real(r_single),   dimension(:,:), allocatable     :: rsingle_2d_buffer
+                real(r_double),   dimension(:,:), allocatable     :: rdouble_2d_buffer
+                
+                character(1),   dimension(:,:,:), allocatable     :: string_2d_buffer
+                character(1),   dimension(:,:,:), allocatable     :: string_2d_expanded_buffer
+            end type temp_storage
+            
+            type(temp_storage), dimension(:), allocatable         :: temp_storage_arr
+            
             character(1) ,  dimension(:), allocatable         :: tmp_str_buffer
             
             integer :: i, j, i_proc, procs_done = 0, base_proc = 1
@@ -40,6 +66,11 @@
             integer(i_long),    dimension(:), allocatable     :: read_var_count
             
             integer(i_long) :: mpi_status(MPI_STATUS_SIZE)
+            integer(i_long),    dimension(:), allocatable     :: mpi_requests
+            integer(i_long)                                   :: mpi_requests_total = 0
+            
+            integer(i_long)                                   :: mpi_request_EOF
+            integer(i_long)                                   :: mpi_request_EOP
             
             character(len=NF90_MAX_NAME) , allocatable :: tmp_in_dim_names(:)
             
@@ -60,6 +91,38 @@
             
             if (cur_proc /= 0) then
                 call info("Reading in data from all files...")
+                
+                ! Allocate the correct amount of requests needed for the
+                ! files and variables!
+                ! 
+                ! We need (num of files * num of vars) space.
+                ! 
+                ! Number of files is a bit tricky to determine, but not too bad!
+                !  -> If the total number of files divides evenly into the number
+                !     of processors handling files (num_procs - 1), then we just
+                !     divide and multiply.
+                !  -> If we have a remainder, and the current process is less
+                !     than or equal to (input_count % (num_procs - 1)), do the
+                !     same, but add 1 extra after dividing, THEN multiply.
+                !  -> If we have a remainder, but we are greater than that,
+                !     just do simple division and multiplication without adding
+                !     anything.
+                
+                if (mod(input_count, num_procs - 1) == 0) then
+                    allocate(mpi_requests((input_count / (num_procs - 1)) * (var_arr_total + 1) + 1))
+                    allocate(temp_storage_arr((input_count / (num_procs - 1)) * (var_arr_total + 1) + 1))
+                else
+                    if (cur_proc <= mod(input_count, num_procs - 1)) then
+                        allocate(mpi_requests(((input_count / (num_procs - 1)) + 1) * (var_arr_total + 1) + 1))
+                        allocate(temp_storage_arr(((input_count / (num_procs - 1)) + 1) * (var_arr_total + 1) + 1))
+                    else
+                        allocate(mpi_requests((input_count / (num_procs - 1)) * (var_arr_total + 1) + 1))
+                        allocate(temp_storage_arr((input_count / (num_procs - 1)) * (var_arr_total + 1) + 1))
+                    end if
+                end if
+                
+                mpi_request_EOF = var_arr_total + 1000
+                mpi_request_EOP = var_arr_total + 2000
                 
                 ! For each processor 1 ... n, do every (n - proc + 1) task.
                 ! Example:
@@ -164,84 +227,101 @@
                                     !! NOTE THAT THIS IS ON LOCAL MACHINE, AFTER DONE TRANSFER TO DALI AND
                                     !! CONTINUE DEV/TESTING THERE!!!
                                     
+                                    mpi_requests_total = mpi_requests_total + 1
+                                    
                                     if (tmp_var_type == NF90_BYTE) then
-                                        allocate(byte_buffer   (cur_dim_sizes(1)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%byte_buffer   (cur_dim_sizes(1)))
                                         ! EMPTY FILL GOES HERE
-                                        byte_buffer = NF90_FILL_BYTE
-                                        call check(nf90_get_var(ncid_input, var_index, byte_buffer))
+                                        temp_storage_arr(mpi_requests_total)%byte_buffer = NF90_FILL_BYTE
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%byte_buffer))
                                         
                                         ! Args: the variable, number of elements to send,
                                         ! data type (in MPI land), destination process #,
                                         ! numeric tag for extra info, and communicator.
-                                        call MPI_Send(byte_buffer, cur_dim_sizes(1), MPI_BYTE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%byte_buffer, &
+                                            cur_dim_sizes(1), MPI_BYTE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%byte_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
                                         !    = byte_buffer(:)
-                                        deallocate(byte_buffer)
+                                        !deallocate(byte_buffer)
                                     else if (tmp_var_type == NF90_SHORT) then
-                                        allocate(short_buffer  (cur_dim_sizes(1)))
-                                        short_buffer = NF90_FILL_SHORT
-                                        call check(nf90_get_var(ncid_input, var_index, short_buffer))
+                                        allocate(temp_storage_arr(mpi_requests_total)%short_buffer  (cur_dim_sizes(1)))
+                                        temp_storage_arr(mpi_requests_total)%short_buffer = NF90_FILL_SHORT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%short_buffer))
                                         
-                                        call MPI_Send(short_buffer, cur_dim_sizes(1), MPI_SHORT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%short_buffer, &
+                                            cur_dim_sizes(1), MPI_SHORT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%short_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
                                         !    = short_buffer(:)
-                                        deallocate(short_buffer)
+                                        !deallocate(short_buffer)
                                     else if (tmp_var_type == NF90_INT) then
-                                        allocate(long_buffer   (cur_dim_sizes(1)))
-                                        long_buffer = NF90_FILL_INT
-                                        call check(nf90_get_var(ncid_input, var_index, long_buffer))
+                                        allocate(temp_storage_arr(mpi_requests_total)%long_buffer   (cur_dim_sizes(1)))
+                                        temp_storage_arr(mpi_requests_total)%long_buffer = NF90_FILL_INT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%long_buffer))
                                         
                                         !write (*, "(A, I0, A, I0)") "[PROC ", cur_proc, &
                                         !    "] long_buffer send for var " // trim(var_names(cur_out_var_ind)) // ": ", &
                                         !    cur_dim_sizes(1)
                                         
-                                        call MPI_Send(long_buffer, cur_dim_sizes(1), MPI_INT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%long_buffer, &
+                                            cur_dim_sizes(1), MPI_INT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%long_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
                                         !    = long_buffer(:)
-                                        deallocate(long_buffer)
+                                        !deallocate(long_buffer)
                                     else if (tmp_var_type == NF90_FLOAT) then
-                                        allocate(rsingle_buffer(cur_dim_sizes(1)))
-                                        rsingle_buffer = NF90_FILL_FLOAT
-                                        call check(nf90_get_var(ncid_input, var_index, rsingle_buffer, &
+                                        allocate(temp_storage_arr(mpi_requests_total)%rsingle_buffer(cur_dim_sizes(1)))
+                                        temp_storage_arr(mpi_requests_total)%rsingle_buffer = NF90_FILL_FLOAT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%rsingle_buffer, &
                                             start = (/ 1 /), &
                                             count = (/ cur_dim_sizes(1) /) ))
                                         
-                                        call MPI_Send(rsingle_buffer, cur_dim_sizes(1), MPI_FLOAT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rsingle_buffer, &
+                                            cur_dim_sizes(1), MPI_FLOAT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%rsingle_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
                                         !    = rsingle_buffer(:)
-                                        deallocate(rsingle_buffer)
+                                        !deallocate(rsingle_buffer)
                                     else if (tmp_var_type == NF90_DOUBLE) then
-                                        allocate(rdouble_buffer(cur_dim_sizes(1)))
-                                        rdouble_buffer = NF90_FILL_DOUBLE
+                                        allocate(temp_storage_arr(mpi_requests_total)%rdouble_buffer(cur_dim_sizes(1)))
+                                        temp_storage_arr(mpi_requests_total)%rdouble_buffer = NF90_FILL_DOUBLE
                                         !print *, cur_dim_sizes(1)
-                                        call check(nf90_get_var(ncid_input, var_index, rdouble_buffer, &
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%rdouble_buffer, &
                                             start = (/ 1 /), &
                                             count = (/ cur_dim_sizes(1) /) ))
                                         
-                                        call MPI_Send(rdouble_buffer, cur_dim_sizes(1), MPI_DOUBLE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rdouble_buffer, &
+                                            cur_dim_sizes(1), MPI_DOUBLE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%rdouble_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1) &
                                         !    = rdouble_buffer(:)
-                                        deallocate(rdouble_buffer)
+                                        !deallocate(rdouble_buffer)
                                     else if (tmp_var_type == NF90_CHAR) then
                                         allocate(string_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
                                         
@@ -250,7 +330,7 @@
                                         allocate(string_expanded_buffer (cur_out_dim_sizes(1), cur_dim_sizes(2)))
                                         
                                         ! Same again, this time just multiplying...
-                                        allocate(string_1d_buffer(cur_out_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer(cur_out_dim_sizes(1)* cur_dim_sizes(2)))
                                         
                                         string_buffer = NF90_FILL_CHAR
                                         string_expanded_buffer = NF90_FILL_CHAR
@@ -261,18 +341,20 @@
                                         string_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2)) = &
                                             string_buffer
                                         
-                                        string_1d_buffer = reshape(string_buffer, &
+                                        temp_storage_arr(mpi_requests_total)%string_1d_buffer = reshape(string_buffer, &
                                             (/ cur_out_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(string_1d_buffer, cur_out_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_1d_buffer, &
+                                            cur_out_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%string_buffer &
                                         !    (data_blobs(cur_out_var_ind)%cur_pos : &
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1, :) &
                                         !    = string_buffer(:,:)
                                         
-                                        deallocate(string_1d_buffer)
+                                        !deallocate(string_1d_buffer)
                                         deallocate(string_buffer)
                                         deallocate(string_expanded_buffer)
                                         !write (*, "(A)") "VARIABLE: " // trim(var_names(cur_out_var_ind))
@@ -345,15 +427,20 @@
                                 else if ((cur_out_var_ndims == 2) .OR. &
                                     ((cur_out_var_ndims == 3) .AND. (tmp_var_type == NF90_CHAR))) then
                                     
+                                    mpi_requests_total = mpi_requests_total + 1
+                                    
                                     if (tmp_var_type == NF90_BYTE) then
                                         allocate(byte_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(byte_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%byte_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
                                         byte_2d_buffer = NF90_FILL_BYTE
                                         call check(nf90_get_var(ncid_input, var_index, byte_2d_buffer))
-                                        byte_buffer = reshape(byte_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        temp_storage_arr(mpi_requests_total)%byte_buffer = &
+                                            reshape(byte_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(byte_buffer, cur_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%byte_buffer, &
+                                            cur_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%byte_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), &
@@ -361,17 +448,20 @@
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                         !    = byte_2d_buffer(:,:)
                                         
-                                        deallocate(byte_buffer)
+                                        !deallocate(byte_buffer)
                                         deallocate(byte_2d_buffer)
                                     else if (tmp_var_type == NF90_SHORT) then
                                         allocate(short_2d_buffer  (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(short_buffer     (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%short_buffer     (cur_dim_sizes(1)* cur_dim_sizes(2)))
                                         short_2d_buffer = NF90_FILL_SHORT
                                         call check(nf90_get_var(ncid_input, var_index, short_2d_buffer))
-                                        short_buffer = reshape(byte_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        temp_storage_arr(mpi_requests_total)%short_buffer = &
+                                            reshape(short_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(short_buffer, cur_dim_sizes(1)* cur_dim_sizes(2), MPI_SHORT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%short_buffer, &
+                                            cur_dim_sizes(1)* cur_dim_sizes(2), MPI_SHORT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%short_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), &
@@ -379,17 +469,20 @@
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                         !    = short_2d_buffer(:,:)
                                         
-                                        deallocate(short_buffer)
+                                        !deallocate(short_buffer)
                                         deallocate(short_2d_buffer)
                                     else if (tmp_var_type == NF90_INT) then
                                         allocate(long_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(long_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%long_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
                                         long_2d_buffer = NF90_FILL_INT
                                         call check(nf90_get_var(ncid_input, var_index, long_2d_buffer))
-                                        long_buffer = reshape(long_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        temp_storage_arr(mpi_requests_total)%long_buffer = &
+                                            reshape(long_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(long_buffer, cur_dim_sizes(1)* cur_dim_sizes(2), MPI_INT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%long_buffer, &
+                                            cur_dim_sizes(1)* cur_dim_sizes(2), MPI_INT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%long_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), &
@@ -397,19 +490,22 @@
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                         !    = long_2d_buffer(:,:)
                                         
-                                        deallocate(long_buffer)
+                                        !deallocate(long_buffer)
                                         deallocate(long_2d_buffer)
                                     else if (tmp_var_type == NF90_FLOAT) then
                                         allocate(rsingle_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(rsingle_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%rsingle_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
                                         rsingle_2d_buffer = NF90_FILL_FLOAT
                                         call check(nf90_get_var(ncid_input, var_index, rsingle_2d_buffer, &
                                             start = (/ 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
-                                        rsingle_buffer = reshape(rsingle_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        temp_storage_arr(mpi_requests_total)%rsingle_buffer = &
+                                            reshape(rsingle_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(rsingle_buffer, cur_dim_sizes(1)* cur_dim_sizes(2), MPI_FLOAT, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rsingle_buffer, &
+                                            cur_dim_sizes(1)* cur_dim_sizes(2), MPI_FLOAT, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%rsingle_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), &
@@ -417,19 +513,22 @@
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                         !    = rsingle_2d_buffer(:,:)
                                         
-                                        deallocate(rsingle_buffer)
+                                        !deallocate(rsingle_buffer)
                                         deallocate(rsingle_2d_buffer)
                                     else if (tmp_var_type == NF90_DOUBLE) then
                                         allocate(rdouble_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(rdouble_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%rdouble_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
                                         rdouble_2d_buffer = NF90_FILL_DOUBLE
                                         call check(nf90_get_var(ncid_input, var_index, rdouble_2d_buffer, &
                                             start = (/ 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
-                                        rdouble_buffer = reshape(rdouble_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        temp_storage_arr(mpi_requests_total)%rdouble_buffer = &
+                                            reshape(rdouble_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_Send(rdouble_buffer, cur_dim_sizes(1)* cur_dim_sizes(2), MPI_DOUBLE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rdouble_buffer, &
+                                            cur_dim_sizes(1)* cur_dim_sizes(2), MPI_DOUBLE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%rdouble_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), &
@@ -437,7 +536,7 @@
                                         !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                         !    = rdouble_2d_buffer(:,:)
                                         
-                                        deallocate(rdouble_buffer)
+                                        !deallocate(rdouble_buffer)
                                         deallocate(rdouble_2d_buffer)
                                     else if (tmp_var_type == NF90_CHAR) then
                                         allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
@@ -447,7 +546,7 @@
                                         allocate(string_2d_expanded_buffer (cur_out_dim_sizes(1), cur_out_dim_sizes(2), cur_dim_sizes(3)))
                                         
                                         ! Same again, this time just multiplying...
-                                        allocate(string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3)))
                                         string_2d_buffer = NF90_FILL_CHAR
                                         string_2d_expanded_buffer = NF90_FILL_CHAR
                                         call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
@@ -457,13 +556,16 @@
                                         string_2d_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2), 1:cur_dim_sizes(3)) = &
                                             string_2d_buffer
                                         
-                                        string_1d_buffer = reshape(string_2d_expanded_buffer, &
-                                            (/ cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3) /))
+                                        temp_storage_arr(mpi_requests_total)%string_1d_buffer = &
+                                            reshape(string_2d_expanded_buffer, &
+                                                (/ cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3) /))
                                         !data_blobs(cur_out_var_ind)%string_2d_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:,:) &
                                         !    = string_2d_buffer(:,:,:)
                                         
-                                        call MPI_Send(string_1d_buffer, cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3), MPI_BYTE, &
-                                            0, cur_out_var_ind, MPI_COMM_WORLD, ierr)
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_1d_buffer, &
+                                            cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3), MPI_BYTE, &
+                                            0, cur_out_var_ind, MPI_COMM_WORLD, &
+                                            mpi_requests(mpi_requests_total), ierr)
                                         
                                         !data_blobs(cur_out_var_ind)%string_2d_buffer &
                                         !    (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
@@ -474,7 +576,7 @@
                                         !call check(nf90_put_var(ncid_output, cur_out_var_id, string_2d_buffer, &
                                         !    start = (/ 1, 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(3))) /), &
                                         !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
-                                        deallocate(string_1d_buffer)
+                                        !deallocate(string_1d_buffer)
                                         deallocate(string_2d_buffer)
                                         deallocate(string_2d_expanded_buffer)
                                     else
@@ -537,11 +639,25 @@
                     end if
                     
                     ! Send EOF notification
-                    call MPI_Send(0, 1, MPI_INT, 0, var_arr_total + 1000, MPI_COMM_WORLD, ierr)
+                    mpi_requests_total = mpi_requests_total + 1
+                    call MPI_ISend(0, 1, MPI_INT, 0, mpi_request_EOF, MPI_COMM_WORLD, &
+                        mpi_requests(mpi_requests_total), ierr)
                 end do
                 
                 ! Send process competion notification
-                call MPI_Send(0, 1, MPI_INT, 0, var_arr_total + 2000, MPI_COMM_WORLD, ierr)
+                mpi_requests_total = mpi_requests_total + 1
+                call MPI_ISend(0, 1, MPI_INT, 0, mpi_request_EOP, MPI_COMM_WORLD, &
+                    mpi_requests(mpi_requests_total), ierr)
+                
+                ! Flush all MPI communications!
+                ! (Deallocate everything while we're at it!)
+                call info(" -> Flushing all data...")
+                do i = 1, mpi_requests_total
+                    call MPI_Wait(mpi_requests(i), mpi_status, ierr)
+                end do
+                
+                ! This will deallocate everything, including internal stuff
+                deallocate(temp_storage_arr)
             else
                 ! Do collection!
                 ! We know how much we need to receive - but we don't know
@@ -556,6 +672,8 @@
                 procs_done_arr = -1
                 
                 procs_done = 0
+                
+                allocate(mpi_requests(input_count * var_arr_total))
                 
                 !print *, "VAR COUNTERS PROC 2 info: ", var_counters
                 call info("Receiving data from other processes...")
