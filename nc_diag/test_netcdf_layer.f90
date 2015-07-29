@@ -50,14 +50,17 @@ program test_netcdf_layer
     
     call nc_diag_set_trim(.FALSE.)
     call nc_diag_chaninfo("chaninfo_strfix", str_chaninfo_fixed)
+    call nc_diag_chaninfo("chaninfo_strfix1", str_chaninfo_fixed)
     str_chaninfo_fixed = "three"
     call nc_diag_chaninfo("chaninfo_strfix", str_chaninfo_fixed)
     
     call nc_diag_metadata("metadata_strfix", str_metadata_fixed)
+    call nc_diag_metadata("metadata_strfix1", str_metadata_fixed)
     str_metadata_fixed = "four"
     call nc_diag_metadata("metadata_strfix", str_metadata_fixed)
     
     call nc_diag_data2d("data2d_strfix", str_data2d_fixed)
+    call nc_diag_data2d("data2d_strfix1", str_data2d_fixed)
     str_data2d_fixed   = (/ "six", "seven", "eight" /)
     call nc_diag_data2d("data2d_strfix", str_data2d_fixed)
     
@@ -73,6 +76,9 @@ program test_netcdf_layer
     call nc_diag_set_trim(.TRUE.)
     
     call nc_diag_init("test.nc")
+    
+    ! Test init checking + corresponding error:
+    !call nc_diag_init("test2.nc")
     
     ! Uncomment below line to enable strict mode, aka strict
     ! variable bounds checking. When strict mode is enabled, if any
@@ -107,6 +113,7 @@ program test_netcdf_layer
         call nc_diag_data2d("data2dsimple4_float", (/ f + 1.00 + i, f + 2.00 + i, f + 3.00 + i, f + 4.00 + i /))
         call nc_diag_data2d("data2dsimple4_float2", (/ f + 2.00 + i, f + 4.00 + i /))
         call nc_diag_data2d("data2dsimple5_double", (/ d + 1.00 + i /))
+        call nc_diag_data2d("data2dsimple99", (/ i /))
         
         write(str_chaninfo, "(A, I0)") "ci6_", i
         call nc_diag_chaninfo("chaninfosimple6_str", str_chaninfo)
