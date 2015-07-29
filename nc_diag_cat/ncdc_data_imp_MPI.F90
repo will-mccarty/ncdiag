@@ -330,7 +330,7 @@
                                         allocate(string_expanded_buffer (cur_out_dim_sizes(1), cur_dim_sizes(2)))
                                         
                                         ! Same again, this time just multiplying...
-                                        allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer(cur_out_dim_sizes(1)* cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer(cur_out_dim_sizes(1)* cur_dim_sizes(2)))
                                         
                                         string_buffer = NF90_FILL_CHAR
                                         string_expanded_buffer = NF90_FILL_CHAR
@@ -341,10 +341,10 @@
                                         string_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2)) = &
                                             string_buffer
                                         
-                                        temp_storage_arr(mpi_requests_total)%string_1d_buffer = reshape(string_buffer, &
-                                            (/ cur_out_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        !temp_storage_arr(mpi_requests_total)%string_1d_buffer = reshape(string_buffer, &
+                                        !    (/ cur_out_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_1d_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_expanded_buffer, &
                                             cur_out_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -356,7 +356,7 @@
                                         
                                         !deallocate(string_1d_buffer)
                                         deallocate(string_buffer)
-                                        deallocate(string_expanded_buffer)
+                                        !deallocate(string_expanded_buffer)
                                         !write (*, "(A)") "VARIABLE: " // trim(var_names(cur_out_var_ind))
                                         !print *, "ALLOC SIZES: ", data_blobs(cur_out_var_ind)%alloc_size
                                         !write (*, "(A, I0, A, I0)") "start = ", data_blobs(cur_out_var_ind)%cur_pos, &
@@ -430,14 +430,15 @@
                                     mpi_requests_total = mpi_requests_total + 1
                                     
                                     if (tmp_var_type == NF90_BYTE) then
-                                        allocate(byte_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(temp_storage_arr(mpi_requests_total)%byte_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
-                                        byte_2d_buffer = NF90_FILL_BYTE
-                                        call check(nf90_get_var(ncid_input, var_index, byte_2d_buffer))
-                                        temp_storage_arr(mpi_requests_total)%byte_buffer = &
-                                            reshape(byte_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        allocate(temp_storage_arr(mpi_requests_total)%byte_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%byte_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        temp_storage_arr(mpi_requests_total)%byte_2d_buffer = NF90_FILL_BYTE
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%byte_2d_buffer))
+                                        !temp_storage_arr(mpi_requests_total)%byte_buffer = &
+                                        !    reshape(byte_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%byte_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%byte_2d_buffer, &
                                             cur_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -449,16 +450,17 @@
                                         !    = byte_2d_buffer(:,:)
                                         
                                         !deallocate(byte_buffer)
-                                        deallocate(byte_2d_buffer)
+                                        !deallocate(byte_2d_buffer)
                                     else if (tmp_var_type == NF90_SHORT) then
-                                        allocate(short_2d_buffer  (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(temp_storage_arr(mpi_requests_total)%short_buffer     (cur_dim_sizes(1)* cur_dim_sizes(2)))
-                                        short_2d_buffer = NF90_FILL_SHORT
-                                        call check(nf90_get_var(ncid_input, var_index, short_2d_buffer))
-                                        temp_storage_arr(mpi_requests_total)%short_buffer = &
-                                            reshape(short_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        allocate(temp_storage_arr(mpi_requests_total)%short_2d_buffer  (cur_dim_sizes(1), cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%short_buffer     (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        temp_storage_arr(mpi_requests_total)%short_2d_buffer = NF90_FILL_SHORT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%short_2d_buffer))
+                                        !temp_storage_arr(mpi_requests_total)%short_buffer = &
+                                        !    reshape(short_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%short_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%short_2d_buffer, &
                                             cur_dim_sizes(1)* cur_dim_sizes(2), MPI_SHORT, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -470,16 +472,17 @@
                                         !    = short_2d_buffer(:,:)
                                         
                                         !deallocate(short_buffer)
-                                        deallocate(short_2d_buffer)
+                                        !deallocate(short_2d_buffer)
                                     else if (tmp_var_type == NF90_INT) then
-                                        allocate(long_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(temp_storage_arr(mpi_requests_total)%long_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
-                                        long_2d_buffer = NF90_FILL_INT
-                                        call check(nf90_get_var(ncid_input, var_index, long_2d_buffer))
-                                        temp_storage_arr(mpi_requests_total)%long_buffer = &
-                                            reshape(long_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        allocate(temp_storage_arr(mpi_requests_total)%long_2d_buffer   (cur_dim_sizes(1), cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%long_buffer      (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        temp_storage_arr(mpi_requests_total)%long_2d_buffer = NF90_FILL_INT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%long_2d_buffer))
+                                        !temp_storage_arr(mpi_requests_total)%long_buffer = &
+                                        !    reshape(long_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%long_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%long_2d_buffer, &
                                             cur_dim_sizes(1)* cur_dim_sizes(2), MPI_INT, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -491,18 +494,19 @@
                                         !    = long_2d_buffer(:,:)
                                         
                                         !deallocate(long_buffer)
-                                        deallocate(long_2d_buffer)
+                                        !deallocate(long_2d_buffer)
                                     else if (tmp_var_type == NF90_FLOAT) then
-                                        allocate(rsingle_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(temp_storage_arr(mpi_requests_total)%rsingle_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
-                                        rsingle_2d_buffer = NF90_FILL_FLOAT
-                                        call check(nf90_get_var(ncid_input, var_index, rsingle_2d_buffer, &
+                                        allocate(temp_storage_arr(mpi_requests_total)%rsingle_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%rsingle_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        temp_storage_arr(mpi_requests_total)%rsingle_2d_buffer = NF90_FILL_FLOAT
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%rsingle_2d_buffer, &
                                             start = (/ 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
-                                        temp_storage_arr(mpi_requests_total)%rsingle_buffer = &
-                                            reshape(rsingle_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        !temp_storage_arr(mpi_requests_total)%rsingle_buffer = &
+                                        !    reshape(rsingle_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rsingle_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rsingle_2d_buffer, &
                                             cur_dim_sizes(1)* cur_dim_sizes(2), MPI_FLOAT, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -514,18 +518,19 @@
                                         !    = rsingle_2d_buffer(:,:)
                                         
                                         !deallocate(rsingle_buffer)
-                                        deallocate(rsingle_2d_buffer)
+                                        !deallocate(rsingle_2d_buffer)
                                     else if (tmp_var_type == NF90_DOUBLE) then
-                                        allocate(rdouble_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
-                                        allocate(temp_storage_arr(mpi_requests_total)%rdouble_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
-                                        rdouble_2d_buffer = NF90_FILL_DOUBLE
-                                        call check(nf90_get_var(ncid_input, var_index, rdouble_2d_buffer, &
+                                        allocate(temp_storage_arr(mpi_requests_total)%rdouble_2d_buffer(cur_dim_sizes(1), cur_dim_sizes(2)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%rdouble_buffer   (cur_dim_sizes(1)* cur_dim_sizes(2)))
+                                        temp_storage_arr(mpi_requests_total)%rdouble_2d_buffer = NF90_FILL_DOUBLE
+                                        call check(nf90_get_var(ncid_input, var_index, &
+                                            temp_storage_arr(mpi_requests_total)%rdouble_2d_buffer, &
                                             start = (/ 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
-                                        temp_storage_arr(mpi_requests_total)%rdouble_buffer = &
-                                            reshape(rdouble_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
+                                        !temp_storage_arr(mpi_requests_total)%rdouble_buffer = &
+                                        !    reshape(rdouble_2d_buffer, (/ cur_dim_sizes(1)* cur_dim_sizes(2) /))
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rdouble_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%rdouble_2d_buffer, &
                                             cur_dim_sizes(1)* cur_dim_sizes(2), MPI_DOUBLE, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -537,32 +542,34 @@
                                         !    = rdouble_2d_buffer(:,:)
                                         
                                         !deallocate(rdouble_buffer)
-                                        deallocate(rdouble_2d_buffer)
+                                        !deallocate(rdouble_2d_buffer)
                                     else if (tmp_var_type == NF90_CHAR) then
                                         allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
                                         
                                         ! NOTE: the 3rd dim is nobs, so this is the actual file size.
                                         ! Other fields are the final sizes (maximum).
-                                        allocate(string_2d_expanded_buffer (cur_out_dim_sizes(1), cur_out_dim_sizes(2), cur_dim_sizes(3)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%string_2d_expanded_buffer &
+                                            (cur_out_dim_sizes(1), cur_out_dim_sizes(2), cur_dim_sizes(3)))
                                         
                                         ! Same again, this time just multiplying...
-                                        allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3)))
+                                        !allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3)))
                                         string_2d_buffer = NF90_FILL_CHAR
                                         string_2d_expanded_buffer = NF90_FILL_CHAR
                                         call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                             start = (/ 1, 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                         
-                                        string_2d_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2), 1:cur_dim_sizes(3)) = &
-                                            string_2d_buffer
+                                        temp_storage_arr(mpi_requests_total)%string_2d_expanded_buffer &
+                                            (1:cur_dim_sizes(1), 1:cur_dim_sizes(2), 1:cur_dim_sizes(3)) = &
+                                                string_2d_buffer
                                         
-                                        temp_storage_arr(mpi_requests_total)%string_1d_buffer = &
-                                            reshape(string_2d_expanded_buffer, &
-                                                (/ cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3) /))
+                                        !temp_storage_arr(mpi_requests_total)%string_1d_buffer = &
+                                        !    reshape(string_2d_expanded_buffer, &
+                                        !        (/ cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3) /))
                                         !data_blobs(cur_out_var_ind)%string_2d_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:,:) &
                                         !    = string_2d_buffer(:,:,:)
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_1d_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_expanded_buffer, &
                                             cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3), MPI_BYTE, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
@@ -578,7 +585,7 @@
                                         !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                         !deallocate(string_1d_buffer)
                                         deallocate(string_2d_buffer)
-                                        deallocate(string_2d_expanded_buffer)
+                                        !deallocate(string_2d_expanded_buffer)
                                     else
                                         write (err_string, "(A, I0, A)") &
                                             "Invalid type detected during write." // &
@@ -998,16 +1005,16 @@
                                 
                                 if (cur_out_var_type == NF90_BYTE) then
                                     allocate(byte_2d_buffer   (cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1)))
-                                    allocate(byte_buffer      (num_count))
+                                    !allocate(byte_buffer      (num_count))
                                     byte_2d_buffer = NF90_FILL_BYTE
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(byte_buffer, num_count, MPI_BYTE, &
+                                    call MPI_Recv(byte_2d_buffer, num_count, MPI_BYTE, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    byte_2d_buffer = reshape(byte_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
+                                    !byte_2d_buffer = reshape(byte_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
                                     
                                     data_blobs(cur_out_var_ind)%byte_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1015,20 +1022,20 @@
                                             data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = byte_2d_buffer(:,:)
                                     
-                                    deallocate(byte_buffer)
+                                    !deallocate(byte_buffer)
                                     deallocate(byte_2d_buffer)
                                 else if (cur_out_var_type == NF90_SHORT) then
                                     allocate(short_2d_buffer  (cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1)))
-                                    allocate(short_buffer     (num_count))
+                                    !allocate(short_buffer     (num_count))
                                     short_2d_buffer = NF90_FILL_SHORT
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(short_buffer, num_count, MPI_SHORT, &
+                                    call MPI_Recv(short_2d_buffer, num_count, MPI_SHORT, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    short_2d_buffer = reshape(short_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
+                                    !short_2d_buffer = reshape(short_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
                                     
                                     data_blobs(cur_out_var_ind)%short_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1036,20 +1043,20 @@
                                             data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = short_2d_buffer(:,:)
                                     
-                                    deallocate(short_buffer)
+                                    !deallocate(short_buffer)
                                     deallocate(short_2d_buffer)
                                 else if (cur_out_var_type == NF90_INT) then
                                     allocate(long_2d_buffer   (cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1)))
-                                    allocate(long_buffer      (num_count))
+                                    !allocate(long_buffer      (num_count))
                                     long_2d_buffer = NF90_FILL_INT
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(long_buffer, num_count, MPI_INT, &
+                                    call MPI_Recv(long_2d_buffer, num_count, MPI_INT, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    long_2d_buffer = reshape(long_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
+                                    !long_2d_buffer = reshape(long_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
                                     
                                     data_blobs(cur_out_var_ind)%long_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1057,20 +1064,20 @@
                                             data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = long_2d_buffer(:,:)
                                     
-                                    deallocate(long_buffer)
+                                    !deallocate(long_buffer)
                                     deallocate(long_2d_buffer)
                                 else if (cur_out_var_type == NF90_FLOAT) then
                                     allocate(rsingle_2d_buffer(cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1)))
-                                    allocate(rsingle_buffer   (num_count))
+                                    !allocate(rsingle_buffer   (num_count))
                                     rsingle_2d_buffer = NF90_FILL_FLOAT
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(rsingle_buffer, num_count, MPI_FLOAT, &
+                                    call MPI_Recv(rsingle_2d_buffer, num_count, MPI_FLOAT, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    rsingle_2d_buffer = reshape(rsingle_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
+                                    !rsingle_2d_buffer = reshape(rsingle_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
                                     
                                     data_blobs(cur_out_var_ind)%rsingle_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1078,20 +1085,20 @@
                                             data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = rsingle_2d_buffer(:,:)
                                     
-                                    deallocate(rsingle_buffer)
+                                    !deallocate(rsingle_buffer)
                                     deallocate(rsingle_2d_buffer)
                                 else if (cur_out_var_type == NF90_DOUBLE) then
                                     allocate(rdouble_2d_buffer(cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1)))
-                                    allocate(rdouble_buffer   (num_count))
+                                    !allocate(rdouble_buffer   (num_count))
                                     rdouble_2d_buffer = NF90_FILL_DOUBLE
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(rdouble_buffer, num_count, MPI_DOUBLE, &
+                                    call MPI_Recv(rdouble_2d_buffer, num_count, MPI_DOUBLE, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    rdouble_2d_buffer = reshape(rdouble_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
+                                    !rdouble_2d_buffer = reshape(rdouble_buffer, (/ cur_out_dim_sizes(1), num_count / cur_out_dim_sizes(1) /))
                                     
                                     data_blobs(cur_out_var_ind)%rdouble_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1099,26 +1106,26 @@
                                             data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = rdouble_2d_buffer(:,:)
                                     
-                                    deallocate(rdouble_buffer)
+                                    !deallocate(rdouble_buffer)
                                     deallocate(rdouble_2d_buffer)
                                 else if (cur_out_var_type == NF90_CHAR) then
                                     allocate(string_2d_buffer (cur_out_dim_sizes(1), cur_out_dim_sizes(2), &
                                         num_count / (cur_out_dim_sizes(1) * cur_out_dim_sizes(2))))
                                     
-                                    ! Same again, this time just multiplying...
-                                    allocate(string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* &
-                                        (num_count / (cur_out_dim_sizes(1) * cur_out_dim_sizes(2)))))
+                                    !! Same again, this time just multiplying...
+                                    !allocate(string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* &
+                                    !    (num_count / (cur_out_dim_sizes(1) * cur_out_dim_sizes(2)))))
                                     
                                     string_2d_buffer = NF90_FILL_CHAR
                                     
                                     ! Args: the target variable, number of elements to recv,
                                     ! data type (in MPI land), source process #,
                                     ! numeric tag for extra info, and communicator.
-                                    call MPI_Recv(string_1d_buffer, num_count, MPI_BYTE, &
+                                    call MPI_Recv(string_2d_buffer, num_count, MPI_BYTE, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
-                                    string_2d_buffer = reshape(string_1d_buffer, (/ cur_out_dim_sizes(1), cur_out_dim_sizes(2), &
-                                        num_count / (cur_out_dim_sizes(1) * cur_out_dim_sizes(2)) /))
+                                    !string_2d_buffer = reshape(string_1d_buffer, (/ cur_out_dim_sizes(1), cur_out_dim_sizes(2), &
+                                    !    num_count / (cur_out_dim_sizes(1) * cur_out_dim_sizes(2)) /))
                                     
                                     data_blobs(cur_out_var_ind)%string_2d_buffer &
                                         (1 : cur_out_dim_sizes(1), &
@@ -1140,7 +1147,7 @@
                                     !call check(nf90_put_var(ncid_output, cur_out_var_id, string_2d_buffer, &
                                     !    start = (/ 1, 1, 1 + dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(3))) /), &
                                     !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
-                                    deallocate(string_1d_buffer)
+                                    !deallocate(string_1d_buffer)
                                     deallocate(string_2d_buffer)
                                 else
                                     write (err_string, "(A, I0, A)") &
