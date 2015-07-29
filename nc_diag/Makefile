@@ -44,18 +44,11 @@ endif
 #                        debugging any issues with code or NCLayer.
 #                        This works by triggering a divide-by-zero
 #                        runtime error, which generates a traceback.
-#   -DIGNORE_VERSION   - ignore the version of NetCDF4. This disables
-#                        any bug checks related to NetCDF4 versions.
-#                        WARNING - do not define this (aka disable
-#                        version checks) unless you know what you're
-#                        doing! (Hint: if you don't want NetCDF4 to
-#                        crash with an error message, don't define
-#                        this!)
 #   -DNO_NETCDF        - see DISABLE_NETCDF above for details.
 #                        
 #                        NOTE - this is set automatically if
 #                        DISABLE_NETCDF is set.
-COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
+COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
 
 NETCDF_LAYER_DEPS+=Makefile \
 	netcdf_realloc_decl.f90 \

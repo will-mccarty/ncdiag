@@ -1147,12 +1147,6 @@
             end if
 #endif
             
-#ifndef IGNORE_VERSION
-            if (NLAYER_STRING_BROKEN) then
-                call error("Data string storage not supported with NetCDF v4.2.1.1 or lower.")
-            end if
-#endif
-            
             if (diag_chaninfo_store%data_lock) then
                 call error("Can't add new data - data have already been written and locked!")
             end if

@@ -44,10 +44,6 @@ module netcdf_layer
     
     character(len=200) :: cur_nc_file
     
-#ifndef IGNORE_VERSION
-    logical :: NLAYER_STRING_BROKEN = .FALSE.
-#endif
-    
 #ifdef NO_NETCDF
 #include "netcdf_nonetcdf_decl.F90"
 #endif
@@ -90,11 +86,6 @@ module netcdf_layer
             !print *,'Initializing netcdf layer library, version ...'
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
             call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
-            
-#ifndef IGNORE_VERSION
-            call nc_version_check(version_num)
-#endif
-
 #endif
             
             ! nf90_create creates the NetCDF file, and initializes
@@ -146,50 +137,6 @@ module netcdf_layer
                     // "              Attempted to open file: " // trim(filename) // ")")
             end if
         end subroutine nc_diag_init
-        
-#ifndef IGNORE_VERSION
-        subroutine nc_version_check(version_num)
-            character(len=*),intent(in)    :: version_num
-            character(len=:), allocatable  :: version_split_char(:)
-            
-            integer(i_long), dimension(4)  :: version_split
-            
-            version_split = 0
-            
-            ! There are problems with a certain version of NetCDF,
-            ! particularly with string handling. When attempting to get
-            ! and put string data, NC_EMAPTYPE (Mapped access for
-            ! atomic types only) appears, preventing string storage from
-            ! working. We can work around this, but we need to know the
-            ! version in order to know whether we need the workaround
-            ! or not.
-            ! 
-            ! Affected versions are 4.2.1.1 and lower.
-            
-            version_split_char = string_split_index(version_num, ".")
-            
-            ! Convert to integers!
-            if (size(version_split_char) >= 1) read(version_split_char(1), "(I)") version_split(1)
-            if (size(version_split_char) >= 2) read(version_split_char(2), "(I)") version_split(2)
-            if (size(version_split_char) >= 3) read(version_split_char(3), "(I)") version_split(3)
-            if (size(version_split_char) >= 4) read(version_split_char(4), "(I)") version_split(4)
-            
-            ! Now compare!
-            if ((version_split(1) <= 4) .AND. (version_split(2) <= 2) &
-                .AND. (version_split(3) <= 2) .AND. (version_split(4) <= 1)) then
-                NLAYER_STRING_BROKEN = .TRUE.
-                call warning("Detected buggy version (<= v4.2.1.1) of NetCDF with bad string" &
-                    // char(10) &
-                    // "             data handling. Any string data input will result in an error." &
-                    // char(10) &
-                    // "             You can use the NLAYER_STRING_BROKEN variable to determine if" &
-                    // char(10) &
-                    // "             strings are usable or not within this module." &
-                    // char(10) &
-                    // "             (To ignore version, rebuild with IGNORE_VERSION defined.)")
-            end if
-        end subroutine nc_version_check
-#endif
         
         !subroutine nc_diag_metadata
         !    
