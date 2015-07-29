@@ -278,11 +278,11 @@
             real(r_double),  dimension(:, :), allocatable :: rdouble_arr
             character(len=:),dimension(:, :), allocatable :: string_arr
             
-            integer(i_long)                               :: max_str_len = -1
+            integer(i_long)                               :: max_str_len
             
-            integer(i_llong)                              :: data_length_counter = -1
+            integer(i_llong)                              :: data_length_counter
             character(len=100)                            :: counter_data_name
-            integer(i_llong)                              :: current_length_count = -1
+            integer(i_llong)                              :: current_length_count
             character(len=1000)                           :: data_uneven_msg
             
 #ifdef ENABLE_ACTION_MSGS
@@ -297,6 +297,17 @@
                 call actionm(trim(action_str))
             end if
 #endif
+            
+            ! Initialization MUST occur here, not in decl...
+            ! Otherwise, it'll initialize once, and never again...
+            ! 
+            ! This will cause scary issues in the future, where closing
+            ! and opening a new file shows strange errors about a file
+            ! opened in the past...
+            max_str_len = -1
+            data_length_counter = -1
+            current_length_count = -1
+            
             if (init_done .AND. allocated(diag_data2d_store)) then
                 if (.NOT. diag_data2d_store%data_lock) then
                     do curdatindex = 1, diag_data2d_store%total

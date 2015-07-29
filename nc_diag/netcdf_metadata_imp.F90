@@ -187,9 +187,9 @@
             
             integer(i_llong)                           :: string_arr_maxlen
             
-            integer(i_llong)                           :: data_length_counter = -1
+            integer(i_llong)                           :: data_length_counter
             character(len=100)                         :: counter_data_name
-            integer(i_llong)                           :: current_length_count = -1
+            integer(i_llong)                           :: current_length_count
             character(len=1000)                        :: data_uneven_msg
             
 #ifdef ENABLE_ACTION_MSGS
@@ -204,6 +204,15 @@
                 call actionm(trim(action_str))
             end if
 #endif
+            ! Initialization MUST occur here, not in decl...
+            ! Otherwise, it'll initialize once, and never again...
+            ! 
+            ! This will cause scary issues in the future, where closing
+            ! and opening a new file shows strange errors about a file
+            ! opened in the past...
+            data_length_counter = -1
+            current_length_count = -1
+            
             if (init_done .AND. allocated(diag_metadata_store)) then
                 if (.NOT. diag_metadata_store%data_lock) then
                     do curdatindex = 1, diag_metadata_store%total
