@@ -222,6 +222,27 @@ module utils
             end do
         end function max_len_string_array
         
+        function max_len_notrim_string_array(str_arr, arr_length) result(max_len)
+            character(len=*), intent(in) :: str_arr(:)
+            integer         , intent(in) :: arr_length
+            
+            integer :: i, max_len
+            
+            max_len = -1
+            
+#ifdef _DEBUG_MEM_
+            write (*, "(A, I0)") " ** max_len_notrim_string_array: size(str_arr) is ", size(str_arr)
+#endif
+            
+            do i = 1, arr_length
+                if (len(str_arr(i)) > max_len) max_len = len(str_arr(i))
+#ifdef _DEBUG_MEM_
+                write (*, "(A, I0, A, I0)") "max_len_notrim_string_array: str_arr(", i, ") is " // trim(str_arr(i)) // ", size is ", len_trim(str_arr(i))
+                write (*, "(A, I0)") "max_len_notrim_string_array: max_len is ", max_len
+#endif
+            end do
+        end function max_len_notrim_string_array
+        
         ! Note to self - ifort does NOT like:
         !   character(len=:), allocatable :: string_part
         ! ... as a function return. It will freak out and throw a fit!
