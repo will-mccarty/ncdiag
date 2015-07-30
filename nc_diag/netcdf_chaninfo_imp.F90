@@ -275,6 +275,8 @@
                 deallocate(tmp_var_dim_names)
                 deallocate(tmp_var_dim_sizes)
             end do
+            
+            diag_chaninfo_store%def_lock = .TRUE.
         end subroutine nc_diag_chaninfo_load_def
         
         subroutine nc_diag_chaninfo_write_def(internal)
