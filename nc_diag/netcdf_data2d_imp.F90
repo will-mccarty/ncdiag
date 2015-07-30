@@ -78,7 +78,7 @@
         
         subroutine nc_diag_data2d_load_def
             integer(i_long) :: ndims, nvars, var_index, type_index
-            integer(i_long) :: rel_index, i, j, nobs_size
+            integer(i_long) :: rel_index, i, nobs_size
             
             character(len=NF90_MAX_NAME)               :: tmp_var_name
             integer(i_long)                            :: tmp_var_type, tmp_var_ndims
@@ -87,15 +87,6 @@
             character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
             
             logical                                    :: is_data2d_var
-            
-            integer(i_byte),    dimension(:), allocatable     :: byte_buffer
-            integer(i_short),   dimension(:), allocatable     :: short_buffer
-            integer(i_long),    dimension(:), allocatable     :: long_buffer
-            
-            real(r_single),     dimension(:), allocatable     :: rsingle_buffer
-            real(r_double),     dimension(:), allocatable     :: rdouble_buffer
-            
-            character(1),     dimension(:,:), allocatable     :: string_buffer
             
             ! Get top level info about the file!
             call check(nf90_inquire(ncid, nDimensions = ndims, &
