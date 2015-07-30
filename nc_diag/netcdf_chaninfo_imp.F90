@@ -241,6 +241,9 @@
                             
                             deallocate(string_buffer)
                             
+                            ! Set max string length constraint
+                            diag_chaninfo_store%max_str_lens(diag_chaninfo_store%total) = tmp_var_dim_sizes(1)
+                            
                             type_index = 6
                         else
                             call error("NetCDF4 type invalid!")
