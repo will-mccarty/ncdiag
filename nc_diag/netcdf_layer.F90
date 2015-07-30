@@ -160,8 +160,6 @@ module netcdf_layer
                     
                     call info("Loading data2d variables/dimensions from file:")
                     call nc_diag_data2d_load_def
-                    
-                    call check(nf90_redef(ncid))
                 end if
             else
                 call error("Attempted to initialize without closing previous nc_diag file!" &
@@ -223,7 +221,8 @@ module netcdf_layer
             call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
-            call check(nf90_enddef(ncid))
+            if (.NOT. append_only) &
+                call check(nf90_enddef(ncid))
             
             call info("Writing chaninfo:")
             call nc_diag_chaninfo_write_data
