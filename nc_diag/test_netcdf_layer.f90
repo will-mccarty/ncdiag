@@ -384,5 +384,18 @@ program test_netcdf_layer
     ! This will also fail due to longer length
     !call nc_diag_data2d("data2d_notcomplete", (/ 2, 3, 4, 5 /))
     
+    ! Flushing works, too!
+    call nc_diag_flush_buffer
+    
+    call nc_diag_chaninfo("chaninfosimple8_str", "test3")
+    call nc_diag_chaninfo("chaninfosimple8_str", "test4")
+    call nc_diag_chaninfo("chaninfosimple10_notcomplete", 3)
+    call nc_diag_chaninfo("chaninfosimple10_notcomplete", 4)
+    
+    call nc_diag_metadata("metadata_notcomplete", 7898)
+    call nc_diag_metadata("metadata_notcomplete", 8989)
+    
+    call nc_diag_metadata("metadata_str_notcomplete", "ijkl")
+    
     call nc_diag_write
 end program test_netcdf_layer
