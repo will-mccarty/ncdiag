@@ -90,12 +90,24 @@
             
             character(1),     dimension(:,:), allocatable     :: string_buffer
             
+            integer(i_long)                                   :: dim_ierr
+            
             ! Get top level info about the file!
             call check(nf90_inquire(ncid, nDimensions = ndims, &
                 nVariables = nvars))
             
             ! Fetch nchans first!
-            call check(nf90_inq_dimid(ncid, "nchans", diag_chaninfo_store%nchans_dimid))
+            dim_ierr = nf90_inq_dimid(ncid, "nchans", diag_chaninfo_store%nchans_dimid)
+            
+            ! Check if we found anything!
+            ! If we got NF90_EBADDIM, then exit.
+            if (dim_ierr == NF90_EBADDIM) then
+                return
+            else if (dim_ierr /= NF90_NOERR) then
+                ! If an error besides not finding the dimension occurs,
+                ! raise an exception.
+                call check(dim_ierr)
+            end if
             
             ! Then grab nchans value...
             call check(nf90_inquire_dimension(ncid, diag_chaninfo_store%nchans_dimid, &
