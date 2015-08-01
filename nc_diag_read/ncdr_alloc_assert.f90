@@ -204,7 +204,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(character(len=correct_dims(2)) :: var_stor(correct_dims(1)))
+                allocate(character(len=correct_dims(1)) :: var_stor(correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_1d_string
         
@@ -221,7 +221,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(var_stor(correct_dims(2), correct_dims(1)))
+                allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_2d_byte
         
@@ -238,7 +238,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(var_stor(correct_dims(2), correct_dims(1)))
+                allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_2d_short
         
@@ -255,7 +255,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(var_stor(correct_dims(2), correct_dims(1)))
+                allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_2d_long
         
@@ -272,7 +272,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(var_stor(correct_dims(2), correct_dims(1)))
+                allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_2d_float
         
@@ -289,7 +289,7 @@ module ncdr_alloc_assert
                 if (any(shape(var_stor) /= correct_dims)) &
                     call error("Mismatched dimensions for variable storage!")
             else
-                allocate(var_stor(correct_dims(2), correct_dims(1)))
+                allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
         end subroutine nc_diag_read_assert_var_dims_2d_double
         
