@@ -174,6 +174,7 @@ program test_nc_diag_read
             print *, var_stor
         end subroutine display_2d_var_double
         
+        ! NOTE - dimensions have to be flipped
         subroutine display_2d_var_string(var_name)
             character(len=*)                           :: var_name
             character(len=:),dimension(:,:),allocatable:: var_stor
