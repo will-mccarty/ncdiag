@@ -1,5 +1,6 @@
 program test_nc_diag_read
     use nc_diag_read
+    use netcdf
     
     call nc_diag_read_init("test.nc")
     !call nc_diag_read_init("test_fixed.nc")
@@ -58,50 +59,149 @@ program test_nc_diag_read
             character(len=*)                           :: var_name
             integer(i_byte), dimension(:), allocatable :: var_stor
             
+            integer(i_long) :: i
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            !print *, var_stor
+            
+            !do i = 1, size(var_stor)
+            !    if (var_stor(i) == NF90_FILL_INT) then
+            !        write (*, "(A5)", advance = "no") "(em) "
+            !    else
+            !        write (*, "(I4, A)", advance = "no") var_stor(i), " "
+            !    end if
+            !end do
+            
+            do i = 1, size(var_stor)
+                if (var_stor(i) == NF90_FILL_INT) then
+                    write (*, "(A4)") "(em)"
+                else
+                    write (*, "(I4)") var_stor(i)
+                end if
+            end do
+            
+            write (*, "(A)") ""
         end subroutine display_1d_var_byte
         
         subroutine display_1d_var_short(var_name)
             character(len=*)                           :: var_name
             integer(i_short), dimension(:), allocatable :: var_stor
             
+            integer(i_long) :: i
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            !print *, var_stor
+            
+            !do i = 1, size(var_stor)
+            !    if (var_stor(i) == NF90_FILL_INT) then
+            !        write (*, "(A7)", advance = "no") "(emp) "
+            !    else
+            !        write (*, "(I6, A)", advance = "no") var_stor(i), " "
+            !    end if
+            !end do
+            
+            do i = 1, size(var_stor)
+                if (var_stor(i) == NF90_FILL_INT) then
+                    write (*, "(A6)") "(emp)"
+                else
+                    write (*, "(I6)") var_stor(i)
+                end if
+            end do
+            
+            write (*, "(A)") ""
         end subroutine display_1d_var_short
         
         subroutine display_1d_var_long(var_name)
             character(len=*)                           :: var_name
             integer(i_long), dimension(:), allocatable :: var_stor
             
+            integer(i_long) :: i
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            !print *, var_stor
+            
+            !do i = 1, size(var_stor)
+            !    if (var_stor(i) == NF90_FILL_INT) then
+            !        write (*, "(A13)", advance = "no") "(empty) "
+            !    else
+            !        write (*, "(I12, A)", advance = "no") var_stor(i), " "
+            !    end if
+            !end do
+            
+            do i = 1, size(var_stor)
+                if (var_stor(i) == NF90_FILL_INT) then
+                    write (*, "(A12)") "(empty) "
+                else
+                    write (*, "(I12)") var_stor(i)
+                end if
+            end do
+            
+            write (*, "(A)") ""
+            
         end subroutine display_1d_var_long
         
         subroutine display_1d_var_float(var_name)
             character(len=*)                           :: var_name
             real(r_single), dimension(:), allocatable  :: var_stor
             
+            integer(i_long) :: i
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            !print *, var_stor
+            
+            !do i = 1, size(var_stor)
+            !    if (var_stor(i) == NF90_FILL_FLOAT) then
+            !        write (*, "(A19)", advance = "no") "(empty) "
+            !    else
+            !        write (*, "(F18.10, A)", advance = "no") var_stor(j, i), " "
+            !    end if
+            !end do
+            
+            do i = 1, size(var_stor)
+                if (var_stor(i) == NF90_FILL_FLOAT) then
+                    write (*, "(A18)") "(empty)"
+                else
+                    write (*, "(F18.10)") var_stor(i)
+                end if
+            end do
         end subroutine display_1d_var_float
         
         subroutine display_1d_var_double(var_name)
             character(len=*)                           :: var_name
             real(r_double), dimension(:), allocatable  :: var_stor
             
+            integer(i_long) :: i
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            !print *, var_stor
+            
+            !do i = 1, size(var_stor)
+            !    if (var_stor(i) == NF90_FILL_FLOAT) then
+            !        write (*, "(A17)", advance = "no") "(empty) "
+            !    else
+            !        write (*, "(F16.13, A)", advance = "no") var_stor(j, i), " "
+            !    end if
+            !end do
+            
+            do i = 1, size(var_stor)
+                if (var_stor(i) == NF90_FILL_DOUBLE) then
+                    write (*, "(A16)") "(empty)"
+                else
+                    write (*, "(F16.13)") var_stor(i)
+                end if
+            end do
         end subroutine display_1d_var_double
         
         subroutine display_1d_var_string(var_name)
@@ -114,9 +214,21 @@ program test_nc_diag_read
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
+            !do i = 1, size(var_stor)
+            !    if ((i > 1) .AND. (mod(i - 1, 5) == 0)) write (*, "(A)") ""
+            !    if ((var_stor(i)(1:1) == NF90_FILL_CHAR) .OR. (len(var_stor(i)) == 0)) then
+            !        write (*, "(A20)", advance = "no") "(empty) "
+            !    else
+            !        write (*, "(A20)", advance = "no") '"' // var_stor(i) // '" '
+            !    end if
+            !end do
+            
             do i = 1, size(var_stor)
-                if ((i > 1) .AND. (mod(i - 1, 5) == 0)) write (*, "(A)") ""
-                write (*, "(A20)", advance = "no") '"' // var_stor(i) // '" '
+                if ((var_stor(i)(1:1) == NF90_FILL_CHAR) .OR. (len(var_stor(i)) == 0)) then
+                    write (*, "(A20)") "(empty)"
+                else
+                    write (*, "(A20)") '"' // var_stor(i) // '"'
+                end if
             end do
             
             write (*, "(A)") ""
@@ -127,51 +239,116 @@ program test_nc_diag_read
             character(len=*)                           :: var_name
             integer(i_byte),dimension(:,:),allocatable :: var_stor
             
+            integer(i_long) :: i, j
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            do i = 1, size(var_stor, 2)
+                do j = 1, size(var_stor, 1)
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if (var_stor(j, i) == NF90_FILL_BYTE) then
+                        write (*, "(A5)", advance = "no") "(e) "
+                    else
+                        write (*, "(I4, A)", advance = "no") var_stor(j, i), " "
+                    end if
+                end do
+                write (*, "(A)") ""
+            end do
         end subroutine display_2d_var_byte
         
         subroutine display_2d_var_short(var_name)
             character(len=*)                           :: var_name
             integer(i_short),dimension(:,:),allocatable :: var_stor
             
+            integer(i_long) :: i, j
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            do i = 1, size(var_stor, 2)
+                do j = 1, size(var_stor, 1)
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if (var_stor(j, i) == NF90_FILL_SHORT) then
+                        write (*, "(A7)", advance = "no") "(emp) "
+                    else
+                        write (*, "(I6, A)", advance = "no") var_stor(j, i), " "
+                    end if
+                end do
+                write (*, "(A)") ""
+            end do
         end subroutine display_2d_var_short
         
         subroutine display_2d_var_long(var_name)
             character(len=*)                           :: var_name
             integer(i_long),dimension(:,:),allocatable :: var_stor
             
+            integer(i_long) :: i, j
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
-            print *, shape(var_stor)
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            do i = 1, size(var_stor, 2)
+                do j = 1, size(var_stor, 1)
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if (var_stor(j, i) == NF90_FILL_INT) then
+                        write (*, "(A13)", advance = "no") "(empty) "
+                    else
+                        write (*, "(I12, A)", advance = "no") var_stor(j, i), " "
+                    end if
+                end do
+                write (*, "(A)") ""
+            end do
         end subroutine display_2d_var_long
         
         subroutine display_2d_var_float(var_name)
             character(len=*)                           :: var_name
             real(r_single), dimension(:,:), allocatable:: var_stor
             
+            integer(i_long) :: i, j
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            do i = 1, size(var_stor, 2)
+                do j = 1, size(var_stor, 1)
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if (var_stor(j, i) == NF90_FILL_FLOAT) then
+                        write (*, "(A19)", advance = "no") "(empty) "
+                    else
+                        write (*, "(F18.10, A)", advance = "no") var_stor(j, i), " "
+                    end if
+                end do
+                write (*, "(A)") ""
+            end do
         end subroutine display_2d_var_float
         
         subroutine display_2d_var_double(var_name)
             character(len=*)                           :: var_name
             real(r_double), dimension(:,:), allocatable:: var_stor
             
+            integer(i_long) :: i, j
+            
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
-            print *, var_stor
+            
+            do i = 1, size(var_stor, 2)
+                do j = 1, size(var_stor, 1)
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if (var_stor(j, i) == NF90_FILL_DOUBLE) then
+                        write (*, "(A17)", advance = "no") "(empty) "
+                    else
+                        write (*, "(F16.13, A)", advance = "no") var_stor(j, i), " "
+                    end if
+                end do
+                write (*, "(A)") ""
+            end do
+            
         end subroutine display_2d_var_double
         
         ! NOTE - dimensions have to be flipped
@@ -189,11 +366,14 @@ program test_nc_diag_read
             
             do i = 1, size(var_stor, 2)
                 do j = 1, size(var_stor, 1)
-                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") ""
-                    write (*, "(A30)", advance = "no") '"' // var_stor(j, i) // '" '
+                    if ((j > 1) .AND. (mod(j - 1, 5) == 0)) write (*, "(A)") "..."
+                    if ((var_stor(j, i)(1:1) == NF90_FILL_CHAR) .OR. (len(var_stor(j, i)) == 0)) then
+                        write (*, "(A20)", advance = "no") "(empty) "
+                    else
+                        write (*, "(A20)", advance = "no") '"' // var_stor(j, i) // '" '
+                    end if
                 end do
                 write (*, "(A)") ""
-                write (*, "(A)") "== END ROW =="
             end do
             
             write (*, "(A)") ""
