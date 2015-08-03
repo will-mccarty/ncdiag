@@ -2,6 +2,10 @@ program test_nc_diag_read
     use nc_diag_read
     use netcdf
     
+    !------------------------------------------------------------------
+    ! Subroutine allocation method testing
+    !------------------------------------------------------------------
+    
     call nc_diag_read_init("test.nc")
     !call nc_diag_read_init("test_fixed.nc")
     call display_1d_var_long("chaninfosimple1")
