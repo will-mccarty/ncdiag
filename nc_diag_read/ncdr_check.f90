@@ -36,7 +36,11 @@ module ncdr_check
             end if
             
             do i = 1, ncdr_file_count
-                if (file_ncid == ncdr_files(i)%ncid) then
+                !write (*, "(A, I0, A, I0)") "File: " // ncdr_files(i)%filename // &
+                !    " | Current NCID: ", ncdr_files(i)%ncid, &
+                !    " | Target NCID: ", file_ncid
+                
+                if ((file_ncid == ncdr_files(i)%ncid) .AND. (ncdr_files(i)%file_open)) then
                     file_ind = i
                     return
                 end if
