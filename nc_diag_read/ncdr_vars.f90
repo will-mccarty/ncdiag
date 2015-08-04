@@ -151,7 +151,7 @@ module ncdr_vars
             
             var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
             
-            var_ndims = ncdr_files(file_ncid)%vars(var_index)%var_ndims
+            var_ndims = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_ndims
         end function nc_diag_read_id_get_var_ndims
         
         function nc_diag_read_noid_get_var_ndims(var_name) result(var_ndims)
@@ -174,7 +174,7 @@ module ncdr_vars
             
             var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
             
-            var_type = ncdr_files(file_ncid)%vars(var_index)%var_type
+            var_type = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_type
         end function nc_diag_read_id_get_var_type
         
         function nc_diag_read_noid_get_var_type(var_name) result(var_type)
@@ -204,8 +204,8 @@ module ncdr_vars
             
             do i = 1, var_ndims
                 var_dims(i) = &
-                    ncdr_files(file_ncid)%dims( &
-                        ncdr_files(file_ncid)%vars(var_index)%var_dim_inds(i) &
+                    ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims( &
+                        ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_dim_inds(i) &
                         )%dim_size
             end do
         end function nc_diag_read_id_ret_var_dims
@@ -214,7 +214,13 @@ module ncdr_vars
             character(len=*), intent(in)                :: var_name
             integer(i_long), dimension(:), allocatable  :: var_dims
             
+            integer(i_long)                             :: var_ndims
+            
             call ncdr_check_current_ncid
+            
+            var_ndims = nc_diag_read_id_get_var_ndims(current_ncid, var_name)
+            
+            allocate(var_dims(var_ndims))
             
             var_dims = nc_diag_read_id_ret_var_dims(current_ncid, var_name)
         end function nc_diag_read_noid_ret_var_dims
@@ -246,8 +252,8 @@ module ncdr_vars
                 
                 do i = 1, v_ndims
                     var_dims(i) = &
-                        ncdr_files(file_ncid)%dims( &
-                            ncdr_files(file_ncid)%vars(var_index)%var_dim_inds(i) &
+                        ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims( &
+                            ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_dim_inds(i) &
                             )%dim_size
                 end do
             end if
