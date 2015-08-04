@@ -9,6 +9,9 @@ module ncdr_check
         subroutine ncdr_check_ncid(file_ncid)
             integer(i_long), intent(in) :: file_ncid
             
+            if (nc_diag_read_get_index_from_ncid(file_ncid) == -1) &
+                call error("The specified NCID is already closed!")
+            
             if (.NOT. ncdr_files(&
                 nc_diag_read_get_index_from_ncid(file_ncid) &
                 )%file_open) &
