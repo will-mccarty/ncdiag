@@ -1,7 +1,8 @@
 FORT90C=ifort
 
 F90FLAGS+=-O0 -fpp -g -pg -fstack-protector -check all \
-	-ftrapuv -debug all -fpe0 -warn all -traceback -debug extended
+	-ftrapuv -debug all -fpe0 -warn all -traceback -debug extended \
+	-I.. -L..
 NETCDF_FLAGS+=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 	-lnetcdff -lnetcdf -lhdf5 -lcurl -lz -lrt -lmpi -lhdf5_hl -lhdf5 \
 	-lz -lsz -lgpfs -lmfhdf -ldf -ljpeg
@@ -32,88 +33,70 @@ NETCDF_FLAGS+=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
 
 NC_DIAG_READ_DEPS+=Makefile \
-	ncdr_climsg.mod \
-	ncdr_state.mod ncdr_types.mod \
-	netcdf_unlimdims.mod \
-	ncdr_realloc_mod.mod \
-	ncdr_vars.mod ncdr_dims.mod
+	../ncdr_climsg.mod \
+	../ncdr_state.mod ../ncdr_types.mod \
+	../netcdf_unlimdims.mod \
+	../ncdr_realloc_mod.mod \
+	../ncdr_vars.mod ../ncdr_dims.mod
 
 NC_DIAG_READ_OBJS+= \
-	nc_diag_read.o \
-	ncdr_climsg.o \
-	ncdr_state.o ncdr_types.o \
-	netcdf_unlimdims.o \
-	ncdr_realloc_mod.o \
-	ncdr_dims.o ncdr_check.o \
-	ncdr_vars.o \
-	ncdr_alloc_assert.o \
-	ncdr_vars_fetch.o
+	../nc_diag_read.o \
+	../ncdr_climsg.o \
+	../ncdr_state.o ../ncdr_types.o \
+	../netcdf_unlimdims.o \
+	../ncdr_realloc_mod.o \
+	../ncdr_dims.o ../ncdr_check.o \
+	../ncdr_vars.o \
+	../ncdr_alloc_assert.o \
+	../ncdr_vars_fetch.o
 
-.PHONY: all tests
+all: test_ncdr_get.x test_ncdr_get_arda.x \
+	test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
+	test_ncdr_get_id.x test_ncdr_get_id_arda.x \
+	test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x
 
-all: nc_diag_read.mod tests
-
-kinds.mod: Makefile kinds.F90
-	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
-
-tests:
-	make -C tests
-
-nc_diag_read.mod: kinds.mod $(NC_DIAG_READ_DEPS) nc_diag_read.F90
+test_ncdr_get.x: ../nc_diag_read.mod test_ncdr_get.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c nc_diag_read.F90 \
+		test_ncdr_get.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get.x \
 		$(NETCDF_FLAGS)
 
-ncdr_climsg.mod: kinds.mod ncdr_climsg.F90
+test_ncdr_get_arda.x: ../nc_diag_read.mod test_ncdr_get_arda.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_climsg.F90
-
-ncdr_types.mod: kinds.mod ncdr_types.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_types.f90
-
-ncdr_state.mod: kinds.mod ncdr_types.mod ncdr_state.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_state.f90
-
-ncdr_vars.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_vars_fetch.mod ncdr_vars.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_vars.f90 \
+		test_ncdr_get_arda.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_arda.x \
 		$(NETCDF_FLAGS)
 
-ncdr_vars_fetch.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_alloc_assert.mod ncdr_vars_fetch.f90
+test_ncdr_get_ardg.x: ../nc_diag_read.mod test_ncdr_get_ardg.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_vars_fetch.f90 \
+		test_ncdr_get_ardg.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_ardg.x \
 		$(NETCDF_FLAGS)
 
-ncdr_alloc_assert.mod: kinds.mod ncdr_check.mod ncdr_alloc_assert.f90
+test_ncdr_get_ardag.x: ../nc_diag_read.mod test_ncdr_get_ardag.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_alloc_assert.f90 \
+		test_ncdr_get_ardag.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_ardag.x \
 		$(NETCDF_FLAGS)
 
-ncdr_dims.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod netcdf_unlimdims.mod ncdr_dims.f90
+test_ncdr_get_id.x: ../nc_diag_read.mod test_ncdr_get_id.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_dims.f90 \
+		test_ncdr_get_id.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_id.x \
 		$(NETCDF_FLAGS)
 
-ncdr_check.mod: kinds.mod ncdr_types.mod ncdr_state.mod ncdr_check.f90
+test_ncdr_get_id_arda.x: ../nc_diag_read.mod test_ncdr_get_id_arda.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_check.f90 \
+		test_ncdr_get_id_arda.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_id_arda.x \
 		$(NETCDF_FLAGS)
 
-ncdr_realloc_mod.mod: kinds.mod ncdr_types.mod ncdr_realloc_mod.F90
+test_ncdr_get_id_ardg.x: ../nc_diag_read.mod test_ncdr_get_id_ardg.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c ncdr_realloc_mod.F90
-
-netcdf_unlimdims.mod: Makefile netcdf_unlimdims.F90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
-		-c netcdf_unlimdims.F90 \
+		test_ncdr_get_id_ardg.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_id_ardg.x \
 		$(NETCDF_FLAGS)
 
-utils.mod: Makefile utils.f90
-	$(FORT90C) $(F90FLAGS) \
-		-c utils.f90
+test_ncdr_get_id_ardag.x: ../nc_diag_read.mod test_ncdr_get_id_ardag.f90
+	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
+		test_ncdr_get_id_ardag.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_id_ardag.x \
+		$(NETCDF_FLAGS)
+
+../nc_diag_read.mod:
+	make -C .. nc_diag_read.mod
 
 clean:
 	rm -f *.mod *.x *.o
-	make -C tests clean

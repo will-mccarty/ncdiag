@@ -1,71 +1,103 @@
-program test_nc_diag_read
+! Use NCIDs and keep track of things ourselves!
+! arda:
+!   -> ALLOCATE dimensions by fetching dimensions and allocating
+!   -> RETURN DIM: dimension fetching method by returning dimensions
+!   -> ALLOCATED GET: allocated dimensions manually with ndims before
+!                     fetch, with additional checks from get()
+program test_ncdr_get_id_arda
     use nc_diag_read
     use netcdf
+    
+    integer(i_long) :: ncid_1, ncid_2
     
     !------------------------------------------------------------------
     ! Subroutine allocation method testing
     !------------------------------------------------------------------
     
-    call nc_diag_read_init("test.nc")
-    !call nc_diag_read_init("test_fixed.nc")
-    call display_1d_var_long("chaninfosimple1")
-    call display_1d_var_long("chaninfosimple2")
+    ncid_1 = nc_diag_read_id_init("test.nc")
+    ncid_2 = nc_diag_read_id_init("test_fixed.nc")
+    
+    call display_1d_var_long(ncid_1, "chaninfosimple1")
+    call display_1d_var_long(ncid_1, "chaninfosimple2")
     
     ! This won't work due to mismatched types:
-    !call display_1d_var_byte("chaninfosimple2")
+    !call display_1d_var_byte(ncid_1, "chaninfosimple2")
     
-    call display_1d_var_float("chaninfosimple4_float")
+    call display_1d_var_float(ncid_1, "chaninfosimple4_float")
     
     ! Mismatched types:
-    !call display_1d_var_long("chaninfosimple4_float")
-    !call display_1d_var_double("chaninfosimple4_float")
+    !call display_1d_var_long(ncid_1, "chaninfosimple4_float")
+    !call display_1d_var_double(ncid_1, "chaninfosimple4_float")
     
-    call display_1d_var_double("chaninfosimple5_double")
+    call display_1d_var_double(ncid_1, "chaninfosimple5_double")
     
-    call display_1d_var_string("chaninfosimple6_str")
-    call display_1d_var_string("chaninfosimple7_str")
+    call display_1d_var_string(ncid_1, "chaninfosimple6_str")
+    call display_1d_var_string(ncid_1, "chaninfosimple7_str")
     
-    call display_1d_var_long("chaninfosimple3_notcomplete")
+    call display_1d_var_long(ncid_1, "chaninfosimple3_notcomplete")
     
-    call display_1d_var_string("chaninfosimple8_str")
+    call display_1d_var_string(ncid_1, "chaninfosimple8_str")
     
-    call display_1d_var_long("chaninfosimple9_buf")
-    call display_1d_var_long("chaninfosimple10_notcomplete")
+    call display_1d_var_long(ncid_1, "chaninfosimple9_buf")
+    call display_1d_var_long(ncid_1, "chaninfosimple10_notcomplete")
     
-    call display_1d_var_long("metadatasimple1")
+    call display_1d_var_long(ncid_1, "metadatasimple1")
     
-    call display_1d_var_string("metadatasimple6_str")
-    call display_1d_var_string("metadatasimple8_str")
+    call display_1d_var_string(ncid_1, "metadatasimple6_str")
+    call display_1d_var_string(ncid_1, "metadatasimple8_str")
     
-    call display_1d_var_long("metadata_notcomplete")
+    call display_1d_var_long(ncid_1, "metadata_notcomplete")
     
-    call display_1d_var_string("metadata_str_notcomplete")
+    call display_1d_var_string(ncid_1, "metadata_str_notcomplete")
     
-    call display_2d_var_long("data2dsimple1")
-    call display_2d_var_long("data2dsimple2")
+    call display_2d_var_long(ncid_1, "data2dsimple1")
+    call display_2d_var_long(ncid_1, "data2dsimple2")
     
-    call display_2d_var_float("data2dsimple4_float")
-    call display_2d_var_float("data2dsimple4_float2")
+    call display_2d_var_float(ncid_1, "data2dsimple4_float")
+    call display_2d_var_float(ncid_1, "data2dsimple4_float2")
     
-    call display_2d_var_double("data2dsimple5_double")
+    call display_2d_var_double(ncid_1, "data2dsimple5_double")
     
-    call display_2d_var_long("data2dsimple99")
+    call display_2d_var_long(ncid_1, "data2dsimple99")
     
-    call display_2d_var_string("data2dsimple6_str")
+    call display_2d_var_string(ncid_1, "data2dsimple6_str")
     
-    call display_2d_var_long("data2dsimple7")
-    call display_2d_var_long("data2d_notcomplete")
+    call display_2d_var_long(ncid_1, "data2dsimple7")
+    call display_2d_var_long(ncid_1, "data2d_notcomplete")
     
-    call nc_diag_read_close
+    ! ncid #2
+    call display_1d_var_string(ncid_2, "chaninfo_strfix")
+    call display_1d_var_string(ncid_2, "chaninfo_strfix1")
+    call display_1d_var_string(ncid_2, "metadata_strfix")
+    call display_1d_var_string(ncid_2, "metadata_strfix1")
+    
+    call display_2d_var_string(ncid_2, "data2d_strfix")
+    call display_2d_var_string(ncid_2, "data2d_strfix1")
+    
+    ! This doesn't work, since we are tracking our own NCID.
+    !call nc_diag_read_close
+    
+    call nc_diag_read_close(file_ncid = ncid_1)
+    call nc_diag_read_close(file_ncid = ncid_2)
+    
+    ! This won't work - can't close twice!
+    !call nc_diag_read_close(file_ncid = ncid_2)
     
     contains
-        subroutine display_1d_var_byte(var_name)
+        subroutine display_1d_var_byte(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_byte), dimension(:), allocatable :: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -90,13 +122,20 @@ program test_nc_diag_read
             write (*, "(A)") ""
         end subroutine display_1d_var_byte
         
-        subroutine display_1d_var_short(var_name)
+        subroutine display_1d_var_short(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_short), dimension(:), allocatable :: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -121,13 +160,20 @@ program test_nc_diag_read
             write (*, "(A)") ""
         end subroutine display_1d_var_short
         
-        subroutine display_1d_var_long(var_name)
+        subroutine display_1d_var_long(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_long), dimension(:), allocatable :: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             !print *, var_stor
@@ -152,13 +198,20 @@ program test_nc_diag_read
             
         end subroutine display_1d_var_long
         
-        subroutine display_1d_var_float(var_name)
+        subroutine display_1d_var_float(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             real(r_single), dimension(:), allocatable  :: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             !print *, var_stor
@@ -180,13 +233,20 @@ program test_nc_diag_read
             end do
         end subroutine display_1d_var_float
         
-        subroutine display_1d_var_double(var_name)
+        subroutine display_1d_var_double(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             real(r_double), dimension(:), allocatable  :: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             !print *, var_stor
@@ -208,13 +268,22 @@ program test_nc_diag_read
             end do
         end subroutine display_1d_var_double
         
-        subroutine display_1d_var_string(var_name)
+        subroutine display_1d_var_string(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             character(len=:), dimension(:), allocatable:: var_stor
             
-            integer(i_long) :: i
+            integer(i_long) :: i, ndims, dim_1, dim_2
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            dim_1 = var_dims(1)
+            dim_2 = var_dims(2)
+            allocate(character(len=dim_1) :: var_stor(dim_2))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -239,13 +308,20 @@ program test_nc_diag_read
             
         end subroutine display_1d_var_string
         
-        subroutine display_2d_var_byte(var_name)
+        subroutine display_2d_var_byte(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_byte),dimension(:,:),allocatable :: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1), var_dims(2)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -262,13 +338,20 @@ program test_nc_diag_read
             end do
         end subroutine display_2d_var_byte
         
-        subroutine display_2d_var_short(var_name)
+        subroutine display_2d_var_short(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_short),dimension(:,:),allocatable :: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1), var_dims(2)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -285,13 +368,20 @@ program test_nc_diag_read
             end do
         end subroutine display_2d_var_short
         
-        subroutine display_2d_var_long(var_name)
+        subroutine display_2d_var_long(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             integer(i_long),dimension(:,:),allocatable :: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1), var_dims(2)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -308,13 +398,20 @@ program test_nc_diag_read
             end do
         end subroutine display_2d_var_long
         
-        subroutine display_2d_var_float(var_name)
+        subroutine display_2d_var_float(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             real(r_single), dimension(:,:), allocatable:: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1), var_dims(2)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -331,13 +428,20 @@ program test_nc_diag_read
             end do
         end subroutine display_2d_var_float
         
-        subroutine display_2d_var_double(var_name)
+        subroutine display_2d_var_double(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             real(r_double), dimension(:,:), allocatable:: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            allocate(var_stor(var_dims(1), var_dims(2)))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -356,13 +460,25 @@ program test_nc_diag_read
         end subroutine display_2d_var_double
         
         ! NOTE - dimensions have to be flipped
-        subroutine display_2d_var_string(var_name)
+        subroutine display_2d_var_string(ncid, var_name)
+            integer(i_long), intent(in)                :: ncid
             character(len=*)                           :: var_name
             character(len=:),dimension(:,:),allocatable:: var_stor
             
-            integer(i_long) :: i, j
+            integer(i_long) :: i, j, ndims, dim_1, dim_2, dim_3
+            integer(i_long), dimension(:), allocatable :: var_dims
             
-            call nc_diag_read_get_var(var_name, var_stor)
+            ndims = nc_diag_read_get_var_ndims(ncid, var_name)
+            allocate(var_dims(ndims))
+            call nc_diag_read_get_var_dims(ncid, var_name, var_dims = var_dims)
+            
+            dim_1 = var_dims(1)
+            dim_2 = var_dims(2)
+            dim_3 = var_dims(3)
+            
+            allocate(character(len=dim_1) :: var_stor(dim_2, dim_3))
+            
+            call nc_diag_read_get_var(ncid, var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (2D): " // var_name // " (Elements: ", size(var_stor), ")"
             
@@ -383,4 +499,4 @@ program test_nc_diag_read
             write (*, "(A)") ""
             
         end subroutine display_2d_var_string
-end program test_nc_diag_read
+end program test_ncdr_get_id_arda
