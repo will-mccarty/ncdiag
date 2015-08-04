@@ -49,6 +49,29 @@ module ncdr_check
             file_ind = -1
         end function nc_diag_read_get_index_from_ncid
         
+        function nc_diag_read_get_index_from_filename(file_name) result(file_ind)
+            character(len=*), intent(in)               :: file_name
+            integer(i_long)                            :: i, file_ind
+            
+            if (ncdr_file_count == 0) then
+                file_ind = -1
+                return
+            end if
+            
+            do i = 1, ncdr_file_count
+                !write (*, "(A, I0, A, I0)") "File: " // ncdr_files(i)%filename // &
+                !    " | Current NCID: ", ncdr_files(i)%ncid, &
+                !    " | Target NCID: ", file_ncid
+                
+                if ((file_name == ncdr_files(i)%filename) .AND. (ncdr_files(i)%file_open)) then
+                    file_ind = i
+                    return
+                end if
+            end do
+            
+            file_ind = -1
+        end function nc_diag_read_get_index_from_filename
+        
         subroutine check(status)
           integer, intent ( in) :: status
           
