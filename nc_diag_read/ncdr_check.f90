@@ -10,12 +10,12 @@ module ncdr_check
             integer(i_long), intent(in) :: file_ncid
             
             if (nc_diag_read_get_index_from_ncid(file_ncid) == -1) &
-                call error("The specified NCID is already closed!")
+                call error("The specified NCID does not exist or is already closed!")
             
             if (.NOT. ncdr_files(&
                 nc_diag_read_get_index_from_ncid(file_ncid) &
                 )%file_open) &
-                call error("The specified NCID is already closed!")
+                call error("The specified NCID does not exist or is already closed! (Still in DB, but closed!)")
         end subroutine ncdr_check_ncid
         
         subroutine ncdr_check_current_ncid
