@@ -188,6 +188,7 @@ module nc_diag_read
             ! Update highest record - this will let us keep track and
             ! help us clear memory when we can!
             range_closed = .TRUE.
+            !print *, "PREUPDATE:", f_ind, ncdr_file_count, ncdr_file_highest
             if (f_ind < ncdr_file_highest) then
                 do i = f_ind, ncdr_file_highest
                     if (ncdr_files(i)%file_open) then
@@ -197,13 +198,27 @@ module nc_diag_read
                 end do
                 
                 if (range_closed) then
-                    ncdr_file_highest = f_ind - 1
-                    ncdr_file_count = f_ind - 1
+                    ncdr_file_highest = f_ind
+                    ncdr_file_count = f_ind
                 end if
             else if (f_ind == ncdr_file_highest) then
                 ncdr_file_highest = f_ind - 1
                 ncdr_file_count = f_ind - 1
+                
+                do i = 1, ncdr_file_highest
+                    if (ncdr_files(i)%file_open) then
+                        range_closed = .FALSE.
+                        exit
+                    end if
+                end do
+                
+                if (range_closed) then
+                    ncdr_file_highest = 0
+                    ncdr_file_count = 0
+                end if
             end if
+            
+            !print *, "POSTUPDATE:", f_ind, ncdr_file_count, ncdr_file_highest
         end subroutine nc_diag_read_close
         
         ! Pop - we return the thing we just deleted, and push things up!
