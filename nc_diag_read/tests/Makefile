@@ -57,11 +57,28 @@ NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
 	test_ncdr_dims.x \
 	test_ncdr_vars.x
 
-.PHONY: all clean check
+ifndef COVERAGE
+	COVERAGE=0
+endif
+
+ifeq ($(COVERAGE), 1)
+	F90FLAGS+=-prof-gen=srcpos
+	STATIC_COMPILE=1
+endif
+
+ifndef STATIC_COMPILE
+	STATIC_COMPILE=0
+endif
+
+ifeq ($(STATIC_COMPILE), 1)
+	NC_DIAG_READ_OBJS=../nc_diag_read.F90 ../ncdr_*.f90 ../ncdr_*.F90 ../netcdf_unlimdims.F90
+endif
+
+.PHONY: all clean check precoverage coverage
 
 all: $(NC_DIAG_READ_TESTS)
 
-check: 
+check: $(NC_DIAG_READ_TESTS)
 	@$(foreach ncdr_test,$(NC_DIAG_READ_TESTS),echo "Running: $(ncdr_test)";./$(ncdr_test) || exit 1;echo "Pass: $(ncdr_test)";)
 
 test_ncdr_dims.x: ../nc_diag_read.mod test_ncdr_dims.f90
@@ -123,5 +140,21 @@ test_ncdr_get_id_ardag.x: ../nc_diag_read.mod test_ncdr_get_id_ardag.f90
 	@echo " *** nc_diag_read library not built yet, building it now..."
 	make -C .. nc_diag_read.mod
 
+precoverage:
+	@[ ! "$$COVERAGE" = "1" ] && \
+		echo "ERROR: COVERAGE must be set to 1 to set build flags and use" && \
+		echo "       use coverage tools." && exit 1 || true
+	@[ ! -f ~/launch_browser ] && \
+		echo "ERROR: You must have a script called launch_browser in your" && \
+		echo "       home directory to display code coverage results. It" && \
+		echo "       should accept a file as an argument to display the" && \
+		echo "       code coverage result page." && exit 1 || true
+
+coverage: precoverage clean check
+	profmerge
+	codecov -srcroot ..
+	~/launch_browser CODE_COVERAGE.HTML &
+
 clean:
 	rm -f *.mod *.x *.o
+	rm -rf pgopti.* CodeCoverage CODE_COVERAGE.HTML *.dyn
