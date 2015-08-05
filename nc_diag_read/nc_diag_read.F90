@@ -283,4 +283,48 @@ module nc_diag_read
                 current_ncid = -1
             end if
         end subroutine nc_diag_read_pop
+        
+        ! Get current file in queue
+        subroutine nc_diag_read_get_current_queue(filename, file_ncid)
+            character(len=*),intent(out), optional :: filename
+            integer(i_long), intent(out), optional :: file_ncid
+            
+            if (present(filename)) then
+                if (ncid_stack_count > 0) then
+                    filename = ncdr_files(ind_stack(ncid_stack_count))%filename
+                else
+                    filename = "(no file in queue at the moment)"
+                end if
+            end if
+            
+            if (present(file_ncid)) then
+                if (ncid_stack_count > 0) then
+                    file_ncid = ncid_stack(ncid_stack_count)
+                else
+                    file_ncid = -1
+                end if
+            end if
+        end subroutine nc_diag_read_get_current_queue
+        
+        ! Get current file, disregarding queue
+        subroutine nc_diag_read_get_current(filename, file_ncid)
+            character(len=*),intent(out), optional :: filename
+            integer(i_long), intent(out), optional :: file_ncid
+            
+            if (present(filename)) then
+                if (current_ind /= -1) then
+                    filename = ncdr_files(current_ind)%filename
+                else
+                    filename = "(no file open at the moment)"
+                end if
+            end if
+            
+            if (present(file_ncid)) then
+                if (current_ind /= -1) then
+                    file_ncid = ncdr_files(current_ind)%ncid
+                else
+                    file_ncid = -1
+                end if
+            end if
+        end subroutine nc_diag_read_get_current
 end module nc_diag_read
