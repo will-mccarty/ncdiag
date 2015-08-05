@@ -156,8 +156,10 @@ module nc_diag_read
             character(len=*),intent(in), optional  :: filename
             integer(i_long), intent(in), optional  :: file_ncid
             
-            integer(i_long)                        :: f_ncid = -1, f_ind, i
+            integer(i_long)                        :: f_ncid, f_ind, i
             logical                                :: range_closed
+            
+            f_ncid = -1
             
             if (ncdr_file_count == 0) &
                 call error("No files are currently open!")
