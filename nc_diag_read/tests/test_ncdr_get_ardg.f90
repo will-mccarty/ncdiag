@@ -158,7 +158,7 @@ program test_ncdr_get_ardg
             
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_INT) then
-                    write (*, "(A12)") "(empty) "
+                    write (*, "(A12)") "(empty)"
                 else
                     write (*, "(I12)") var_stor(i)
                 end if
