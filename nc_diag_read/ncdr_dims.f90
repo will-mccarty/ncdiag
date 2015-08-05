@@ -33,6 +33,11 @@ module ncdr_dims
             nc_diag_read_noid_check_dim_unlim
     end interface nc_diag_read_check_dim_unlim
     
+    interface nc_diag_read_get_dim_names
+        module procedure nc_diag_read_id_get_dim_names, &
+            nc_diag_read_noid_get_dim_names
+    end interface nc_diag_read_get_dim_names
+    
     contains
         subroutine nc_diag_read_parse_file_dims(file_ncid, file_index, num_dims)
             integer(i_long), intent(in)                :: file_ncid
@@ -204,4 +209,87 @@ module ncdr_dims
             
             dim_isunlim = nc_diag_read_id_check_dim_unlim(current_ncid, dim_name)
         end function nc_diag_read_noid_check_dim_unlim
+        
+        subroutine nc_diag_read_id_get_dim_names(file_ncid, num_dims, dim_name_mlen, dim_names)
+            integer, intent(in)                      :: file_ncid
+            integer, intent(out), optional           :: num_dims
+            integer, intent(out), optional           :: dim_name_mlen
+            character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
+            
+            integer(i_long)                :: dim_index, ndims, f_ind, max_dim_name_len
+            
+            max_dim_name_len = 0
+            
+            call ncdr_check_ncid(file_ncid)
+            
+            f_ind = nc_diag_read_get_index_from_ncid(file_ncid)
+            ndims = ncdr_files(f_ind)%ndims
+            
+            if (present(num_dims)) &
+                num_dims = ndims
+            
+            ! Figure out character max length
+            do dim_index = 1, ndims
+                if (len(ncdr_files(f_ind)%dims(dim_index)%dim_name) > max_dim_name_len) &
+                    max_dim_name_len = len(ncdr_files(f_ind)%dims(dim_index)%dim_name)
+            end do
+            
+            if (present(dim_name_mlen)) &
+                dim_name_mlen = max_dim_name_len
+            
+            if (present(dim_names)) then
+                if (.NOT. allocated(dim_names)) then
+                    allocate(character(max_dim_name_len) :: dim_names(ndims))
+                else
+                    if (size(dim_names) /= ndims) &
+                        call error("Invalid allocated array size for dimension names storage!")
+                    if (len(dim_names) < max_dim_name_len) &
+                        call error("Invalid allocated array size for dimension names storage! (String length does not match!)")
+                end if
+                
+                do dim_index = 1, ndims
+                    dim_names(dim_index) = ncdr_files(f_ind)%dims(dim_index)%dim_name
+                end do
+            end if
+        end subroutine nc_diag_read_id_get_dim_names
+        
+        subroutine nc_diag_read_noid_get_dim_names(num_dims, dim_name_mlen, dim_names)
+            integer, intent(out), optional           :: num_dims
+            integer, intent(out), optional           :: dim_name_mlen
+            character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
+            
+            call ncdr_check_current_ncid
+            
+            if (present(num_dims)) then
+                if (present(dim_name_mlen)) then
+                    if (present(dim_names)) then
+                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_name_mlen, dim_names)
+                    else
+                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_name_mlen)
+                    end if
+                else
+                    if (present(dim_names)) then
+                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_names = dim_names)
+                    else
+                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims)
+                    end if
+                end if
+            else
+                if (present(dim_name_mlen)) then
+                    if (present(dim_names)) then
+                        call nc_diag_read_id_get_dim_names(current_ncid, dim_name_mlen = dim_name_mlen, &
+                            dim_names = dim_names)
+                    else
+                        call nc_diag_read_id_get_dim_names(current_ncid, dim_name_mlen = dim_name_mlen)
+                    end if
+                else
+                    if (present(dim_names)) then
+                        call nc_diag_read_id_get_dim_names(current_ncid, dim_names = dim_names)
+                    else
+                        ! Why would you do this?
+                        call nc_diag_read_id_get_dim_names(current_ncid)
+                    end if
+                end if
+            end if
+        end subroutine nc_diag_read_noid_get_dim_names
 end module ncdr_dims
