@@ -54,11 +54,17 @@ all: test_ncdr_get.x test_ncdr_get_arda.x \
 	test_ncdr_get_id.x test_ncdr_get_id_arda.x \
 	test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
 	test_ncdr_get_pushpop.x \
-	test_ncdr_dims.x
+	test_ncdr_dims.x \
+	test_ncdr_vars.x
 
 test_ncdr_dims.x: ../nc_diag_read.mod test_ncdr_dims.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
 		test_ncdr_dims.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_dims.x \
+		$(NETCDF_FLAGS)
+
+test_ncdr_vars.x: ../nc_diag_read.mod test_ncdr_vars.f90
+	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
+		test_ncdr_vars.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_vars.x \
 		$(NETCDF_FLAGS)
 
 test_ncdr_get.x: ../nc_diag_read.mod test_ncdr_get.f90
