@@ -87,8 +87,8 @@ module ncdr_dims
             
             call ncdr_check_ncid(file_ncid)
             
-            do dim_index = 1, ncdr_files(file_ncid)%ndims
-                if (ncdr_files(file_ncid)%dims(dim_index)%dim_name == dim_name) &
+            do dim_index = 1, ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%ndims
+                if (ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_name == dim_name) &
                     return
             end do
             
@@ -173,7 +173,7 @@ module ncdr_dims
             
             dim_index = nc_diag_read_id_assert_dim(file_ncid, dim_name)
             
-            dim_size = ncdr_files(file_ncid)%dims(dim_index)%dim_size
+            dim_size = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_size
         end function nc_diag_read_id_get_dim
         
         function nc_diag_read_noid_get_dim(dim_name) result(dim_size)
@@ -197,7 +197,7 @@ module ncdr_dims
             
             dim_index = nc_diag_read_id_assert_dim(file_ncid, dim_name)
             
-            dim_isunlim = ncdr_files(file_ncid)%dims(dim_index)%dim_unlim
+            dim_isunlim = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_unlim
         end function nc_diag_read_id_check_dim_unlim
         
         function nc_diag_read_noid_check_dim_unlim(dim_name) result(dim_isunlim)
