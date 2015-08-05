@@ -46,6 +46,9 @@ module nc_diag_read
             call nc_diag_read_parse_file_dims(file_ncid, ncdr_file_count, input_ndims)
             call nc_diag_read_parse_file_vars(file_ncid, ncdr_file_count, input_nvars)
             
+            ! Make sure file is now open!
+            ncdr_files(ncdr_file_count)%file_open = .TRUE.
+            
             ! Update highest record - this will let us keep track and
             ! help us clear memory when we can!
             if (ncdr_file_count > ncdr_file_highest) then
