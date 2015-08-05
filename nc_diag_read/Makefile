@@ -49,7 +49,7 @@ NC_DIAG_READ_OBJS+= \
 	ncdr_alloc_assert.o \
 	ncdr_vars_fetch.o
 
-.PHONY: all tests
+.PHONY: all clean tests check
 
 all: nc_diag_read.mod tests
 
@@ -58,6 +58,9 @@ kinds.mod: Makefile kinds.F90
 
 tests:
 	make -C tests
+
+check:
+	make -C tests check
 
 nc_diag_read.mod: kinds.mod $(NC_DIAG_READ_DEPS) nc_diag_read.F90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \

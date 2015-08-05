@@ -49,13 +49,20 @@ NC_DIAG_READ_OBJS+= \
 	../ncdr_alloc_assert.o \
 	../ncdr_vars_fetch.o
 
-all: test_ncdr_get.x test_ncdr_get_arda.x \
+NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
 	test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
 	test_ncdr_get_id.x test_ncdr_get_id_arda.x \
 	test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
 	test_ncdr_get_pushpop.x \
 	test_ncdr_dims.x \
 	test_ncdr_vars.x
+
+.PHONY: all clean check
+
+all: $(NC_DIAG_READ_TESTS)
+
+check: 
+	@$(foreach ncdr_test,$(NC_DIAG_READ_TESTS),echo "Running: $(ncdr_test)";./$(ncdr_test) || exit 1;echo "Pass: $(ncdr_test)";)
 
 test_ncdr_dims.x: ../nc_diag_read.mod test_ncdr_dims.f90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) \
