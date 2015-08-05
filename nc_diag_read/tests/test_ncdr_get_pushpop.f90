@@ -39,6 +39,9 @@ program test_ncdr_get
     print *, "** All variables: **"
     print *, var_names
     
+    ! You can't open a file twice!
+    !tmp_ncdr_id_2 = nc_diag_read_id_init("test.nc")
+    
     tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")
     
     deallocate(var_names)

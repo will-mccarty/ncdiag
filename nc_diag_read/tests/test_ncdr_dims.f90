@@ -48,6 +48,18 @@ program test_ncdr_get
             nc_diag_read_check_dim_unlim(dim_name)
     end do
     
+    if (nc_diag_read_lookup_dim("INVALID_DIM_INVALID") /= -1) &
+        call error("Invalid dimension lookup result check failed.")
+    
+    if (nc_diag_read_check_dim("INVALID_DIM_INVALID")) &
+        call error("Invalid dimension check result check = TRUE failed.")
+    
+    ! These will result in an error:
+    !i = nc_diag_read_assert_dim("INVALID_DIM_INVALID")
+    !i = nc_diag_read_get_dim("INVALID_DIM_INVALID")
+    !print *, nc_diag_read_check_dim_unlim("INVALID_DIM_INVALID")
+    !call nc_diag_read_init("invalid file name.nc/\/\/\")
+    
     tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")
     
     deallocate(dim_names)
