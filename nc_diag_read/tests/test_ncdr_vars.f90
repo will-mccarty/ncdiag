@@ -66,15 +66,15 @@ program test_ncdr_get
     if (nc_diag_read_lookup_var("INVALID_VAR_INVALID") /= -1) &
         call error("Invalid variable lookup result check failed.")
     
-    if (nc_diag_read_check_var("INVALID_DIM_INVALID")) &
+    if (nc_diag_read_check_var("INVALID_VAR_INVALID")) &
         call error("Invalid variable check result check = TRUE failed.")
     
     ! These will result in an error:
-    !i = nc_diag_read_assert_var("INVALID_DIM_INVALID")
-    !i = nc_diag_read_get_var_ndims("INVALID_DIM_INVALID")
-    !i = nc_diag_read_get_var_type("INVALID_DIM_INVALID")
-    !call nc_diag_read_get_var_dims("INVALID_DIM_INVALID")
-    !print *, nc_diag_read_ret_var_dims("INVALID_DIM_INVALID")
+    !i = nc_diag_read_assert_var("INVALID_VAR_INVALID")
+    !i = nc_diag_read_get_var_ndims("INVALID_VAR_INVALID")
+    !i = nc_diag_read_get_var_type("INVALID_VAR_INVALID")
+    !call nc_diag_read_get_var_dims("INVALID_VAR_INVALID")
+    !print *, nc_diag_read_ret_var_dims("INVALID_VAR_INVALID")
     !call nc_diag_read_init("invalid file name.nc/\/\/\")
     
     tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")

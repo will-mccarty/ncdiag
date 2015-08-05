@@ -14,6 +14,9 @@ program test_ncdr_get
     
     call nc_diag_read_init("test.nc")
     
+    ! Using an invalid NCDR ID should fail:
+    !print *, nc_diag_read_get_dim(1234567, "asdf")
+    
     call nc_diag_read_get_dim_names(ndims, ndims_len, dim_names)
     write (*, "(A, I0, A, I0)") " ** Number of dimensions: ", ndims, &
         " | Maximum length of dimension names: ", ndims_len
