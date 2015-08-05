@@ -282,21 +282,4 @@ module ncdr_vars
             end if
         end subroutine nc_diag_read_noid_get_var_dims
         
-        subroutine test_nc_diag_read_get_var_dims
-            integer(i_long)                            :: var_ndims
-            integer(i_long), dimension(:), allocatable :: var_dims
-            var_dims = nc_diag_read_ret_var_dims(0, "test")
-            var_dims = nc_diag_read_ret_var_dims("test")
-            
-            call nc_diag_read_get_var_dims(0, "test")
-            call nc_diag_read_get_var_dims(0, "test", var_ndims)
-            call nc_diag_read_get_var_dims(0, "test", var_ndims, var_dims)
-            call nc_diag_read_get_var_dims(0, "test", var_dims = var_dims)
-            call nc_diag_read_get_var_dims(0, "test")
-            
-            call nc_diag_read_get_var_dims("test", var_ndims)
-            call nc_diag_read_get_var_dims("test", var_ndims, var_dims)
-            call nc_diag_read_get_var_dims("test", var_dims = var_dims)
-            call nc_diag_read_get_var_dims("test")
-        end subroutine test_nc_diag_read_get_var_dims
 end module ncdr_vars
