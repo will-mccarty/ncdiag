@@ -37,6 +37,11 @@ module ncdr_vars
             nc_diag_read_noid_get_var_dims
     end interface nc_diag_read_get_var_dims
     
+    interface nc_diag_read_get_var_names
+        module procedure nc_diag_read_id_get_var_names, &
+            nc_diag_read_noid_get_var_names
+    end interface nc_diag_read_get_var_names
+    
     contains
         subroutine nc_diag_read_parse_file_vars(file_ncid, file_index, num_vars)
             integer(i_long), intent(in)                :: file_ncid
@@ -282,4 +287,86 @@ module ncdr_vars
             end if
         end subroutine nc_diag_read_noid_get_var_dims
         
+        subroutine nc_diag_read_id_get_var_names(file_ncid, num_vars, var_name_mlen, var_names)
+            integer, intent(in)                      :: file_ncid
+            integer, intent(out), optional           :: num_vars
+            integer, intent(out), optional           :: var_name_mlen
+            character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
+            
+            integer(i_long)                :: var_index, nvars, f_ind, max_var_name_len
+            
+            max_var_name_len = 0
+            
+            call ncdr_check_ncid(file_ncid)
+            
+            f_ind = nc_diag_read_get_index_from_ncid(file_ncid)
+            nvars = ncdr_files(f_ind)%nvars
+            
+            if (present(num_vars)) &
+                num_vars = nvars
+            
+            ! Figure out character max length
+            do var_index = 1, nvars
+                if (len(ncdr_files(f_ind)%vars(var_index)%var_name) > max_var_name_len) &
+                    max_var_name_len = len(ncdr_files(f_ind)%vars(var_index)%var_name)
+            end do
+            
+            if (present(var_name_mlen)) &
+                var_name_mlen = max_var_name_len
+            
+            if (present(var_names)) then
+                if (.NOT. allocated(var_names)) then
+                    allocate(character(max_var_name_len) :: var_names(nvars))
+                else
+                    if (size(var_names) /= nvars) &
+                        call error("Invalid allocated array size for variable names storage!")
+                    if (len(var_names) < max_var_name_len) &
+                        call error("Invalid allocated array size for variable names storage! (String length does not match!)")
+                end if
+                
+                do var_index = 1, nvars
+                    var_names(var_index) = ncdr_files(f_ind)%vars(var_index)%var_name
+                end do
+            end if
+        end subroutine nc_diag_read_id_get_var_names
+        
+        subroutine nc_diag_read_noid_get_var_names(num_vars, var_name_mlen, var_names)
+            integer, intent(out), optional           :: num_vars
+            integer, intent(out), optional           :: var_name_mlen
+            character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
+            
+            call ncdr_check_current_ncid
+            
+            if (present(num_vars)) then
+                if (present(var_name_mlen)) then
+                    if (present(var_names)) then
+                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_name_mlen, var_names)
+                    else
+                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_name_mlen)
+                    end if
+                else
+                    if (present(var_names)) then
+                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_names = var_names)
+                    else
+                        call nc_diag_read_id_get_var_names(current_ncid, num_vars)
+                    end if
+                end if
+            else
+                if (present(var_name_mlen)) then
+                    if (present(var_names)) then
+                        call nc_diag_read_id_get_var_names(current_ncid, var_name_mlen = var_name_mlen, &
+                            var_names = var_names)
+                    else
+                        call nc_diag_read_id_get_var_names(current_ncid, var_name_mlen = var_name_mlen)
+                    end if
+                else
+                    if (present(var_names)) then
+                        call nc_diag_read_id_get_var_names(current_ncid, var_names = var_names)
+                    else
+                        ! Why would you do this?
+                        call nc_diag_read_id_get_var_names(current_ncid)
+                    end if
+                end if
+            end if
+        end subroutine nc_diag_read_noid_get_var_names
 end module ncdr_vars
