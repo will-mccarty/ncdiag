@@ -7,7 +7,6 @@ NETCDF_FLAGS+=-I $(BASEDIR)/Linux/include/netcdf -L$(BASEDIR)/Linux/lib \
 	-lnetcdff -lnetcdf -lhdf5 -lcurl -lz -lrt -lmpi -lhdf5_hl -lhdf5 \
 	-lz -lsz -lgpfs -lmfhdf -ldf -ljpeg
 
-
 # Available compile flags:
 #   -D_REAL8_          - define the default "real" number
 #                        (other kinds defines available!)
@@ -101,7 +100,8 @@ test_ncdr_get_id_ardag.x: ../nc_diag_read.mod test_ncdr_get_id_ardag.f90
 		test_ncdr_get_id_ardag.f90 $(NC_DIAG_READ_OBJS) -o test_ncdr_get_id_ardag.x \
 		$(NETCDF_FLAGS)
 
-../nc_diag_read.mod:
+../nc_diag_read.mod: ../nc_diag_read.F90 ../ncdr_*.F90 ../ncdr_*.f90
+	@echo " *** nc_diag_read library not built yet, building it now..."
 	make -C .. nc_diag_read.mod
 
 clean:
