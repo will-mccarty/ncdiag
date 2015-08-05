@@ -165,15 +165,12 @@ module nc_diag_read
                 call error("No files are currently open!")
             
             if (present(filename)) then
-                do i = 1, ncdr_file_count
-                    if (filename == ncdr_files(i)%filename) then
-                        f_ncid = i
-                        exit
-                    end if
-                end do
+                f_ind = nc_diag_read_get_index_from_filename(filename)
                 
-                if (f_ncid == -1) &
+                if (f_ind == -1) &
                     call error("The NetCDF file specified, " // filename // ", is not open and can't be closed.")
+                
+                f_ncid = ncdr_files(f_ind)%ncid
             else if (present(file_ncid)) then
                 ! Do... nothing. Just store the ncid.
                 f_ncid = file_ncid
@@ -198,10 +195,19 @@ module nc_diag_read
             deallocate(ncdr_files(f_ind)%dims)
             deallocate(ncdr_files(f_ind)%vars)
             
+            ! Set current_ncid to -1, as necessary:
+            if (current_ncid == f_ncid) then
+                current_ncid = -1
+                current_ind = -1
+            end if
+            
             ! Update highest record - this will let us keep track and
             ! help us clear memory when we can!
             range_closed = .TRUE.
+            
+            !print *, "UPDATE:      f_ind, ncdr_file_count, ncdr_file_highest"
             !print *, "PREUPDATE:", f_ind, ncdr_file_count, ncdr_file_highest
+            
             if (f_ind < ncdr_file_highest) then
                 do i = f_ind, ncdr_file_highest
                     if (ncdr_files(i)%file_open) then
