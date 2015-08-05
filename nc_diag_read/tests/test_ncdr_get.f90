@@ -2,11 +2,30 @@ program test_ncdr_get
     use nc_diag_read
     use netcdf
     
+    integer(i_long) :: nvars, nvars_len
+    character(len=:), dimension(:), allocatable :: var_names
+    
+    integer(i_long) :: ndims, ndims_len
+    character(len=:), dimension(:), allocatable :: dim_names
+    
     !------------------------------------------------------------------
     ! Subroutine allocation method testing
     !------------------------------------------------------------------
     
     call nc_diag_read_init("test.nc")
+    
+    call nc_diag_read_get_dim_names(ndims, ndims_len, dim_names)
+    write (*, "(A, I0, A, I0)") " ** Number of dimensions: ", ndims, &
+        " | Maximum length of dimension names: ", ndims_len
+    print *, "** All dimensions: **"
+    print *, dim_names
+    
+    call nc_diag_read_get_var_names(nvars, nvars_len, var_names)
+    write (*, "(A, I0, A, I0)") " ** Number of variables: ", nvars, &
+        " | Maximum length of variable names: ", nvars_len
+    print *, "** All variables: **"
+    print *, var_names
+    
     !call nc_diag_read_init("test_fixed.nc")
     call display_1d_var_long("chaninfosimple1")
     call display_1d_var_long("chaninfosimple2")
