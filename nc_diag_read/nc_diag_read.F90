@@ -152,9 +152,10 @@ module nc_diag_read
             ind_stack(ncid_stack_count) = nc_diag_read_get_index_from_ncid(current_ncid)
         end subroutine nc_diag_read_push
         
-        subroutine nc_diag_read_close(filename, file_ncid)
+        subroutine nc_diag_read_close(filename, file_ncid, from_pop)
             character(len=*),intent(in), optional  :: filename
             integer(i_long), intent(in), optional  :: file_ncid
+            logical,         intent(in), optional  :: from_pop
             
             integer(i_long)                        :: f_ncid, f_ind, i
             logical                                :: range_closed
@@ -163,6 +164,11 @@ module nc_diag_read
             
             if (ncdr_file_count == 0) &
                 call error("No files are currently open!")
+            
+            if (ncid_stack_count > 0) then
+                if ((any(ncid_stack == file_ncid)) .AND. (.NOT. (present(from_pop) .AND. (from_pop)))) &
+                    call error("Can not close due to push/pop queue use! If you want to use this without the stack, you must use nc_diag_read_id_init or clear the queue first!")
+            end if
             
             if (present(filename)) then
                 f_ind = nc_diag_read_get_index_from_filename(filename)
@@ -260,7 +266,7 @@ module nc_diag_read
             end if
             
             ! Close the file
-            call nc_diag_read_close(file_ncid = ncdr_files(ncid_stack(ncid_stack_count))%ncid)
+            call nc_diag_read_close(file_ncid = ncid_stack(ncid_stack_count), from_pop = .TRUE.)
             
             ! Set the stack spot to -1...
             ncid_stack(ncid_stack_count) = -1
