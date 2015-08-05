@@ -79,16 +79,16 @@ module ncdr_dims
             end do
         end subroutine nc_diag_read_parse_file_dims
         
-        function nc_diag_read_id_lookup_dim(file_ncid, dim_name) result(dim_index)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_lookup_dim(file_ncdr_id, dim_name) result(dim_index)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer                        :: dim_index
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            do dim_index = 1, ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%ndims
-                if (ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_name == dim_name) &
+            do dim_index = 1, ncdr_files(file_ncdr_id)%ndims
+                if (ncdr_files(file_ncdr_id)%dims(dim_index)%dim_name == dim_name) &
                     return
             end do
             
@@ -101,21 +101,21 @@ module ncdr_dims
             
             integer                        :: dim_index
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            dim_index = nc_diag_read_id_lookup_dim(current_ncid, dim_name)
+            dim_index = nc_diag_read_id_lookup_dim(current_ncdr_id, dim_name)
         end function nc_diag_read_noid_lookup_dim
         
-        function nc_diag_read_id_assert_dim(file_ncid, dim_name) result(dim_index)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_assert_dim(file_ncdr_id, dim_name) result(dim_index)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer                        :: dim_index
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
             ! Otherwise, return -1!
-            dim_index = nc_diag_read_id_lookup_dim(file_ncid, dim_name)
+            dim_index = nc_diag_read_id_lookup_dim(file_ncdr_id, dim_name)
             
             ! ...except don't, since we're asserting!
             if (dim_index == -1) &
@@ -127,20 +127,20 @@ module ncdr_dims
             
             integer                        :: dim_index
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            dim_index = nc_diag_read_id_assert_dim(current_ncid, dim_name)
+            dim_index = nc_diag_read_id_assert_dim(current_ncdr_id, dim_name)
         end function nc_diag_read_noid_assert_dim
         
-        function nc_diag_read_id_check_dim(file_ncid, dim_name) result(dim_exists)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_check_dim(file_ncdr_id, dim_name) result(dim_exists)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             logical                        :: dim_exists
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            if (nc_diag_read_id_lookup_dim(file_ncid, dim_name) == -1) then
+            if (nc_diag_read_id_lookup_dim(file_ncdr_id, dim_name) == -1) then
                 dim_exists = .FALSE.
                 return
             end if
@@ -153,7 +153,7 @@ module ncdr_dims
             
             logical                        :: dim_exists
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
             if (nc_diag_read_lookup_dim(dim_name) == -1) then
                 dim_exists = .FALSE.
@@ -163,17 +163,17 @@ module ncdr_dims
             dim_exists = .TRUE.
         end function nc_diag_read_noid_check_dim
         
-        function nc_diag_read_id_get_dim(file_ncid, dim_name) result(dim_size)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_get_dim(file_ncdr_id, dim_name) result(dim_size)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer(i_long)                :: dim_index, dim_size
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            dim_index = nc_diag_read_id_assert_dim(file_ncid, dim_name)
+            dim_index = nc_diag_read_id_assert_dim(file_ncdr_id, dim_name)
             
-            dim_size = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_size
+            dim_size = ncdr_files(file_ncdr_id)%dims(dim_index)%dim_size
         end function nc_diag_read_id_get_dim
         
         function nc_diag_read_noid_get_dim(dim_name) result(dim_size)
@@ -181,23 +181,23 @@ module ncdr_dims
             
             integer(i_long)                :: dim_size
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            dim_size = nc_diag_read_id_get_dim(current_ncid, dim_name)
+            dim_size = nc_diag_read_id_get_dim(current_ncdr_id, dim_name)
         end function nc_diag_read_noid_get_dim
         
-        function nc_diag_read_id_check_dim_unlim(file_ncid, dim_name) result(dim_isunlim)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_check_dim_unlim(file_ncdr_id, dim_name) result(dim_isunlim)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer(i_long)                :: dim_index
             logical                        :: dim_isunlim
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            dim_index = nc_diag_read_id_assert_dim(file_ncid, dim_name)
+            dim_index = nc_diag_read_id_assert_dim(file_ncdr_id, dim_name)
             
-            dim_isunlim = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims(dim_index)%dim_unlim
+            dim_isunlim = ncdr_files(file_ncdr_id)%dims(dim_index)%dim_unlim
         end function nc_diag_read_id_check_dim_unlim
         
         function nc_diag_read_noid_check_dim_unlim(dim_name) result(dim_isunlim)
@@ -205,33 +205,32 @@ module ncdr_dims
             
             logical                        :: dim_isunlim
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            dim_isunlim = nc_diag_read_id_check_dim_unlim(current_ncid, dim_name)
+            dim_isunlim = nc_diag_read_id_check_dim_unlim(current_ncdr_id, dim_name)
         end function nc_diag_read_noid_check_dim_unlim
         
-        subroutine nc_diag_read_id_get_dim_names(file_ncid, num_dims, dim_name_mlen, dim_names)
-            integer, intent(in)                      :: file_ncid
+        subroutine nc_diag_read_id_get_dim_names(file_ncdr_id, num_dims, dim_name_mlen, dim_names)
+            integer, intent(in)                      :: file_ncdr_id
             integer, intent(out), optional           :: num_dims
             integer, intent(out), optional           :: dim_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
             
-            integer(i_long)                :: dim_index, ndims, f_ind, max_dim_name_len
+            integer(i_long)                :: dim_index, ndims, max_dim_name_len
             
             max_dim_name_len = 0
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            f_ind = nc_diag_read_get_index_from_ncid(file_ncid)
-            ndims = ncdr_files(f_ind)%ndims
+            ndims = ncdr_files(file_ncdr_id)%ndims
             
             if (present(num_dims)) &
                 num_dims = ndims
             
             ! Figure out character max length
             do dim_index = 1, ndims
-                if (len(ncdr_files(f_ind)%dims(dim_index)%dim_name) > max_dim_name_len) &
-                    max_dim_name_len = len(ncdr_files(f_ind)%dims(dim_index)%dim_name)
+                if (len(ncdr_files(file_ncdr_id)%dims(dim_index)%dim_name) > max_dim_name_len) &
+                    max_dim_name_len = len(ncdr_files(file_ncdr_id)%dims(dim_index)%dim_name)
             end do
             
             if (present(dim_name_mlen)) &
@@ -248,7 +247,7 @@ module ncdr_dims
                 end if
                 
                 do dim_index = 1, ndims
-                    dim_names(dim_index) = ncdr_files(f_ind)%dims(dim_index)%dim_name
+                    dim_names(dim_index) = ncdr_files(file_ncdr_id)%dims(dim_index)%dim_name
                 end do
             end if
         end subroutine nc_diag_read_id_get_dim_names
@@ -258,36 +257,36 @@ module ncdr_dims
             integer, intent(out), optional           :: dim_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
             if (present(num_dims)) then
                 if (present(dim_name_mlen)) then
                     if (present(dim_names)) then
-                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_name_mlen, dim_names)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, num_dims, dim_name_mlen, dim_names)
                     else
-                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_name_mlen)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, num_dims, dim_name_mlen)
                     end if
                 else
                     if (present(dim_names)) then
-                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims, dim_names = dim_names)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, num_dims, dim_names = dim_names)
                     else
-                        call nc_diag_read_id_get_dim_names(current_ncid, num_dims)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, num_dims)
                     end if
                 end if
             else
                 if (present(dim_name_mlen)) then
                     if (present(dim_names)) then
-                        call nc_diag_read_id_get_dim_names(current_ncid, dim_name_mlen = dim_name_mlen, &
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, dim_name_mlen = dim_name_mlen, &
                             dim_names = dim_names)
                     else
-                        call nc_diag_read_id_get_dim_names(current_ncid, dim_name_mlen = dim_name_mlen)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, dim_name_mlen = dim_name_mlen)
                     end if
                 else
                     if (present(dim_names)) then
-                        call nc_diag_read_id_get_dim_names(current_ncid, dim_names = dim_names)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id, dim_names = dim_names)
                     else
                         ! Why would you do this?
-                        call nc_diag_read_id_get_dim_names(current_ncid)
+                        call nc_diag_read_id_get_dim_names(current_ncdr_id)
                     end if
                 end if
             end if

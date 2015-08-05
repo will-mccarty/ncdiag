@@ -30,18 +30,16 @@ module ncdr_alloc_assert
     end interface nc_diag_read_assert_var_dims
     
     contains
-        function nc_diag_read_id_assert_var(file_ncid, var_name) result(var_index)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_assert_var(file_ncdr_id, var_name) result(var_index)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
-            integer                        :: var_index, file_ind
+            integer                        :: var_index
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            file_ind = nc_diag_read_get_index_from_ncid(file_ncid)
-            
-            do var_index = 1, ncdr_files(file_ind)%nvars
-                if (ncdr_files(file_ind)%vars(var_index)%var_name == var_name) &
+            do var_index = 1, ncdr_files(file_ncdr_id)%nvars
+                if (ncdr_files(file_ncdr_id)%vars(var_index)%var_name == var_name) &
                     return
             end do
             
@@ -54,9 +52,9 @@ module ncdr_alloc_assert
             
             integer                        :: var_index
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            var_index = nc_diag_read_id_assert_var(current_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(current_ncdr_id, var_name)
         end function nc_diag_read_noid_assert_var
         
         subroutine nc_diag_read_assert_var_type(var_type, correct_var_type)

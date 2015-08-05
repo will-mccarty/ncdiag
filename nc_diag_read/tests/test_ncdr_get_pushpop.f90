@@ -7,7 +7,7 @@ program test_ncdr_get
     
     integer(i_long) :: nvars, nvars_len
     character(len=:), dimension(:), allocatable :: var_names
-    integer(i_long) :: tmp_ncid, tmp_ncid_2
+    integer(i_long) :: tmp_ncdr_id, tmp_ncdr_id_2
     
     !------------------------------------------------------------------
     ! Subroutine allocation method testing
@@ -22,10 +22,10 @@ program test_ncdr_get
     call nc_diag_read_close("test.nc")
     
     !------------------------------------------------------------------
-    ! Make sure if we close with NCID via caching, we actually clear
+    ! Make sure if we close with ncdr_id via caching, we actually clear
     ! the cache!
     !------------------------------------------------------------------
-    call nc_diag_read_init("test.nc", tmp_ncid)
+    call nc_diag_read_init("test.nc", tmp_ncdr_id)
     
     call nc_diag_read_get_dim_names(ndims, ndims_len, dim_names)
     write (*, "(A, I0, A, I0)") " ** Number of dimensions in test.nc: ", ndims, &
@@ -39,18 +39,18 @@ program test_ncdr_get
     print *, "** All variables: **"
     print *, var_names
     
-    tmp_ncid_2 = nc_diag_read_id_init("test_fixed.nc")
+    tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")
     
     deallocate(var_names)
     deallocate(dim_names)
     
-    call nc_diag_read_get_dim_names(tmp_ncid_2, ndims, ndims_len, dim_names)
+    call nc_diag_read_get_dim_names(tmp_ncdr_id_2, ndims, ndims_len, dim_names)
     write (*, "(A, I0, A, I0)") " ** Number of dimensions in test_fixed.nc: ", ndims, &
         " | Maximum length of dimension names: ", ndims_len
     print *, "** All dimensions: **"
     print *, dim_names
     
-    call nc_diag_read_get_var_names(tmp_ncid_2, nvars, nvars_len, var_names)
+    call nc_diag_read_get_var_names(tmp_ncdr_id_2, nvars, nvars_len, var_names)
     write (*, "(A, I0, A, I0)") " ** Number of variables in test_fixed.nc: ", nvars, &
         " | Maximum length of variable names: ", nvars_len
     print *, "** All variables: **"
@@ -59,14 +59,14 @@ program test_ncdr_get
     ! This won't work since we can't use push/pop with regular caching:
     !call nc_diag_read_push("test.nc")
     
-    call nc_diag_read_close(file_ncid = tmp_ncid)
+    call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id)
     
     write (*, "(A)") "Pushing test.nc..."
     call nc_diag_read_push("test.nc")
     call display_current_state
     
     ! We can still close ID-based (non-cached) files, though!
-    call nc_diag_read_close(file_ncid = tmp_ncid_2)
+    call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id_2)
     
     ! This is NOT good, since we are using push, and will result in an
     ! error:
@@ -77,7 +77,7 @@ program test_ncdr_get
     call nc_diag_read_push("test_fixed.nc")
     call display_current_state
     
-    ! ncid #2
+    ! ncdr_id #2
     call display_1d_var_string("chaninfo_strfix")
     call display_1d_var_string("chaninfo_strfix1")
     call display_1d_var_string("metadata_strfix")
@@ -95,7 +95,7 @@ program test_ncdr_get
     !call nc_diag_read_init("test_fixed.nc")
     
     ! Just for more fun...
-    tmp_ncid_2 = nc_diag_read_id_init("test_fixed.nc")
+    tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")
     
     print *, ncdr_file_count
     
@@ -131,7 +131,7 @@ program test_ncdr_get
     call display_1d_var_long("metadata_notcomplete")
     
     ! Close ID-based (non-cached) files, though!
-    call nc_diag_read_close(file_ncid = tmp_ncid_2)
+    call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id_2)
     
     call display_1d_var_string("metadata_str_notcomplete")
     
@@ -167,17 +167,17 @@ program test_ncdr_get
     contains
         subroutine display_current_state
             character(len=100)                         :: file_name
-            integer(i_long)                            :: file_ncid
+            integer(i_long)                            :: file_ncdr_id
             
-            call nc_diag_read_get_current(file_name, file_ncid)
+            call nc_diag_read_get_current(file_name, file_ncdr_id)
             
             write (*, "(A, I0, A)") " ** Current file: " // trim(file_name) // &
-                " (NCID: ", file_ncid, ")"
+                " (ncdr_id: ", file_ncdr_id, ")"
             
-            call nc_diag_read_get_current_queue(file_name, file_ncid)
+            call nc_diag_read_get_current_queue(file_name, file_ncdr_id)
             
             write (*, "(A, I0, A)") " ** Current file in queue: " // trim(file_name) // &
-                " (NCID: ", file_ncid, ")"
+                " (ncdr_id: ", file_ncdr_id, ")"
         end subroutine display_current_state
         
         subroutine display_1d_var_byte(var_name)

@@ -88,16 +88,16 @@ module ncdr_vars
             end do
         end subroutine nc_diag_read_parse_file_vars
         
-        function nc_diag_read_id_lookup_var(file_ncid, var_name) result(var_index)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_lookup_var(file_ncdr_id, var_name) result(var_index)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             integer                        :: var_index
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            do var_index = 1, ncdr_files(file_ncid)%nvars
-                if (ncdr_files(file_ncid)%vars(var_index)%var_name == var_name) &
+            do var_index = 1, ncdr_files(file_ncdr_id)%nvars
+                if (ncdr_files(file_ncdr_id)%vars(var_index)%var_name == var_name) &
                     return
             end do
             
@@ -110,20 +110,20 @@ module ncdr_vars
             
             integer                        :: var_index
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            var_index = nc_diag_read_id_lookup_var(current_ncid, var_name)
+            var_index = nc_diag_read_id_lookup_var(current_ncdr_id, var_name)
         end function nc_diag_read_noid_lookup_var
         
-        function nc_diag_read_id_check_var(file_ncid, var_name) result(var_exists)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_check_var(file_ncdr_id, var_name) result(var_exists)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             logical                        :: var_exists
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            if (nc_diag_read_id_lookup_var(file_ncid, var_name) == -1) then
+            if (nc_diag_read_id_lookup_var(file_ncdr_id, var_name) == -1) then
                 var_exists = .FALSE.
                 return
             end if
@@ -136,7 +136,7 @@ module ncdr_vars
             
             logical                        :: var_exists
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
             if (nc_diag_read_lookup_var(var_name) == -1) then
                 var_exists = .FALSE.
@@ -146,17 +146,17 @@ module ncdr_vars
             var_exists = .TRUE.
         end function nc_diag_read_noid_check_var
         
-        function nc_diag_read_id_get_var_ndims(file_ncid, var_name) result(var_ndims)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_get_var_ndims(file_ncdr_id, var_name) result(var_ndims)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             integer(i_long)                :: var_index, var_ndims
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             
-            var_ndims = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_ndims
+            var_ndims = ncdr_files(file_ncdr_id)%vars(var_index)%var_ndims
         end function nc_diag_read_id_get_var_ndims
         
         function nc_diag_read_noid_get_var_ndims(var_name) result(var_ndims)
@@ -164,22 +164,22 @@ module ncdr_vars
             
             integer(i_long)                :: var_ndims
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            var_ndims = nc_diag_read_id_get_var_ndims(current_ncid, var_name)
+            var_ndims = nc_diag_read_id_get_var_ndims(current_ncdr_id, var_name)
         end function nc_diag_read_noid_get_var_ndims
         
-        function nc_diag_read_id_get_var_type(file_ncid, var_name) result(var_type)
-            integer, intent(in)            :: file_ncid
+        function nc_diag_read_id_get_var_type(file_ncdr_id, var_name) result(var_type)
+            integer, intent(in)            :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             integer(i_long)                :: var_index, var_type
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             
-            var_type = ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_type
+            var_type = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
         end function nc_diag_read_id_get_var_type
         
         function nc_diag_read_noid_get_var_type(var_name) result(var_type)
@@ -187,30 +187,30 @@ module ncdr_vars
             
             integer(i_long)                :: var_type
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            var_type = nc_diag_read_id_get_var_type(current_ncid, var_name)
+            var_type = nc_diag_read_id_get_var_type(current_ncdr_id, var_name)
         end function nc_diag_read_noid_get_var_type
         
-        function nc_diag_read_id_ret_var_dims(file_ncid, var_name) result(var_dims)
-            integer, intent(in)                        :: file_ncid
+        function nc_diag_read_id_ret_var_dims(file_ncdr_id, var_name) result(var_dims)
+            integer, intent(in)                        :: file_ncdr_id
             character(len=*), intent(in)               :: var_name
             
             integer(i_long)                            :: var_index, var_ndims, i
             integer(i_long), dimension(:), allocatable :: var_dims
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             
-            var_ndims = nc_diag_read_id_get_var_ndims(file_ncid, var_name)
+            var_ndims = nc_diag_read_id_get_var_ndims(file_ncdr_id, var_name)
             
             allocate(var_dims(var_ndims))
             
             do i = 1, var_ndims
                 var_dims(i) = &
-                    ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims( &
-                        ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_dim_inds(i) &
+                    ncdr_files(file_ncdr_id)%dims( &
+                        ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_inds(i) &
                         )%dim_size
             end do
         end function nc_diag_read_id_ret_var_dims
@@ -221,28 +221,28 @@ module ncdr_vars
             
             integer(i_long)                             :: var_ndims
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
-            var_ndims = nc_diag_read_id_get_var_ndims(current_ncid, var_name)
+            var_ndims = nc_diag_read_id_get_var_ndims(current_ncdr_id, var_name)
             
             allocate(var_dims(var_ndims))
             
-            var_dims = nc_diag_read_id_ret_var_dims(current_ncid, var_name)
+            var_dims = nc_diag_read_id_ret_var_dims(current_ncdr_id, var_name)
         end function nc_diag_read_noid_ret_var_dims
         
-        subroutine nc_diag_read_id_get_var_dims(file_ncid, var_name, var_ndims, var_dims)
-            integer, intent(in)                      :: file_ncid
+        subroutine nc_diag_read_id_get_var_dims(file_ncdr_id, var_name, var_ndims, var_dims)
+            integer, intent(in)                      :: file_ncdr_id
             character(len=*), intent(in)             :: var_name
             integer(i_long), intent(inout), optional :: var_ndims
             integer(i_long), intent(inout), dimension(:), allocatable, optional :: var_dims
             
             integer(i_long)                :: var_index, v_ndims, i
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             
-            v_ndims = nc_diag_read_id_get_var_ndims(file_ncid, var_name)
+            v_ndims = nc_diag_read_id_get_var_ndims(file_ncdr_id, var_name)
             
             if (present(var_ndims)) &
                 var_ndims = v_ndims
@@ -257,8 +257,8 @@ module ncdr_vars
                 
                 do i = 1, v_ndims
                     var_dims(i) = &
-                        ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%dims( &
-                            ncdr_files(nc_diag_read_get_index_from_ncid(file_ncid))%vars(var_index)%var_dim_inds(i) &
+                        ncdr_files(file_ncdr_id)%dims( &
+                            ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_inds(i) &
                             )%dim_size
                 end do
             end if
@@ -269,46 +269,45 @@ module ncdr_vars
             integer(i_long), intent(inout), optional :: var_ndims
             integer(i_long), intent(inout), dimension(:), allocatable, optional :: var_dims
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
             if (present(var_ndims)) then
                 if (present(var_dims)) then
-                    call nc_diag_read_id_get_var_dims(current_ncid, var_name, var_ndims, var_dims)
+                    call nc_diag_read_id_get_var_dims(current_ncdr_id, var_name, var_ndims, var_dims)
                 else
-                    call nc_diag_read_id_get_var_dims(current_ncid, var_name, var_ndims)
+                    call nc_diag_read_id_get_var_dims(current_ncdr_id, var_name, var_ndims)
                 end if
             else
                 if (present(var_dims)) then
-                    call nc_diag_read_id_get_var_dims(current_ncid, var_name, var_dims = var_dims)
+                    call nc_diag_read_id_get_var_dims(current_ncdr_id, var_name, var_dims = var_dims)
                 else
                     ! Why you want to do this, I dunno...
-                    call nc_diag_read_id_get_var_dims(current_ncid, var_name)
+                    call nc_diag_read_id_get_var_dims(current_ncdr_id, var_name)
                 end if
             end if
         end subroutine nc_diag_read_noid_get_var_dims
         
-        subroutine nc_diag_read_id_get_var_names(file_ncid, num_vars, var_name_mlen, var_names)
-            integer, intent(in)                      :: file_ncid
+        subroutine nc_diag_read_id_get_var_names(file_ncdr_id, num_vars, var_name_mlen, var_names)
+            integer, intent(in)                      :: file_ncdr_id
             integer, intent(out), optional           :: num_vars
             integer, intent(out), optional           :: var_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
             
-            integer(i_long)                :: var_index, nvars, f_ind, max_var_name_len
+            integer(i_long)                :: var_index, nvars, max_var_name_len
             
             max_var_name_len = 0
             
-            call ncdr_check_ncid(file_ncid)
+            call ncdr_check_ncdr_id(file_ncdr_id)
             
-            f_ind = nc_diag_read_get_index_from_ncid(file_ncid)
-            nvars = ncdr_files(f_ind)%nvars
+            nvars = ncdr_files(file_ncdr_id)%nvars
             
             if (present(num_vars)) &
                 num_vars = nvars
             
             ! Figure out character max length
             do var_index = 1, nvars
-                if (len(ncdr_files(f_ind)%vars(var_index)%var_name) > max_var_name_len) &
-                    max_var_name_len = len(ncdr_files(f_ind)%vars(var_index)%var_name)
+                if (len(ncdr_files(file_ncdr_id)%vars(var_index)%var_name) > max_var_name_len) &
+                    max_var_name_len = len(ncdr_files(file_ncdr_id)%vars(var_index)%var_name)
             end do
             
             if (present(var_name_mlen)) &
@@ -325,7 +324,7 @@ module ncdr_vars
                 end if
                 
                 do var_index = 1, nvars
-                    var_names(var_index) = ncdr_files(f_ind)%vars(var_index)%var_name
+                    var_names(var_index) = ncdr_files(file_ncdr_id)%vars(var_index)%var_name
                 end do
             end if
         end subroutine nc_diag_read_id_get_var_names
@@ -335,36 +334,36 @@ module ncdr_vars
             integer, intent(out), optional           :: var_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
             
-            call ncdr_check_current_ncid
+            call ncdr_check_current_ncdr_id
             
             if (present(num_vars)) then
                 if (present(var_name_mlen)) then
                     if (present(var_names)) then
-                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_name_mlen, var_names)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, num_vars, var_name_mlen, var_names)
                     else
-                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_name_mlen)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, num_vars, var_name_mlen)
                     end if
                 else
                     if (present(var_names)) then
-                        call nc_diag_read_id_get_var_names(current_ncid, num_vars, var_names = var_names)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, num_vars, var_names = var_names)
                     else
-                        call nc_diag_read_id_get_var_names(current_ncid, num_vars)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, num_vars)
                     end if
                 end if
             else
                 if (present(var_name_mlen)) then
                     if (present(var_names)) then
-                        call nc_diag_read_id_get_var_names(current_ncid, var_name_mlen = var_name_mlen, &
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, var_name_mlen = var_name_mlen, &
                             var_names = var_names)
                     else
-                        call nc_diag_read_id_get_var_names(current_ncid, var_name_mlen = var_name_mlen)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, var_name_mlen = var_name_mlen)
                     end if
                 else
                     if (present(var_names)) then
-                        call nc_diag_read_id_get_var_names(current_ncid, var_names = var_names)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id, var_names = var_names)
                     else
                         ! Why would you do this?
-                        call nc_diag_read_id_get_var_names(current_ncid)
+                        call nc_diag_read_id_get_var_names(current_ncdr_id)
                     end if
                 end if
             end if
