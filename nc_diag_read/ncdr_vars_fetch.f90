@@ -46,7 +46,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncdr_id(file_ncdr_id)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_BYTE)
@@ -82,7 +82,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_SHORT)
@@ -118,7 +118,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_INT)
@@ -154,7 +154,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_FLOAT)
@@ -190,7 +190,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_DOUBLE)
@@ -226,7 +226,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_CHAR)
@@ -263,7 +263,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_BYTE)
@@ -300,7 +300,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_SHORT)
@@ -337,7 +337,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_INT)
@@ -374,7 +374,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_FLOAT)
@@ -411,7 +411,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
                         
             call nc_diag_read_assert_var_type(var_type, NF90_DOUBLE)
@@ -448,7 +448,7 @@ module ncdr_vars_fetch
             file_ncid = ncdr_files(file_ncdr_id)%ncid
             call ncdr_check_ncid(file_ncid)
             
-            var_index = nc_diag_read_id_assert_var(file_ncid, var_name)
+            var_index = nc_diag_read_id_assert_var(file_ncdr_id, var_name)
             var_type  = ncdr_files(file_ncdr_id)%vars(var_index)%var_type
             
             call nc_diag_read_assert_var_type(var_type, NF90_CHAR)
