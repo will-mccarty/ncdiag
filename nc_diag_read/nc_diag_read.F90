@@ -96,9 +96,9 @@ module nc_diag_read
             end if
 #endif
             
-            if (ncdr_file_count > 0) then
+            if (ncid_stack_count > 0) then
                 if (.NOT. (present(from_push) .AND. (from_push))) &
-                    call error("Can not initialize due to push use! If you want to init without the stack, you must use nc_diag_read_id_init or clear the queue first!")
+                    call error("Can not initialize due to push/pop queue use! If you want to init without the stack, you must use nc_diag_read_id_init or clear the queue first!")
             end if
             
             f_ncid = nc_diag_read_id_init(filename)
@@ -124,15 +124,20 @@ module nc_diag_read
             end if
 #endif
             
+            if ((ncid_stack_count == 0) .AND. (current_ncid /= -1)) &
+                call error("Can not initialize due to normal caching use! If you want to init with the stack, you must close the cached file first, then use nc_diag_read_push()!")
+            
+            ncid_stack_count = ncid_stack_count + 1
+            
             if (allocated(ncid_stack)) then
-                ncid_stack_count = ncid_stack_count + 1
-                
                 if (ncid_stack_count >= ncid_stack_size) then
                     call ncdr_realloc(ncid_stack, size(ncid_stack))
+                    call ncdr_realloc(ind_stack, size(ind_stack))
                     ncid_stack_size = size(ncid_stack)
                 end if
             else
                 allocate(ncid_stack(INITIAL_SIZE))
+                allocate(ind_stack(INITIAL_SIZE))
                 ncid_stack_size = size(ncid_stack)
             end if
             
@@ -233,7 +238,7 @@ module nc_diag_read
             integer(i_long), intent(out), optional :: file_ncid
             
             if (ncid_stack_count == 0) &
-                call error("No NetCDF files left to pop!")
+                call error("No NetCDF files to pop!")
             
             if (current_ncid /= ncid_stack(ncid_stack_count)) &
                 call error("BUG - current NCID differs from the current queued NCID!")
