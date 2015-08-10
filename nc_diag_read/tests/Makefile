@@ -11,21 +11,21 @@ NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
 
 # Coverage build flags
 ifndef COVERAGE
-	COVERAGE=0
+    COVERAGE=0
 endif
 
 ifeq ($(COVERAGE), 1)
-	NCDR_F90FLAGS+=-prof-gen=srcpos
-	STATIC_COMPILE=1
+    NCDR_F90FLAGS+=-prof-gen=srcpos
+    STATIC_COMPILE=1
 endif
 
 # Static compilation flags
 ifndef STATIC_COMPILE
-	STATIC_COMPILE=0
+    STATIC_COMPILE=0
 endif
 
 ifeq ($(STATIC_COMPILE), 1)
-	NC_DIAG_READ_FLAGS=-I.. ../nc_diag_read.F90 ../ncdr_*.f90 ../ncdr_*.F90 ../netcdf_unlimdims.F90
+    NC_DIAG_READ_FLAGS=-I.. ../nc_diag_read.F90 ../ncdr_*.f90 ../ncdr_*.F90 ../netcdf_unlimdims.F90
 endif
 
 .PHONY: all clean check precoverage coverage

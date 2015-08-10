@@ -3,32 +3,32 @@ include Makefile.config
 
 # Debug setup
 ifndef NCDR_DEBUG
-	NCDR_DEBUG=0
+    NCDR_DEBUG=0
 endif
 
 # Debug flags
 ifeq ($(NCDR_DEBUG), 1)
-	NCDR_NCDR_F90FLAGS+=-O0 -fpp -g -pg -fstack-protector -check all \
-		-ftrapuv -debug all -fpe0 -warn all -traceback -debug extended
+    NCDR_NCDR_F90FLAGS+=-O0 -fpp -g -pg -fstack-protector -check all \
+        -ftrapuv -debug all -fpe0 -warn all -traceback -debug extended
 endif
 
 NC_DIAG_READ_DEPS+=Makefile \
-	ncdr_climsg.mod \
-	ncdr_state.mod ncdr_types.mod \
-	netcdf_unlimdims.mod \
-	ncdr_realloc_mod.mod \
-	ncdr_vars.mod ncdr_dims.mod
+    ncdr_climsg.mod \
+    ncdr_state.mod ncdr_types.mod \
+    netcdf_unlimdims.mod \
+    ncdr_realloc_mod.mod \
+    ncdr_vars.mod ncdr_dims.mod
 
 NC_DIAG_READ_OBJS+= \
-	nc_diag_read.o \
-	ncdr_climsg.o \
-	ncdr_state.o ncdr_types.o \
-	netcdf_unlimdims.o \
-	ncdr_realloc_mod.o \
-	ncdr_dims.o ncdr_check.o \
-	ncdr_vars.o \
-	ncdr_alloc_assert.o \
-	ncdr_vars_fetch.o
+    nc_diag_read.o \
+    ncdr_climsg.o \
+    ncdr_state.o ncdr_types.o \
+    netcdf_unlimdims.o \
+    ncdr_realloc_mod.o \
+    ncdr_dims.o ncdr_check.o \
+    ncdr_vars.o \
+    ncdr_alloc_assert.o \
+    ncdr_vars_fetch.o
 
 .PHONY: all clean tests check
 

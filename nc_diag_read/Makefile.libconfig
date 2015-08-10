@@ -116,7 +116,8 @@ NCDR_LIB_PATH=$(NCDR_PATH)/$(NCDR_LIB_FILE)
 
 # Define nc_diag_read library dependencies, so that any changes
 # can prompt a re-build:
-NCDR_LIB_DEPS=$(NCDR_PATH)/*.f90 $(NCDR_PATH)/*.F90 $(NCDR_PATH)/Makefile $(NCDR_PATH)/Makefile.config
+NCDR_LIB_DEPS=$(NCDR_PATH)/*.f90 $(NCDR_PATH)/*.F90 \
+    $(NCDR_PATH)/Makefile $(NCDR_PATH)/Makefile.config
 
 # Define the build command necessary to build this library:
 NCDR_BUILD_CMD=make -C $(NCDR_PATH) $(NCDR_LIB_FILE)
