@@ -96,8 +96,15 @@ else
     NCDR_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
     # Then, get the directory for this file.
     # We yank out the directory to get a relative path.
-    NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
+    #$(warning $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
+    #$(warning $(CURDIR))
+    #$(warning $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDR_MAKEFILE)))))
+    
+    #NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
+    NCDR_PATH := $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
 endif
+
+#$(warning DEBUG - [$(NCDR_MAKEFILE)] [$(NCDR_PATH)])
 
 # Define the nc_diag_read library name and filename:
 NCDR_LIB_NAME=nc_diag_read
