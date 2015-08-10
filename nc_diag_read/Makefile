@@ -102,5 +102,5 @@ utils.mod: Makefile utils.f90
 		-c utils.f90
 
 clean:
-	rm -f *.mod *.x *.o
+	rm -f *.mod *.x *.o *.a
 	make -C tests clean
