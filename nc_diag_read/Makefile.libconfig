@@ -61,12 +61,36 @@
 # the included one...
 # 
 # NCDR_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+# 
+# This also doesn't work if we use an absolute path:
+# NCDR_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+# 
+# This doesn't work, either:
+# NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
 
 # First, use a trick to get the included (Makefile.libconfig) path:
-NCDR_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+# Check if we are using an absolute path - aka we have a slash.
+# If we don't, process with relative path...
 
-# Then, get the directory for this file:
-NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
+#$(warning DEBUG - $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+#$(warning DEBUG - $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))
+
+NCDR_MKFILE_TMP := $(strip $(word 1, $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))))
+
+#$(warning DEBUG - [$(NCDR_MKFILE_TMP)])
+
+ifeq ($(NCDR_MKFILE_TMP),/)
+    #$(warning Using absolute paths!)
+    NCDR_MAKEFILE := $(abspath $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+    # Then, get the directory for this file:
+    NCDR_PATH := $(patsubst %/,%,$(dir $(NCDR_MAKEFILE)))
+else
+    #$(warning Using relative paths!)
+    NCDR_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+    # Then, get the directory for this file.
+    # We yank out the directory to get a relative path.
+    NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
+endif
 
 # Define the nc_diag_read library name and filename:
 NCDR_LIB_NAME=nc_diag_read
@@ -78,7 +102,7 @@ NCDR_LIB_PATH=$(NCDR_PATH)/$(NCDR_LIB_FILE)
 
 # Define nc_diag_read library dependencies, so that any changes
 # can prompt a re-build:
-NCDR_LIB_DEPS=$(NCDR_PATH)/*.f90 $(NCDR_PATH)/*.F90 $(NCDR_PATH)/Makefile*
+NCDR_LIB_DEPS=$(NCDR_PATH)/*.f90 $(NCDR_PATH)/*.F90 $(NCDR_PATH)/Makefile $(NCDR_PATH)/Makefile.config
 
 # Define the build command necessary to build this library:
 NCDR_BUILD_CMD=make -C $(NCDR_PATH) $(NCDR_LIB_FILE)
