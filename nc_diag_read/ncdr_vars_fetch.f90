@@ -53,7 +53,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 1)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -89,7 +89,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 1)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -125,7 +125,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 1)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -161,7 +161,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 1)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -197,7 +197,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 1)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -233,7 +233,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -270,7 +270,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -307,7 +307,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -344,7 +344,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -381,7 +381,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -418,7 +418,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 2)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
@@ -455,7 +455,7 @@ module ncdr_vars_fetch
             call nc_diag_read_assert_var_ndims(size( &
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes), 3)
             
-            call nc_diag_read_assert_var_dims(var_stor, & 
+            call nc_diag_read_assert_dims(var_stor, & 
                 ncdr_files(file_ncdr_id)%vars(var_index)%var_dim_sizes)
             
             call check(nf90_get_var(file_ncid, var_index, &
