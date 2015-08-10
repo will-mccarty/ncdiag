@@ -31,11 +31,12 @@
 #     First, add the nc_diag_read library to your dependencies. We
 #     already figured out the path for you, so all you have to do is
 #     just add it! Use NCDR_LIB_PATH to get that path:
-#         mytarget: $(NCDR_LIB_PATH) srcfiles ...
+#         mytarget: srcfiles ... $(NCDR_LIB_PATH)
 #             [your build commands here]
 #     
-#     Alternatively, if you depend on $<, you can simply add this to
-#     your "all" target, making this MUCH cleaner:
+#     Alternatively, if you want to use your specific dependencies, you
+#     can simply add this to your "all" target, making this MUCH
+#     cleaner:
 #         all: $(NCDR_LIB_PATH) myexecs ...
 #     Note that this only works as long as you build with "all".
 #     Building with specific targets will forgo this dependency.
