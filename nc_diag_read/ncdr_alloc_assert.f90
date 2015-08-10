@@ -32,10 +32,10 @@ module ncdr_alloc_assert
     
     contains
         function nc_diag_read_id_assert_var(file_ncdr_id, var_name) result(var_index)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
-            integer                        :: var_index
+            integer(i_long)                :: var_index
             
             call ncdr_check_ncdr_id(file_ncdr_id)
             
@@ -51,7 +51,7 @@ module ncdr_alloc_assert
         function nc_diag_read_noid_assert_var(var_name) result(var_index)
             character(len=*), intent(in)   :: var_name
             
-            integer                        :: var_index
+            integer(i_long)                :: var_index
             
             call ncdr_check_current_ncdr_id
             
