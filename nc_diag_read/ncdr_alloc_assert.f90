@@ -105,6 +105,23 @@ module ncdr_alloc_assert
         ! Variable allocation and assertion subroutines
         !-------------------------------------------------------------
         
+        subroutine nc_diag_read_assert_dims_string(var_stor, correct_dims)
+            character(len=:),allocatable,intent(inout) :: var_stor
+            integer(i_long), dimension(:)              :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            ! If allocated, make sure the dimensions are correct.
+            ! If not, go ahead and allocate it ourselves.
+            if (allocated(var_stor)) then
+                if (size(correct_dims) /= correct_ndims) &
+                    call error("Invalid number of dimensions for variable!")
+                if (len(var_stor) /= correct_dims(1)) &
+                    call error("Mismatched dimensions for variable storage!")
+            else
+                allocate(character(len=correct_dims(1)) :: var_stor)
+            end if
+        end subroutine nc_diag_read_assert_dims_string
+        
         subroutine nc_diag_read_assert_dims_1d_byte(var_stor, correct_dims)
             integer(i_byte),dimension(:),allocatable,intent(inout) :: var_stor
             integer(i_long), dimension(:)                           :: correct_dims
