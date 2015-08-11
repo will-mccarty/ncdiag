@@ -327,18 +327,18 @@
                                         
                                         ! NOTE: the 2nd dim is nobs, so this is the actual file size.
                                         ! Other fields are the final sizes (maximum).
-                                        allocate(string_expanded_buffer (cur_out_dim_sizes(1), cur_dim_sizes(2)))
+                                        allocate(temp_storage_arr(mpi_requests_total)%string_expanded_buffer (cur_out_dim_sizes(1), cur_dim_sizes(2)))
                                         
                                         ! Same again, this time just multiplying...
                                         !allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer(cur_out_dim_sizes(1)* cur_dim_sizes(2)))
                                         
                                         string_buffer = NF90_FILL_CHAR
-                                        string_expanded_buffer = NF90_FILL_CHAR
+                                        temp_storage_arr(mpi_requests_total)%string_expanded_buffer = NF90_FILL_CHAR
                                         call check(nf90_get_var(ncid_input, var_index, string_buffer, &
                                             start = (/ 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                         
-                                        string_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2)) = &
+                                        temp_storage_arr(mpi_requests_total)%string_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2)) = &
                                             string_buffer
                                         
                                         !temp_storage_arr(mpi_requests_total)%string_1d_buffer = reshape(string_buffer, &
@@ -554,7 +554,7 @@
                                         ! Same again, this time just multiplying...
                                         !allocate(temp_storage_arr(mpi_requests_total)%string_1d_buffer (cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3)))
                                         string_2d_buffer = NF90_FILL_CHAR
-                                        string_2d_expanded_buffer = NF90_FILL_CHAR
+                                        temp_storage_arr(mpi_requests_total)%string_2d_expanded_buffer = NF90_FILL_CHAR
                                         call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                             start = (/ 1, 1, 1 /), &
                                             count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
@@ -819,7 +819,7 @@
                             .OR. (any(cur_out_dim_sizes == -1))) then
                             
                             if ((cur_out_var_ndims == 1) .OR. &
-                                ((cur_out_var_ndims == 2) .AND. (tmp_var_type == NF90_CHAR))) then
+                                ((cur_out_var_ndims == 2) .AND. (cur_out_var_type == NF90_CHAR))) then
                                 if (cur_out_var_type == NF90_BYTE) then
                                     allocate(byte_buffer   (num_count))
                                     byte_buffer = NF90_FILL_BYTE
@@ -916,8 +916,9 @@
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
                                     
                                     data_blobs(cur_out_var_ind)%string_buffer &
-                                        (data_blobs(cur_out_var_ind)%cur_pos : &
-                                            data_blobs(cur_out_var_ind)%cur_pos + num_count - 1, :) &
+                                        (1 : cur_out_dim_sizes(1), &
+                                            data_blobs(cur_out_var_ind)%cur_pos : &
+                                            data_blobs(cur_out_var_ind)%cur_pos + (num_count / cur_out_dim_sizes(1)) - 1) &
                                         = string_buffer(:,:)
                                     
                                     deallocate(string_buffer)
@@ -983,7 +984,7 @@
                                         "Invalid type detected during write." // &
                                         CHAR(10) // "             " // &
                                         "(Variable '" // trim(tmp_var_name) // "' has an type of ", &
-                                        tmp_var_type, "," // &
+                                        cur_out_var_type, "," // &
                                         CHAR(10) // "             " // &
                                         "which is invalid!)"
                                     call error(trim(err_string))
@@ -1000,7 +1001,7 @@
                                             num_count
                                     end if
                                 end if
-                            else if ((cur_out_var_ndims == 2) .OR. &
+                            else if (((cur_out_var_ndims == 2) .AND. (cur_out_var_type /= NF90_CHAR)) .OR. &
                                 ((cur_out_var_ndims == 3) .AND. (cur_out_var_type == NF90_CHAR))) then
                                 
                                 if (cur_out_var_type == NF90_BYTE) then
@@ -1171,6 +1172,18 @@
                                             (num_count / cur_out_dim_sizes(1))
                                     end if
                                 end if
+                            else
+                                write (err_string, "(A, I0, A, I0, A)") &
+                                    "Invalid dimensions detected during write." // &
+                                    CHAR(10) // "             " // &
+                                    "(Variable '" // trim(tmp_var_name) // "' has an type of ", &
+                                    cur_out_var_type, &
+                                    ", with ", &
+                                    cur_out_var_ndims, &
+                                    " dimensions," // &
+                                    CHAR(10) // "             " // &
+                                    "which is invalid!)"
+                                call error(trim(err_string))
                             end if
                             
                             !print *, "cur_out_var_ndims", cur_out_var_ndims
