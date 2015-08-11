@@ -11,9 +11,9 @@ program test_ncdr_attrs
     ! nc_diag_read_lookup_attr
     ! nc_diag_read_assert_attr
     ! nc_diag_read_check_attr
-    ! nc_diag_read_get_global_attr
+    ! nc_diag_read_get_attr
     ! nc_diag_read_check_attr_unlim
-    ! nc_diag_read_get_global_attr_names
+    ! nc_diag_read_get_attr_names
     ! 
     ! All functions except last one!
     
@@ -29,7 +29,7 @@ program test_ncdr_attrs
     
     write (*, "(A)") " ** File: test.nc (using cached ncdr_id)"
     
-    call nc_diag_read_get_global_attr_names(nattrs, nattrs_len, attr_names)
+    call nc_diag_read_get_attr_names("data2dsimple7", nattrs, nattrs_len, attr_names)
     write (*, "(A, I0, A, I0)") " ** Number of attributes in test.nc: ", nattrs, &
         " | Maximum length of attribute names: ", nattrs_len
     print *, "** All Attributes: **"
@@ -39,18 +39,18 @@ program test_ncdr_attrs
     
     do i = 1, nattrs
         attr_name = trim(attr_names(i))
-        call nc_diag_read_assert_global_attr(attr_name, attr_type, attr_len)
-        if (nc_diag_read_check_global_attr(attr_name) == .FALSE.) &
+        call nc_diag_read_assert_attr("data2dsimple7", trim(attr_names(i)), attr_type, attr_len)
+        if (nc_diag_read_check_attr("data2dsimple7", attr_name) == .FALSE.) &
             call error("Can't find attr with check(), even when it's listed!")
-        call nc_diag_read_get_global_attr_len(attr_name, attr_len)
+        call nc_diag_read_get_attr_len("data2dsimple7", attr_name, attr_len)
         write (*, "(A, I0)") "    -> Attribute: " // attr_name // " | Length: ", &
             attr_len
         
-        if (attr_len /= nc_diag_read_ret_global_attr_len(attr_name)) &
-            call error("nc_diag_read_get_global_attr_len != nc_diag_read_ret_global_attr_len!")
+        if (attr_len /= nc_diag_read_ret_attr_len("data2dsimple7", attr_name)) &
+            call error("nc_diag_read_get_attr_len != nc_diag_read_ret_attr_len!")
         
-        if (attr_type /= nc_diag_read_get_global_attr_type(attr_name)) &
-            call error("nc_diag_read_assert_global_attr != nc_diag_read_get_global_attr_type!")
+        if (attr_type /= nc_diag_read_get_attr_type("data2dsimple7", attr_name)) &
+            call error("nc_diag_read_assert_attr != nc_diag_read_get_attr_type!")
         
         if (attr_type == NF90_BYTE) call display_1d_attr_byte(attr_name)
         if (attr_type == NF90_SHORT) call display_1d_attr_short(attr_name)
@@ -60,44 +60,14 @@ program test_ncdr_attrs
         if (attr_type == NF90_CHAR) call display_1d_attr_string(attr_name)
     end do
     
-    if (nc_diag_read_check_global_attr("INVALID_attr_INVALID")) &
+    if (nc_diag_read_check_attr("data2dsimple7", "INVALID_attr_INVALID")) &
         call error("Invalid attribute check result check = TRUE failed.")
     
     ! These will result in an error:
     !i = nc_diag_read_assert_attr("INVALID_attr_INVALID")
-    !i = nc_diag_read_get_global_attr("INVALID_attr_INVALID")
+    !i = nc_diag_read_get_attr("INVALID_attr_INVALID")
     !print *, nc_diag_read_check_attr_unlim("INVALID_attr_INVALID")
     !call nc_diag_read_init("invalid file name.nc/\/\/\")
-    
-    call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id)
-    
-    tmp_ncdr_id = nc_diag_read_id_init("test_fixed.nc")
-    
-    deallocate(attr_names)
-    
-    write (*, "(A)") " ** File: test_fixed.nc (using ncdr_id)"
-    
-    call nc_diag_read_get_global_attr_names(tmp_ncdr_id, nattrs, nattrs_len, attr_names)
-    write (*, "(A, I0, A, I0)") " ** Number of attributes in test_fixed.nc: ", nattrs, &
-        " | Maximum length of attribute names: ", nattrs_len
-    print *, "** All Attributes: **"
-    print *, attr_names
-    
-    print *, "** Attribute details: **"
-    
-    do i = 1, nattrs
-        attr_name = trim(attr_names(i))
-        call nc_diag_read_assert_global_attr(tmp_ncdr_id, attr_name, attr_type, attr_len)
-        if (nc_diag_read_check_global_attr(tmp_ncdr_id, attr_name) == .FALSE.) &
-            call error("Can't find attr with check(), even when it's listed!")
-        call nc_diag_read_get_global_attr_len(tmp_ncdr_id, attr_name, attr_len)
-        
-        if (attr_len /= nc_diag_read_ret_global_attr_len(attr_name)) &
-            call error("nc_diag_read_get_global_attr_len != nc_diag_read_ret_global_attr_len!")
-        
-        write (*, "(A, I0, A, L)") "    -> Attribute: " // attr_name // " | Length: ", &
-            attr_len
-    end do
     
     call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id)
     
@@ -111,15 +81,15 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             
             if (any(attr_stor /= attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
             
             if (size(attr_stor) == 1) then
-                call nc_diag_read_get_global_attr(attr_name, attr_stor_single)
-                call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor_single2)
+                call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor_single)
+                call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_single2)
                 
                 if ((attr_stor(1) /= attr_stor_single) .AND. (attr_stor(1) /= attr_stor_single2)) &
                     call error("Storage with and without NCDR ID don't match!")
@@ -157,15 +127,15 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             
             if (any(attr_stor /= attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
             
             if (size(attr_stor) == 1) then
-                call nc_diag_read_get_global_attr(attr_name, attr_stor_single)
-                call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor_single2)
+                call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor_single)
+                call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_single2)
                 
                 if ((attr_stor(1) /= attr_stor_single) .AND. (attr_stor(1) /= attr_stor_single2)) &
                     call error("Storage with and without NCDR ID don't match!")
@@ -203,15 +173,15 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             
             if (any(attr_stor /= attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
             
             if (size(attr_stor) == 1) then
-                call nc_diag_read_get_global_attr(attr_name, attr_stor_single)
-                call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor_single2)
+                call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor_single)
+                call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_single2)
                 
                 if ((attr_stor(1) /= attr_stor_single) .AND. (attr_stor(1) /= attr_stor_single2)) &
                     call error("Storage with and without NCDR ID don't match!")
@@ -249,14 +219,14 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             if (any(attr_stor /= attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
             
             if (size(attr_stor) == 1) then
-                call nc_diag_read_get_global_attr(attr_name, attr_stor_single)
-                call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor_single2)
+                call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor_single)
+                call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_single2)
                 
                 if ((attr_stor(1) /= attr_stor_single) .AND. (attr_stor(1) /= attr_stor_single2)) &
                     call error("Storage with and without NCDR ID don't match!")
@@ -291,15 +261,15 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             
             if (any(attr_stor /= attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
             
             if (size(attr_stor) == 1) then
-                call nc_diag_read_get_global_attr(attr_name, attr_stor_single)
-                call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor_single2)
+                call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor_single)
+                call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_single2)
                 
                 if ((attr_stor(1) /= attr_stor_single) .AND. (attr_stor(1) /= attr_stor_single2)) &
                     call error("Storage with and without NCDR ID don't match!")
@@ -334,11 +304,11 @@ program test_ncdr_attrs
             
             integer(i_long) :: i
             
-            call nc_diag_read_get_global_attr(attr_name, attr_stor)
-            call nc_diag_read_get_global_attr(tmp_ncdr_id, attr_name, attr_stor2)
+            call nc_diag_read_get_attr("data2dsimple7", attr_name, attr_stor)
+            call nc_diag_read_get_attr(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor2)
             
-            call nc_diag_read_noid_get_global_attr_1d_string(attr_name, attr_stor_alloc)
-            call nc_diag_read_id_get_global_attr_1d_string(tmp_ncdr_id, attr_name, attr_stor_alloc2)
+            call nc_diag_read_noid_get_attr_1d_string("data2dsimple7", attr_name, attr_stor_alloc)
+            call nc_diag_read_id_get_attr_1d_string(tmp_ncdr_id, "data2dsimple7", attr_name, attr_stor_alloc2)
             
             if (len_trim(attr_stor) /= len_trim(attr_stor2)) &
                 call error("Storage with and without NCDR ID don't match!")
