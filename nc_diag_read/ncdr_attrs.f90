@@ -35,7 +35,7 @@ module ncdr_attrs
     
     contains
         function nc_diag_read_id_check_attr(file_ncdr_id, var_name, attr_name) result(attr_exists)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             character(len=*), intent(in)   :: attr_name
             
@@ -77,7 +77,7 @@ module ncdr_attrs
         end function nc_diag_read_noid_check_attr
         
         function nc_diag_read_id_get_attr_type(file_ncdr_id, var_name, attr_name) result(attr_type)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             character(len=*), intent(in)   :: attr_name
             
@@ -104,7 +104,7 @@ module ncdr_attrs
         end function nc_diag_read_noid_get_attr_type
         
         function nc_diag_read_id_ret_attr_len(file_ncdr_id, var_name, attr_name) result(attr_len)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: var_name
             character(len=*), intent(in)               :: attr_name
             

@@ -24,7 +24,14 @@ module ncdr_alloc_assert
     end interface nc_diag_read_assert_global_attr
     
     interface nc_diag_read_assert_dims
+        ! Note that nc_diag_read_assert_dims_alloc_string is seperate
+        ! since it is rare and conflicts with the non-alloc def.
         module procedure &
+            nc_diag_read_assert_dims_single_byte, &
+            nc_diag_read_assert_dims_single_short, &
+            nc_diag_read_assert_dims_single_long, &
+            nc_diag_read_assert_dims_single_float, &
+            nc_diag_read_assert_dims_single_double, &
             nc_diag_read_assert_dims_string, &
             nc_diag_read_assert_dims_1d_byte, &
             nc_diag_read_assert_dims_1d_short, &
@@ -68,29 +75,34 @@ module ncdr_alloc_assert
             var_index = nc_diag_read_id_assert_var(current_ncdr_id, var_name)
         end function nc_diag_read_noid_assert_var
         
-        subroutine nc_diag_read_id_assert_attr(file_ncdr_id, var_index, attr_name, attr_type, attr_len)
+        subroutine nc_diag_read_id_assert_attr(file_ncdr_id, var_name, attr_name, attr_type, attr_len)
             integer(i_long), intent(in)    :: file_ncdr_id
-            integer(i_long), intent(in)    :: var_index
+            character(len=*), intent(in)   :: var_name
             character(len=*), intent(in)   :: attr_name
             integer(i_long), intent(out)   :: attr_type
             integer(i_long), intent(out)   :: attr_len
             
+            integer(i_long)                :: var_id
+            
             call ncdr_check_ncdr_id(file_ncdr_id)
             
+            var_id = ncdr_files(file_ncdr_id)%vars( &
+                nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
+            
             call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
-                ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
+                var_id, &
                 attr_name, attr_type, attr_len))
         end subroutine nc_diag_read_id_assert_attr
         
-        subroutine nc_diag_read_noid_assert_attr(var_index, attr_name, attr_type, attr_len)
-            integer(i_long), intent(in)    :: var_index
+        subroutine nc_diag_read_noid_assert_attr(var_name, attr_name, attr_type, attr_len)
+            character(*), intent(in)   :: var_name
             character(len=*), intent(in)   :: attr_name
             integer(i_long), intent(out)   :: attr_type
             integer(i_long), intent(out)   :: attr_len
             
             call ncdr_check_current_ncdr_id
             
-            call nc_diag_read_id_assert_attr(current_ncdr_id, var_index, attr_name, attr_type, attr_len)
+            call nc_diag_read_id_assert_attr(current_ncdr_id, var_name, attr_name, attr_type, attr_len)
         end subroutine nc_diag_read_noid_assert_attr
         
         subroutine nc_diag_read_id_assert_global_attr(file_ncdr_id, attr_name, attr_type, attr_len)
@@ -186,10 +198,75 @@ module ncdr_alloc_assert
         !-------------------------------------------------------------
         ! Variable allocation and assertion subroutines
         !-------------------------------------------------------------
-        
         subroutine nc_diag_read_assert_dims_string(var_stor, correct_dims)
+            character(len=*), intent(in)               :: var_stor
+            integer(i_long), dimension(:), intent(in)  :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (len(var_stor) < correct_dims(1)) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_string
+        
+        subroutine nc_diag_read_assert_dims_single_byte(var_stor, correct_dims)
+            integer(i_byte), intent(in)                             :: var_stor
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (correct_dims(1) /= 1) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_single_byte
+        
+        subroutine nc_diag_read_assert_dims_single_short(var_stor, correct_dims)
+            integer(i_short), intent(in)                            :: var_stor
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (correct_dims(1) /= 1) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_single_short
+        
+        subroutine nc_diag_read_assert_dims_single_long(var_stor, correct_dims)
+            integer(i_long), intent(in)                             :: var_stor
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (correct_dims(1) /= 1) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_single_long
+        
+        subroutine nc_diag_read_assert_dims_single_float(var_stor, correct_dims)
+            real(r_single) , intent(in)                             :: var_stor
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (correct_dims(1) /= 1) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_single_float
+        
+        subroutine nc_diag_read_assert_dims_single_double(var_stor, correct_dims)
+            real(r_double) , intent(in)                             :: var_stor
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
+            integer(i_long), parameter :: correct_ndims = 1
+            
+            if (size(correct_dims) /= correct_ndims) &
+                call error("Invalid number of dimensions for variable!")
+            if (correct_dims(1) /= 1) &
+                call error("Mismatched dimensions for variable storage!")
+        end subroutine nc_diag_read_assert_dims_single_double
+        
+        subroutine nc_diag_read_assert_dims_alloc_string(var_stor, correct_dims)
             character(len=:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)              :: correct_dims
+            integer(i_long), dimension(:), intent(in)  :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -202,11 +279,11 @@ module ncdr_alloc_assert
             else
                 allocate(character(len=correct_dims(1)) :: var_stor)
             end if
-        end subroutine nc_diag_read_assert_dims_string
+        end subroutine nc_diag_read_assert_dims_alloc_string
         
         subroutine nc_diag_read_assert_dims_1d_byte(var_stor, correct_dims)
             integer(i_byte),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)              :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -223,7 +300,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_1d_short(var_stor, correct_dims)
             integer(i_short),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -240,7 +317,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_1d_long(var_stor, correct_dims)
             integer(i_long),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)              :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -257,7 +334,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_1d_float(var_stor, correct_dims)
             real(r_single),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)             :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -274,7 +351,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_1d_double(var_stor, correct_dims)
             real(r_double),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)             :: correct_dims
             integer(i_long), parameter :: correct_ndims = 1
             
             ! If allocated, make sure the dimensions are correct.
@@ -291,7 +368,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_1d_string(var_stor, correct_dims)
             character(len=:),dimension(:),allocatable,intent(inout) :: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -310,7 +387,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_byte(var_stor, correct_dims)
             integer(i_byte),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -327,7 +404,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_short(var_stor, correct_dims)
             integer(i_short),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)                :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -344,7 +421,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_long(var_stor, correct_dims)
             integer(i_long),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)               :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -361,7 +438,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_float(var_stor, correct_dims)
             real(r_single),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)              :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -378,7 +455,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_double(var_stor, correct_dims)
             real(r_double),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)              :: correct_dims
             integer(i_long), parameter :: correct_ndims = 2
             
             ! If allocated, make sure the dimensions are correct.
@@ -395,7 +472,7 @@ module ncdr_alloc_assert
         
         subroutine nc_diag_read_assert_dims_2d_string(var_stor, correct_dims)
             character(len=:),dimension(:,:),allocatable,intent(inout):: var_stor
-            integer(i_long), dimension(:)                           :: correct_dims
+            integer(i_long), dimension(:), intent(in)                :: correct_dims
             integer(i_long), parameter :: correct_ndims = 3
             
             ! If allocated, make sure the dimensions are correct.
