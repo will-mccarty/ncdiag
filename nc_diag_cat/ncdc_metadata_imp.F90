@@ -1,6 +1,68 @@
+        subroutine nc_diag_cat_copy_attr(attr_name, var_id_in, var_id_out)
+            character(len=*), intent(in)               :: attr_name
+            integer(i_long), intent(in)                :: var_id_in
+            integer(i_long), intent(in), optional      :: var_id_out
+            
+            integer(i_byte), dimension(:), allocatable :: byte_arr
+            integer(i_short),dimension(:), allocatable :: short_arr
+            integer(i_long), dimension(:), allocatable :: long_arr
+            real(r_single),dimension(:),   allocatable :: rsingle_arr
+            real(r_double),dimension(:),   allocatable :: rdouble_arr
+            character(len=:),              allocatable :: string_arr
+            
+            integer(i_long)                            :: attr_type, attr_len, final_var_id_out
+            
+            call check(nf90_inquire_attribute(ncid_input, var_id_in, attr_name, &
+                xtype = attr_type, len = attr_len))
+            
+            if (.NOT. present(var_id_out)) then
+                if (var_id_in /= NF90_GLOBAL) &
+                    call error("BUG! var_id_out not specified even when var_id_in is var-specific!")
+                final_var_id_out = var_id_in
+            else
+                final_var_id_out = var_id_out
+            end if
+            
+            if (attr_type == NF90_BYTE) then
+                allocate(byte_arr(attr_len))
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, byte_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, byte_arr))
+                deallocate(byte_arr)
+            else if (attr_type == NF90_SHORT) then
+                allocate(short_arr(attr_len))
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, short_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, short_arr))
+                deallocate(short_arr)
+            else if (attr_type == NF90_INT) then
+                allocate(long_arr(attr_len))
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, long_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, long_arr))
+                deallocate(long_arr)
+            else if (attr_type == NF90_FLOAT) then
+                allocate(rsingle_arr(attr_len))
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, rsingle_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, rsingle_arr))
+                deallocate(rsingle_arr)
+            else if (attr_type == NF90_DOUBLE) then
+                allocate(byte_arr(attr_len))
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, rdouble_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, rdouble_arr))
+                deallocate(rdouble_arr)
+            else if (attr_type == NF90_CHAR) then
+                allocate(character(len=attr_len) :: string_arr)
+                call check(nf90_get_att(ncid_input, var_id_in, attr_name, string_arr))
+                call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, string_arr))
+                deallocate(string_arr)
+            else
+                call error("Unable to copy attribute for unknown type!")
+            end if
+        end subroutine nc_diag_cat_copy_attr
+        
         subroutine nc_diag_cat_metadata_pass
             character(len=1000) :: err_string
             integer             :: old_dim_arr_total = 0, old_var_arr_total = 0
+            
+            integer(i_long)     :: nc_err
             
             character(:), allocatable :: input_file_cut
             
@@ -34,6 +96,27 @@
                     call check(nf90_inquire(ncid_input, nDimensions = input_ndims, &
                         nVariables = input_nvars, nAttributes = input_nattrs))
                     
+#ifdef USE_MPI
+                    if (cur_proc == 0) then
+#endif
+                        ! Fetch attributes and only add if they are NOT in the final file
+                        do tmp_attr_index = 1, input_nattrs
+                            call check(nf90_inq_attname(ncid_input, NF90_GLOBAL, tmp_attr_index, tmp_attr_name))
+                            
+                            nc_err = nf90_inquire_attribute(ncid_output, &
+                                NF90_GLOBAL, trim(tmp_attr_name))
+                            
+                            ! If attribute doesn't exist, add it!
+                            if (nc_err == NF90_ENOTATT) then
+                                call nc_diag_cat_copy_attr(trim(tmp_attr_name), NF90_GLOBAL)
+                            else if (nc_err /= NF90_NOERR) then
+                                ! Sanity check - could be another error!
+                                call check(nc_err)
+                            end if
+                        end do
+#ifdef USE_MPI
+                    end if
+#endif
 #ifdef DEBUG
                     write (*, "(A, I0)") "Number of dimensions: ", input_ndims
 #endif

@@ -3,9 +3,9 @@
     integer(i_long)                            :: input_nvars, cached_nvars = -1
     integer(i_long)                            :: input_nattrs
     
-    integer(i_long)                            :: tmp_dim_index
+    integer(i_long)                            :: tmp_dim_index, tmp_attr_index
     
-    character(len=NF90_MAX_NAME)               :: tmp_dim_name
+    character(len=NF90_MAX_NAME)               :: tmp_dim_name, tmp_attr_name
     integer(i_long)                            :: tmp_dim_size
     
     character(len=NF90_MAX_NAME)               :: tmp_var_name
