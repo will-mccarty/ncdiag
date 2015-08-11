@@ -7,7 +7,8 @@ NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
 	test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
 	test_ncdr_get_pushpop.x \
 	test_ncdr_dims.x \
-	test_ncdr_vars.x
+	test_ncdr_vars.x \
+	test_ncdr_attrs.x
 
 # Coverage build flags
 ifndef COVERAGE
@@ -34,6 +35,12 @@ all: $(NC_DIAG_READ_TESTS)
 
 check: $(NC_DIAG_READ_TESTS)
 	@$(foreach ncdr_test,$(NC_DIAG_READ_TESTS),echo "Running: $(ncdr_test)";./$(ncdr_test) || exit 1;echo "Pass: $(ncdr_test)";)
+
+test_ncdr_attrs.x: $(NCDR_LIB_PATH) test_ncdr_attrs.f90
+	$(NCDR_FORT90C) $(NCDR_F90FLAGS)\
+		test_ncdr_attrs.f90 -o test_ncdr_attrs.x \
+		$(NC_DIAG_READ_FLAGS) \
+		$(NCDR_NETCDF_FLAGS)
 
 test_ncdr_dims.x: $(NCDR_LIB_PATH) test_ncdr_dims.f90
 	$(NCDR_FORT90C) $(NCDR_F90FLAGS)\

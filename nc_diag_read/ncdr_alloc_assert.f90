@@ -13,6 +13,16 @@ module ncdr_alloc_assert
             nc_diag_read_noid_assert_var
     end interface nc_diag_read_assert_var
     
+    interface nc_diag_read_assert_attr
+        module procedure nc_diag_read_id_assert_attr, &
+            nc_diag_read_noid_assert_attr
+    end interface nc_diag_read_assert_attr
+    
+    interface nc_diag_read_assert_global_attr
+        module procedure nc_diag_read_id_assert_global_attr, &
+            nc_diag_read_noid_assert_global_attr
+    end interface nc_diag_read_assert_global_attr
+    
     interface nc_diag_read_assert_dims
         module procedure &
             nc_diag_read_assert_dims_string, &
@@ -58,6 +68,54 @@ module ncdr_alloc_assert
             var_index = nc_diag_read_id_assert_var(current_ncdr_id, var_name)
         end function nc_diag_read_noid_assert_var
         
+        subroutine nc_diag_read_id_assert_attr(file_ncdr_id, var_index, attr_name, attr_type, attr_len)
+            integer(i_long), intent(in)    :: file_ncdr_id
+            integer(i_long), intent(in)    :: var_index
+            character(len=*), intent(in)   :: attr_name
+            integer(i_long), intent(out)   :: attr_type
+            integer(i_long), intent(out)   :: attr_len
+            
+            call ncdr_check_ncdr_id(file_ncdr_id)
+            
+            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+                ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
+                attr_name, attr_type, attr_len))
+        end subroutine nc_diag_read_id_assert_attr
+        
+        subroutine nc_diag_read_noid_assert_attr(var_index, attr_name, attr_type, attr_len)
+            integer(i_long), intent(in)    :: var_index
+            character(len=*), intent(in)   :: attr_name
+            integer(i_long), intent(out)   :: attr_type
+            integer(i_long), intent(out)   :: attr_len
+            
+            call ncdr_check_current_ncdr_id
+            
+            call nc_diag_read_id_assert_attr(current_ncdr_id, var_index, attr_name, attr_type, attr_len)
+        end subroutine nc_diag_read_noid_assert_attr
+        
+        subroutine nc_diag_read_id_assert_global_attr(file_ncdr_id, attr_name, attr_type, attr_len)
+            integer(i_long), intent(in)    :: file_ncdr_id
+            character(len=*), intent(in)   :: attr_name
+            integer(i_long), intent(out)   :: attr_type
+            integer(i_long), intent(out)   :: attr_len
+            
+            call ncdr_check_ncdr_id(file_ncdr_id)
+            
+            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+                NF90_GLOBAL, &
+                attr_name, attr_type, attr_len))
+        end subroutine nc_diag_read_id_assert_global_attr
+        
+        subroutine nc_diag_read_noid_assert_global_attr(attr_name, attr_type, attr_len)
+            character(len=*), intent(in)   :: attr_name
+            integer(i_long), intent(out)   :: attr_type
+            integer(i_long), intent(out)   :: attr_len
+            
+            call ncdr_check_current_ncdr_id
+            
+            call nc_diag_read_id_assert_global_attr(current_ncdr_id, attr_name, attr_type, attr_len)
+        end subroutine nc_diag_read_noid_assert_global_attr
+        
         subroutine nc_diag_read_assert_var_type(var_type, correct_var_type)
             integer(i_long)                            :: var_type
             integer(i_long)                            :: correct_var_type
@@ -69,6 +127,30 @@ module ncdr_alloc_assert
                     nc_diag_read_get_type_str(correct_var_type) // &
                     " was expected for the variable!")
         end subroutine nc_diag_read_assert_var_type
+        
+        subroutine nc_diag_read_assert_attr_type(attr_type, correct_attr_type)
+            integer(i_long)                            :: attr_type
+            integer(i_long)                            :: correct_attr_type
+            
+            if (attr_type /= correct_attr_type) &
+                call error("Mismatched type for attribute! Got " // &
+                    nc_diag_read_get_type_str(attr_type) // &
+                    " when " // &
+                    nc_diag_read_get_type_str(correct_attr_type) // &
+                    " was expected for the attribute!")
+        end subroutine nc_diag_read_assert_attr_type
+        
+        subroutine nc_diag_read_assert_global_attr_type(attr_type, correct_attr_type)
+            integer(i_long)                            :: attr_type
+            integer(i_long)                            :: correct_attr_type
+            
+            if (attr_type /= correct_attr_type) &
+                call error("Mismatched type for global attribute! Got " // &
+                    nc_diag_read_get_type_str(attr_type) // &
+                    " when " // &
+                    nc_diag_read_get_type_str(correct_attr_type) // &
+                    " was expected for the global attribute!")
+        end subroutine nc_diag_read_assert_global_attr_type
         
         function nc_diag_read_get_type_str(var_type) result(type_str)
             integer(i_long)                            :: var_type

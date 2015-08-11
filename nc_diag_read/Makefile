@@ -6,7 +6,7 @@ NC_DIAG_READ_DEPS+=Makefile \
     ncdr_state.mod ncdr_types.mod \
     netcdf_unlimdims.mod \
     ncdr_realloc_mod.mod \
-    ncdr_vars.mod ncdr_dims.mod
+    ncdr_vars.mod ncdr_dims.mod ncdr_attrs.mod ncdr_global_attrs.mod
 
 NC_DIAG_READ_OBJS+= \
     nc_diag_read.o \
@@ -16,8 +16,12 @@ NC_DIAG_READ_OBJS+= \
     ncdr_realloc_mod.o \
     ncdr_dims.o ncdr_check.o \
     ncdr_vars.o \
+    ncdr_attrs.o \
+    ncdr_global_attrs.o \
     ncdr_alloc_assert.o \
-    ncdr_vars_fetch.o
+    ncdr_vars_fetch.o \
+    ncdr_attrs_fetch.o \
+    ncdr_global_attrs_fetch.o
 
 .PHONY: all clean tests check
 
@@ -60,6 +64,26 @@ ncdr_vars.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_vars_
 ncdr_vars_fetch.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_alloc_assert.mod ncdr_vars_fetch.f90
 	$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
 		-c ncdr_vars_fetch.f90 \
+		$(NCDR_NETCDF_FLAGS)
+
+ncdr_attrs.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_attrs_fetch.mod ncdr_attrs.f90
+	$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
+		-c ncdr_attrs.f90 \
+		$(NCDR_NETCDF_FLAGS)
+
+ncdr_attrs_fetch.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_alloc_assert.mod ncdr_attrs_fetch.f90
+	$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
+		-c ncdr_attrs_fetch.f90 \
+		$(NCDR_NETCDF_FLAGS)
+
+ncdr_global_attrs.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_global_attrs_fetch.mod ncdr_global_attrs.f90
+	$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
+		-c ncdr_global_attrs.f90 \
+		$(NCDR_NETCDF_FLAGS)
+
+ncdr_global_attrs_fetch.mod: kinds.mod ncdr_state.mod ncdr_types.mod ncdr_check.mod ncdr_alloc_assert.mod ncdr_global_attrs_fetch.f90
+	$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
+		-c ncdr_global_attrs_fetch.f90 \
 		$(NCDR_NETCDF_FLAGS)
 
 ncdr_alloc_assert.mod: kinds.mod ncdr_check.mod ncdr_alloc_assert.f90

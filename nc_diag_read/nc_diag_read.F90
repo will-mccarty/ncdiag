@@ -10,6 +10,8 @@ module nc_diag_read
     
     use ncdr_dims
     use ncdr_vars
+    use ncdr_attrs
+    use ncdr_global_attrs
     
     !use utils
     implicit none
