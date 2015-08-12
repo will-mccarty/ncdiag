@@ -1,4 +1,4 @@
-all: test_netcdf_layer.x generic_data.x test_utils.x
+all: test_netcdf_layer.x test_nclayer_allcov.x test_nclayer_stress.x generic_data.x test_utils.x
 
 FORT90C=ifort
 
@@ -69,6 +69,14 @@ netcdf_layer.mod: Makefile kinds.mod utils.mod $(NETCDF_LAYER_DEPS) netcdf_layer
 
 test_netcdf_layer.x: netcdf_layer.mod test_netcdf_layer.f90
 	$(FORT90C) $(F90FLAGS) -o test_netcdf_layer.x test_netcdf_layer.f90 \
+		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+test_nclayer_allcov.x: netcdf_layer.mod test_nclayer_allcov.f90
+	$(FORT90C) $(F90FLAGS) -o test_nclayer_allcov.x test_nclayer_allcov.f90 \
+		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+test_nclayer_stress.x: netcdf_layer.mod test_nclayer_stress.f90
+	$(FORT90C) $(F90FLAGS) -o test_nclayer_stress.x test_nclayer_stress.f90 \
 		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
 generic_data.x: netcdf_layer.mod generic_data.f90
