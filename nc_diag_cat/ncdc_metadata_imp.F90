@@ -44,7 +44,7 @@
                 call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, rsingle_arr))
                 deallocate(rsingle_arr)
             else if (attr_type == NF90_DOUBLE) then
-                allocate(byte_arr(attr_len))
+                allocate(rdouble_arr(attr_len))
                 call check(nf90_get_att(ncid_input, var_id_in, attr_name, rdouble_arr))
                 call check(nf90_put_att(ncid_output, final_var_id_out, attr_name, rdouble_arr))
                 deallocate(rdouble_arr)
