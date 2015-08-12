@@ -4,7 +4,6 @@ module netcdf_layer
 #else
 #warning NetCDF library usage disabled. Filler routines will be used.
 #endif
-    use fnv32mod
     use kinds
     use utils
     implicit none

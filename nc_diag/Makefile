@@ -64,11 +64,8 @@ NETCDF_LAYER_DEPS+=Makefile \
 kinds.mod: Makefile kinds.F90
 	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
 
-netcdf_layer.mod: Makefile kinds.mod utils.mod fnv32mod.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
+netcdf_layer.mod: Makefile kinds.mod utils.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
 	$(FORT90C) $(F90FLAGS) -c netcdf_layer.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
-
-fnv32mod.mod: Makefile fnv32mod.f90
-	$(FORT90C) $(F90FLAGS) -c fnv32mod.f90
 
 test_netcdf_layer.x: netcdf_layer.mod test_netcdf_layer.f90
 	$(FORT90C) $(F90FLAGS) -o test_netcdf_layer.x test_netcdf_layer.f90 \

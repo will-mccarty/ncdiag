@@ -3,7 +3,6 @@ program test_netcdf_layer
 #ifndef NO_NETCDF
     use netcdf
 #endif
-    use fnv32mod
     use netcdf_layer
     implicit none
     
