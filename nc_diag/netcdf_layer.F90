@@ -221,7 +221,9 @@ module netcdf_layer
             call nc_diag_data2d_write_def(.TRUE.)
             
             ! Lock definition writing!
-            if (.NOT. append_only) &
+            if ((.NOT. append_only) .AND. ((.NOT. diag_chaninfo_store%def_lock) .OR. &
+                (.NOT. diag_metadata_store%def_lock) .OR. &
+                (.NOT. diag_data2d_store%def_lock))) & &
                 call check(nf90_enddef(ncid))
             
             call info("Writing chaninfo:")
