@@ -25,7 +25,8 @@ module ncdr_climsg
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
             div0 = 1 / 0
 #else
-            stop " ** Failed to read NetCDF4."
+            write (*, "(A)") " ** Failed to read NetCDF4."
+            stop 1
 #endif
         end subroutine error
         
