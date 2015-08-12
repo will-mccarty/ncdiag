@@ -199,9 +199,9 @@ module ncdr_attrs
                     allocate(character(max_attr_name_len) :: attr_names(nattrs))
                 else
                     if (size(attr_names) /= nattrs) &
-                        call error("Invalid allocated array size for attriable names storage!")
+                        call error("Invalid allocated array size for attribute names storage!")
                     if (len(attr_names) < max_attr_name_len) &
-                        call error("Invalid allocated array size for attriable names storage! (String length does not match!)")
+                        call error("Invalid allocated array size for attribute names storage! (String length does not match!)")
                 end if
                 
                 do attr_index = 1, nattrs
