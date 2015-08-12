@@ -17,6 +17,8 @@ module ncdr_check
         end subroutine ncdr_check_ncdr_id
         
         subroutine ncdr_check_current_ncdr_id
+            if (current_ncdr_id == -1) &
+                call error("Current NCDR ID indicates that no files are open.")
             call ncdr_check_ncdr_id(current_ncdr_id)
         end subroutine ncdr_check_current_ncdr_id
         
