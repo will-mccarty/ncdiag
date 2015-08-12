@@ -569,7 +569,7 @@
                                         !data_blobs(cur_out_var_ind)%string_2d_buffer(data_blobs(cur_out_var_ind)%cur_pos:,:,:) &
                                         !    = string_2d_buffer(:,:,:)
                                         
-                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_expanded_buffer, &
+                                        call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_2d_expanded_buffer, &
                                             cur_out_dim_sizes(1)* cur_out_dim_sizes(2)* cur_dim_sizes(3), MPI_BYTE, &
                                             0, cur_out_var_ind, MPI_COMM_WORLD, &
                                             mpi_requests(mpi_requests_total), ierr)
