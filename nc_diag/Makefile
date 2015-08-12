@@ -17,6 +17,15 @@ ifndef DISABLE_NETCDF
 	DISABLE_NETCDF=0
 endif
 
+# Coverage build flags
+ifndef COVERAGE
+    COVERAGE=0
+endif
+
+ifeq ($(COVERAGE), 1)
+	F90FLAGS+=-prof-gen=srcpos
+endif
+
 ifeq ($(DISABLE_NETCDF), 1)
 	NETCDF_FLAGS=
 	COMPILE_FLAGS+=-DNO_NETCDF
@@ -88,5 +97,27 @@ test_utils.x: utils.mod test_utils.f90
 utils.mod: Makefile utils.f90
 	$(FORT90C) $(F90FLAGS) -c utils.f90
 
+check: test_netcdf_layer.x test_nclayer_allcov.x test_nclayer_stress.x
+	./test_netcdf_layer.x
+	./test_nclayer_allcov.x
+	./test_nclayer_stress.x
+
+precoverage:
+	@[ ! "$$COVERAGE" = "1" ] && \
+		echo "ERROR: COVERAGE must be set to 1 to set build flags and use" && \
+		echo "       use coverage tools." && exit 1 || true
+	@[ ! -f ~/launch_browser ] && \
+		echo "ERROR: You must have a script called launch_browser in your" && \
+		echo "       home directory to display code coverage results. It" && \
+		echo "       should accept a file as an argument to display the" && \
+		echo "       code coverage result page." && exit 1 || true
+
+coverage: precoverage clean check
+	profmerge
+	codecov -srcroot ..
+	~/launch_browser CODE_COVERAGE.HTML &
+	rm -f *.mod *.o
+
 clean:
 	rm -f *.mod *.x *.o
+	rm -rf pgopti.* CodeCoverage CODE_COVERAGE.HTML *.dyn
