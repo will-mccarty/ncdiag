@@ -29,7 +29,7 @@ program test_nclayer_allcov
     ! Fluid mode
     call nc_diag_set_trim(.TRUE.)
     
-    call nc_diag_init("test_stress.nc")
+    call nc_diag_init("test_allcov.nc")
     call nc_diag_set_strict(.TRUE.)
     
     call nc_diag_chaninfo_allocmulti(1)
