@@ -92,7 +92,37 @@ program test_ncdr_attrs
             call error("Can't find attr with check(), even when it's listed!")
         call nc_diag_read_get_global_attr_len(tmp_ncdr_id, attr_name, attr_len)
         
-        if (attr_len /= nc_diag_read_ret_global_attr_len(attr_name)) &
+        if (attr_len /= nc_diag_read_ret_global_attr_len(tmp_ncdr_id, attr_name)) &
+            call error("nc_diag_read_get_global_attr_len != nc_diag_read_ret_global_attr_len!")
+        
+        write (*, "(A, I0, A, L)") "    -> Attribute: " // attr_name // " | Length: ", &
+            attr_len
+    end do
+    
+    call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id)
+    
+    tmp_ncdr_id = nc_diag_read_id_init("test_allcov.nc")
+    
+    deallocate(attr_names)
+    
+    write (*, "(A)") " ** File: test_allcov.nc (using ncdr_id)"
+    
+    call nc_diag_read_get_global_attr_names(tmp_ncdr_id, nattrs, nattrs_len, attr_names)
+    write (*, "(A, I0, A, I0)") " ** Number of attributes in test_allcov.nc: ", nattrs, &
+        " | Maximum length of attribute names: ", nattrs_len
+    print *, "** All Attributes: **"
+    print *, attr_names
+    
+    print *, "** Attribute details: **"
+    
+    do i = 1, nattrs
+        attr_name = trim(attr_names(i))
+        call nc_diag_read_assert_global_attr(tmp_ncdr_id, attr_name, attr_type, attr_len)
+        if (nc_diag_read_check_global_attr(tmp_ncdr_id, attr_name) == .FALSE.) &
+            call error("Can't find attr with check(), even when it's listed!")
+        call nc_diag_read_get_global_attr_len(tmp_ncdr_id, attr_name, attr_len)
+        
+        if (attr_len /= nc_diag_read_ret_global_attr_len(tmp_ncdr_id, attr_name)) &
             call error("nc_diag_read_get_global_attr_len != nc_diag_read_ret_global_attr_len!")
         
         write (*, "(A, I0, A, L)") "    -> Attribute: " // attr_name // " | Length: ", &

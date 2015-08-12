@@ -8,6 +8,8 @@ program test_ncdr_get
     integer(i_long) :: ndims, ndims_len
     character(len=:), dimension(:), allocatable :: dim_names
     
+    integer(i_long) :: i, var_type, var_ndims
+    
     !------------------------------------------------------------------
     ! Subroutine allocation method testing
     !------------------------------------------------------------------
@@ -79,6 +81,67 @@ program test_ncdr_get
     call display_2d_var_long("data2d_notcomplete")
     
     call nc_diag_read_close
+    
+    deallocate(dim_names)
+    deallocate(var_names)
+    
+    call nc_diag_read_init("test_allcov.nc")
+    
+    call nc_diag_read_get_dim_names(ndims, ndims_len, dim_names)
+    write (*, "(A, I0, A, I0)") " ** Number of dimensions: ", ndims, &
+        " | Maximum length of dimension names: ", ndims_len
+    print *, "** All dimensions: **"
+    print *, dim_names
+    
+    call nc_diag_read_get_var_names(nvars, nvars_len, var_names)
+    write (*, "(A, I0, A, I0)") " ** Number of variables: ", nvars, &
+        " | Maximum length of variable names: ", nvars_len
+    print *, "** All variables: **"
+    print *, var_names
+    
+    !call nc_diag_read_init("test_fixed.nc")
+    do i = 1, nvars
+        var_type = nc_diag_read_get_var_type(var_names(i))
+        var_ndims = nc_diag_read_get_var_ndims(var_names(i))
+        
+        if ((var_ndims == 1) .OR. &
+            ((var_ndims == 2) .AND. (var_type == NF90_CHAR))) then
+            if (var_type == NF90_BYTE) then
+                call display_1d_var_byte(var_names(i))
+            else if (var_type == NF90_SHORT) then
+                call display_1d_var_short(var_names(i))
+            else if (var_type == NF90_INT) then
+                call display_1d_var_long(var_names(i))
+            else if (var_type == NF90_FLOAT) then
+                call display_1d_var_float(var_names(i))
+            else if (var_type == NF90_DOUBLE) then
+                call display_1d_var_double(var_names(i))
+            else if (var_type == NF90_CHAR) then
+                call display_1d_var_string(var_names(i))
+            else
+                call error("Invalid type!")
+            end if
+        else if (((var_ndims == 2) .AND. (var_type /= NF90_CHAR)) &
+            .OR. ((var_ndims == 3) .AND. (var_type == NF90_CHAR))) then
+            if (var_type == NF90_BYTE) then
+                call display_2d_var_byte(var_names(i))
+            else if (var_type == NF90_SHORT) then
+                call display_2d_var_short(var_names(i))
+            else if (var_type == NF90_INT) then
+                call display_2d_var_long(var_names(i))
+            else if (var_type == NF90_FLOAT) then
+                call display_2d_var_float(var_names(i))
+            else if (var_type == NF90_DOUBLE) then
+                call display_2d_var_double(var_names(i))
+            else if (var_type == NF90_CHAR) then
+                call display_2d_var_string(var_names(i))
+            else
+                call error("Invalid type!")
+            end if
+        else
+            call error("Invalid ndims!")
+        end if
+    end do
     
     contains
         subroutine display_1d_var_byte(var_name)
