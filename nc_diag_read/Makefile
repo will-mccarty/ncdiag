@@ -27,7 +27,7 @@ NC_DIAG_READ_OBJS+= \
 
 all: libnc_diag_read.a nc_diag_read.mod tests
 
-kinds.mod: Makefile kinds.F90
+kinds.mod: Makefile Makefile.config Makefile.libconfig kinds.F90
 	$(NCDR_FORT90C) $(NCDR_F90FLAGS) -c kinds.F90 $(NCDR_CONFIG_FLAGS)
 
 tests:
