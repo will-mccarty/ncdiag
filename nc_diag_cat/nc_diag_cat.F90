@@ -12,7 +12,11 @@ program nc_diag_cat
 #include "ncdc_cli_decl.F90"
 #include "ncdc_metadata_decl.F90"
 #include "ncdc_data_decl.F90"
+#ifdef QUIET
+    logical                            :: enable_info = .FALSE.
+#else
     logical                            :: enable_info = .TRUE.
+#endif
     
     integer(i_long)                    :: ncid_output, ncid_input
     
@@ -52,7 +56,7 @@ program nc_diag_cat
 #endif
     
 #ifndef NO_NETCDF
-    write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
+    call info('Initializing netcdf layer library, version ' // trim(nf90_inq_libvers()) // '...')
     !call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
 #endif
     

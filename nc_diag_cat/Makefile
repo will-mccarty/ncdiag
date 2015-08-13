@@ -46,6 +46,10 @@ endif
 #                        (other kinds defines available!)
 #   -D_DEBUG_MEM_      - enable verbose memory debugging messages.
 #                        WARNING - this is a LOT of messages!
+#   -DQUIET            - silence most (if not all) verbose output from
+#                        nc_diag_cat. This include info messages. Note
+#                        that this does NOT silence error or warning
+#                        messages.
 #   -DANSI_TERM_COLORS - enable terminal colors for warning and error
 #                        messages.
 #   -DERROR_TRACEBACK  - enable a traceback on error. This is useful for
@@ -63,7 +67,7 @@ endif
 #                        
 #                        NOTE - this is set automatically if
 #                        DISABLE_NETCDF is set.
-COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
+COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DIGNORE_VERSION -DERROR_TRACEBACK -DENABLE_ACTION_MSGS -DQUIET
 
 NC_DIAG_CAT_DEPS+=Makefile \
 	ncdc_util.F90 \
