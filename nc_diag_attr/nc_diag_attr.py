@@ -123,139 +123,143 @@ def progress_counter(filename):
         entry_num += 1
         line_msg("%s %i/%i: %s" % (entry_str, entry_num, entry_total, filename))
 
-# Parse arguments
-parse_cli_args()
-
-# Sanity checks
-
-# Check to make sure that the JSON resource file exists!
-try:
-    resource_file_fh = open(args.resource_file, "r")
-except IOError:
-    error_msg("Resource file '%s' is not accessible or does not exist!" % args.resource_file)
-    exit(1)
-
-# Check to make sure that the JSON resource file is valid!
-try:
-    resource_data = json.loads(resource_file_fh.read())
-except KeyboardInterrupt:
-    info_msg("CTRL-C detected, exiting.")
-    exit(0)
-except:
-    error_msg("Resource file '%s' is not a valid JSON file!" % args.resource_file)
-    print(traceback.format_exc())
-    exit(1)
-
-# Close file - we got the data already!
-resource_file_fh.close()
-
-# Print verbose version information
-if args.verbose:
-    info_msg("Using following versions:")
-    info_msg("    netcdf4-python v%s" % netCDF4.__version__)
-    info_msg("    NetCDF v%s" % getlibversion())
-    info_msg("    HDF5 v%s" % netCDF4.__hdf5libversion__)
-    info_msg("    Python v%s\n" % sys.version.split("\n")[0].strip())
-    info_msg("Reading and validating NetCDF4 files...")
-
-# Check to make sure the NetCDF4 files are legitimate!
-nc4_files_root = []
-
-init_counter(len(args.nc4_files), "Reading/verifying file")
-for nc4_file in args.nc4_files:
+def main():
+    # Parse arguments
+    parse_cli_args()
+    
+    # Sanity checks
+    
+    # Check to make sure that the JSON resource file exists!
     try:
-        open(nc4_file, "r").close()
-    except KeyboardInterrupt:
-        info_msg("CTRL-C detected, exiting.")
-        exit(0)
+        resource_file_fh = open(args.resource_file, "r")
     except IOError:
-        error_msg("The NetCDF4 file '%s' does not exist!" % nc4_file)
+        error_msg("Resource file '%s' is not accessible or does not exist!" % args.resource_file)
         exit(1)
     
-    progress_counter(nc4_file)
-    
+    # Check to make sure that the JSON resource file is valid!
     try:
-        rootgrp = Dataset(nc4_file, "a", format="NETCDF4")
-        nc4_files_root.append({ "file" : nc4_file, "group" : rootgrp })
+        resource_data = json.loads(resource_file_fh.read())
     except KeyboardInterrupt:
         info_msg("CTRL-C detected, exiting.")
         exit(0)
     except:
-        error_msg("'%s' is not a valid NetCDF4 file!" % nc4_file)
+        error_msg("Resource file '%s' is not a valid JSON file!" % args.resource_file)
+        print(traceback.format_exc())
         exit(1)
-
-line_msg_done()
-
-# Global attributes
-if args.global_attributes:
-    # Check if we have a global attributes entry in the resource file
-    if not "global_attributes" in resource_data:
-        warning_msg("Resource file '%s' does not have any global attributes, skipping." % args.resource_file)
-    else:
-        # Initialize our counter
-        init_counter(len(nc4_files_root), "Applying global attributes to file")
+    
+    # Close file - we got the data already!
+    resource_file_fh.close()
+    
+    # Print verbose version information
+    if args.verbose:
+        info_msg("Using following versions:")
+        info_msg("    netcdf4-python v%s" % netCDF4.__version__)
+        info_msg("    NetCDF v%s" % getlibversion())
+        info_msg("    HDF5 v%s" % netCDF4.__hdf5libversion__)
+        info_msg("    Python v%s\n" % sys.version.split("\n")[0].strip())
+        info_msg("Reading and validating NetCDF4 files...")
+    
+    # Check to make sure the NetCDF4 files are legitimate!
+    nc4_files_root = []
+    
+    init_counter(len(args.nc4_files), "Reading/verifying file")
+    for nc4_file in args.nc4_files:
+        try:
+            open(nc4_file, "r").close()
+        except KeyboardInterrupt:
+            info_msg("CTRL-C detected, exiting.")
+            exit(0)
+        except IOError:
+            error_msg("The NetCDF4 file '%s' does not exist!" % nc4_file)
+            exit(1)
         
-        for nc4_entry in nc4_files_root:
-            # Update progress counter
-            progress_counter(nc4_entry["file"])
-            
-            for global_attr_key in resource_data["global_attributes"]:
-                global_attr_val = resource_data["global_attributes"][global_attr_key]
-                
-                # We need to convert unicode to ASCII
-                if type(global_attr_val) == unicode:
-                    global_attr_val = str(global_attr_val)
-                
-                # BUG fix - NetCDF really, really, REALLY does not like
-                # 64-bit integers. We forcefully convert the value to a 
-                # 32-bit signed integer, with some help from numpy!
-                if type(global_attr_val) == int:
-                    global_attr_val = numpy.int32(global_attr_val)
-                
-                setattr(nc4_entry["group"], global_attr_key, global_attr_val)
-        line_msg_done()
-
-# Variable attributes
-if args.var_attributes:
-    # Check if we have a variable attributes entry in the resource file
-    if not "variable_attributes" in resource_data:
-        warning_msg("Resource file '%s' does not have any variable attributes, skipping." % args.resource_file)
-    else:
-        # Initialize our counter
-        init_counter(len(nc4_files_root), "Applying variable attributes to file")
+        progress_counter(nc4_file)
         
-        for nc4_entry in nc4_files_root:
-            # Update progress counter
-            progress_counter(nc4_entry["file"])
+        try:
+            rootgrp = Dataset(nc4_file, "a", format="NETCDF4")
+            nc4_files_root.append({ "file" : nc4_file, "group" : rootgrp })
+        except KeyboardInterrupt:
+            info_msg("CTRL-C detected, exiting.")
+            exit(0)
+        except:
+            error_msg("'%s' is not a valid NetCDF4 file!" % nc4_file)
+            exit(1)
+    
+    line_msg_done()
+    
+    # Global attributes
+    if args.global_attributes:
+        # Check if we have a global attributes entry in the resource file
+        if not "global_attributes" in resource_data:
+            warning_msg("Resource file '%s' does not have any global attributes, skipping." % args.resource_file)
+        else:
+            # Initialize our counter
+            init_counter(len(nc4_files_root), "Applying global attributes to file")
             
-            # Iterate through all of our var_attr variables
-            for var in resource_data["variable_attributes"]:
-                if var in nc4_entry["group"].variables.keys():
-                    for var_attr_key in resource_data["variable_attributes"][var]:
-                        var_attr_val = resource_data["variable_attributes"][var][var_attr_key]
-                        var_attr_key = str(var_attr_key)
-                        
-                        # We need to convert unicode to ASCII
-                        if type(var_attr_val) == unicode:
-                            var_attr_val = list(str(var_attr_val))
-                        
-                        # BUG fix - NetCDF really, really, REALLY does not like
-                        # 64-bit integers. We forcefully convert the value to a 
-                        # 32-bit signed integer, with some help from numpy!
-                        if type(var_attr_val) == int:
-                            var_attr_val = numpy.int32(var_attr_val)
-                        
-                        setattr(nc4_entry["group"].variables[var], var_attr_key, var_attr_val)
-                else:
-                    warning_msg("Can't find variable %s in file %s!" % (var, nc4_entry["file"]))
-        line_msg_done()
+            for nc4_entry in nc4_files_root:
+                # Update progress counter
+                progress_counter(nc4_entry["file"])
+                
+                for global_attr_key in resource_data["global_attributes"]:
+                    global_attr_val = resource_data["global_attributes"][global_attr_key]
+                    
+                    # We need to convert unicode to ASCII
+                    if type(global_attr_val) == unicode:
+                        global_attr_val = str(global_attr_val)
+                    
+                    # BUG fix - NetCDF really, really, REALLY does not like
+                    # 64-bit integers. We forcefully convert the value to a 
+                    # 32-bit signed integer, with some help from numpy!
+                    if type(global_attr_val) == int:
+                        global_attr_val = numpy.int32(global_attr_val)
+                    
+                    setattr(nc4_entry["group"], global_attr_key, global_attr_val)
+            line_msg_done()
+    
+    # Variable attributes
+    if args.var_attributes:
+        # Check if we have a variable attributes entry in the resource file
+        if not "variable_attributes" in resource_data:
+            warning_msg("Resource file '%s' does not have any variable attributes, skipping." % args.resource_file)
+        else:
+            # Initialize our counter
+            init_counter(len(nc4_files_root), "Applying variable attributes to file")
+            
+            for nc4_entry in nc4_files_root:
+                # Update progress counter
+                progress_counter(nc4_entry["file"])
+                
+                # Iterate through all of our var_attr variables
+                for var in resource_data["variable_attributes"]:
+                    if var in nc4_entry["group"].variables.keys():
+                        for var_attr_key in resource_data["variable_attributes"][var]:
+                            var_attr_val = resource_data["variable_attributes"][var][var_attr_key]
+                            var_attr_key = str(var_attr_key)
+                            
+                            # We need to convert unicode to ASCII
+                            if type(var_attr_val) == unicode:
+                                var_attr_val = list(str(var_attr_val))
+                            
+                            # BUG fix - NetCDF really, really, REALLY does not like
+                            # 64-bit integers. We forcefully convert the value to a 
+                            # 32-bit signed integer, with some help from numpy!
+                            if type(var_attr_val) == int:
+                                var_attr_val = numpy.int32(var_attr_val)
+                            
+                            setattr(nc4_entry["group"].variables[var], var_attr_key, var_attr_val)
+                    else:
+                        warning_msg("Can't find variable %s in file %s!" % (var, nc4_entry["file"]))
+            line_msg_done()
+    
+    # Close everything
+    init_counter(len(nc4_files_root), "Saving changes to file")
+    for nc4_entry in nc4_files_root:
+        progress_counter(nc4_entry["file"])
+        nc4_entry["group"].close()
+    
+    line_msg_done()
+    
+    info_msg("Attribute appending complete!")
 
-# Close everything
-init_counter(len(nc4_files_root), "Saving changes to file")
-for nc4_entry in nc4_files_root:
-    progress_counter(nc4_entry["file"])
-    nc4_entry["group"].close()
-
-line_msg_done()
-
-info_msg("Attribute appending complete!")
+if __name__ == "__main__":
+    main()
