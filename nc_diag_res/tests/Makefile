@@ -39,44 +39,44 @@ check: $(NC_DIAG_RES_TESTS) $(NC_DIAG_RES_TESTS_FAIL)
 	@$(foreach ncdr_test,$(NC_DIAG_RES_TESTS_FAIL),echo "Running FAIL test: $(ncdr_test)";./$(ncdr_test) && exit 1 || true;echo "Pass: $(ncdr_test)";)
 
 test_ncdres_simple.x: test_ncdres_simple.f90 $(NCDRES_LIB_PATH)
-	@printf "\033[1m\033[33m ** Building $< => $@...\033[0m\n"
-	@$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
 		test_ncdres_simple.f90 -o test_ncdres_simple.x \
 		$(NC_DIAG_RES_FLAGS) \
 		$(NCDRES_NETCDF_FLAGS)
-	@printf "\033[F\r\033[32m ** Building $< => $@... done!\033[0m\n"
+	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_invalid.x: test_ncdres_invalid.f90 $(NCDRES_LIB_PATH)
-	@printf "\033[1m\033[33m ** Building $< => $@...\033[0m\n"
-	@$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
 		test_ncdres_invalid.f90 -o test_ncdres_invalid.x \
 		$(NC_DIAG_RES_FLAGS) \
 		$(NCDRES_NETCDF_FLAGS)
-	@printf "\033[F\r\033[32m ** Building $< => $@... done!\033[0m\n"
+	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fopen_crash.x: test_ncdres_fopen_crash.f90 $(NCDRES_LIB_PATH)
-	@printf "\033[1m\033[33m ** Building $< => $@...\033[0m\n"
-	@$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
 		test_ncdres_fopen_crash.f90 -o test_ncdres_fopen_crash.x \
 		$(NC_DIAG_RES_FLAGS) \
 		$(NCDRES_NETCDF_FLAGS)
-	@printf "\033[F\r\033[32m ** Building $< => $@... done!\033[0m\n"
+	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fclose_crash_1.x: test_ncdres_fclose_crash_1.f90 $(NCDRES_LIB_PATH)
-	@printf "\033[1m\033[33m ** Building $< => $@...\033[0m\n"
-	@$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
 		test_ncdres_fclose_crash_1.f90 -o test_ncdres_fclose_crash_1.x \
 		$(NC_DIAG_RES_FLAGS) \
 		$(NCDRES_NETCDF_FLAGS)
-	@printf "\033[F\r\033[32m ** Building $< => $@... done!\033[0m\n"
+	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fclose_crash_2.x: test_ncdres_fclose_crash_2.f90 $(NCDRES_LIB_PATH)
-	@printf "\033[1m\033[33m ** Building $< => $@...\033[0m\n"
-	@$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
 		test_ncdres_fclose_crash_2.f90 -o test_ncdres_fclose_crash_2.x \
 		$(NC_DIAG_RES_FLAGS) \
 		$(NCDRES_NETCDF_FLAGS)
-	@printf "\033[F\r\033[32m ** Building $< => $@... done!\033[0m\n"
+	$(NCDRES_MAKE_FANCY_END)
 
 $(NCDRES_LIB_PATH): $(NCDRES_LIB_DEPS)
 	@echo " *** nc_diag_read library not built yet (or outdated)."
