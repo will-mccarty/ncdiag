@@ -1,0 +1,127 @@
+# NetCDF Diag Resource Library
+# Makefile library configuration for building with NC_DIAG_RES
+# --------------------------------------------------------------------
+# Do NOT modify this file. Everything has been set up automatically
+# for you! Modifying this file may break things!
+# --------------------------------------------------------------------
+# Usage:
+#     To use this file, simply include it within your Makefile:
+#         include /path/to/NC_DIAG_RES/Makefile.config
+#     
+#     Then use the NC_DIAG_RES specific build variables:
+#         $(F90) [your stuff here] $(NC_DIAG_RES_FLAGS)
+#     Note that $(NC_DIAG_RES_FLAGS) MUST go after your source files
+#     (and/or your own build flags). Failure to do so will cause build
+#     problems.
+#     
+#     Finally, you must include the NetCDF libraries and includes. The
+#     NetCDF flags should go AFTER the NC_DIAG_RES flags (as well as
+#     any other libraries that use NetCDF). This is due to the
+#     dependency order, where libraries that need to use NetCDF need to
+#     be added first so that the compiler knows to search and link
+#     NetCDF libraries.
+#     
+#     Your final build command should look something like this:
+#         $(F90) [...] $(NC_DIAG_RES_FLAGS) $(NETCDF_FLAGS)
+# --------------------------------------------------------------------
+# Integration:
+#     If you would also like to integrate NC_DIAG_RES building with
+#     your source, you can do the following:
+#     
+#     First, add the NC_DIAG_RES library to your dependencies. We
+#     already figured out the path for you, so all you have to do is
+#     just add it! Use NCDRES_LIB_PATH to get that path:
+#         mytarget: srcfiles ... $(NCDRES_LIB_PATH)
+#             [your build commands here]
+#     
+#     Alternatively, if you want to use your specific dependencies, you
+#     can simply add this to your "all" target, making this MUCH
+#     cleaner:
+#         all: $(NCDRES_LIB_PATH) myexecs ...
+#     Note that this only works as long as you build with "all".
+#     Building with specific targets will forgo this dependency.
+#     
+#     Of course, you really want to also be able to build said library
+#     as well! Simply add the following target and build command, and
+#     everything should work:
+#         $(NCDRES_LIB_PATH): $(NCDRES_LIB_DEPS)
+#             $(NCDRES_BUILD_CMD)
+#     
+#     Now, if NC_DIAG_RES gets updated, or it hasn't been built yet,
+#     the library will automatically get (re-)built when you build
+#     your program!
+# --------------------------------------------------------------------
+# That's it - everything else is stuff on our end!
+# 
+# As a friendly reminder, do *NOT* change or touch anything below!
+# We've set up everything so that you can just include this file and
+# start using NC_DIAG_RES! Changing anything below WILL cause
+# problems!
+# 
+# If you're really stuck, try looking at the Makefile in tests/ - we
+# include this Makefile.libconfig and set things up according to the
+# steps above!
+# --------------------------------------------------------------------
+# 
+
+# The following doesn't work - it only considers the base Makefile, not
+# the included one...
+# 
+# NCDRES_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
+# 
+# This also doesn't work if we use an absolute path:
+# NCDRES_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+# 
+# This doesn't work, either:
+# NCDRES_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
+
+# First, use a trick to get the included (Makefile.libconfig) path:
+# Check if we are using an absolute path - aka we have a slash.
+# If we don't, process with relative path...
+
+#$(warning DEBUG - $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+#$(warning DEBUG - $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))
+
+NCDRES_MKFILE_TMP := $(strip $(word 1, $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))))
+
+#$(warning DEBUG - [$(NCDRES_MKFILE_TMP)])
+
+ifeq ($(NCDRES_MKFILE_TMP),/)
+    #$(warning Using absolute paths!)
+    NCDRES_MAKEFILE := $(abspath $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+    # Then, get the directory for this file:
+    NCDRES_PATH := $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE)))
+else
+    #$(warning Using relative paths!)
+    NCDRES_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+    # Then, get the directory for this file.
+    # We yank out the directory to get a relative path.
+    #$(warning $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
+    #$(warning $(CURDIR))
+    #$(warning $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDRES_MAKEFILE)))))
+    
+    #NCDRES_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
+    NCDRES_PATH := $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
+endif
+
+#$(warning DEBUG - [$(NCDRES_MAKEFILE)] [$(NCDRES_PATH)])
+
+# Define the NC_DIAG_RES library name and filename:
+NCDRES_LIB_NAME=nc_diag_res
+NCDRES_LIB_FILE=lib$(NCDRES_LIB_NAME).a
+
+# Combine everything to make a path for developers to use
+# (for dependencies and targeting):
+NCDRES_LIB_PATH=$(NCDRES_PATH)/$(NCDRES_LIB_FILE)
+
+# Define NC_DIAG_RES library dependencies, so that any changes
+# can prompt a re-build:
+NCDRES_LIB_DEPS=$(NCDRES_PATH)/*.f90 $(NCDRES_PATH)/*.F90 \
+    $(NCDRES_PATH)/Makefile $(NCDRES_PATH)/Makefile.config
+
+# Define the build command necessary to build this library:
+NCDRES_BUILD_CMD=make -C $(NCDRES_PATH) $(NCDRES_LIB_FILE)
+
+# Define the necessary build flags to link with NC_DIAG_RES:
+NC_DIAG_RES_FLAGS=-I$(NCDRES_PATH) -L$(NCDRES_PATH) -lnc_diag_res \
+    -I$(NCDRES_PATH)/fson/lib -L$(NCDRES_PATH)/fson/lib -lfson
