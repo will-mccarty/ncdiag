@@ -12,12 +12,12 @@
             end if
             
             call get_command_argument(0, prgm_name)
-            print *, "nc_diag_cat v1.0"
-            print *, "NetCDF Diag File Concatenator"
-            print *, "Usage: " // trim(prgm_name) // " -o OUTPUT_FILE FILES..."
-            print *, "    Concatenate the NetCDF files listed in FILES into OUTPUT_FILE."
-            print *, "    At least 2 input files must be specified in order for this tool"
-            print *, "    to run. The resulting file will be compressed."
+            write (*, "(A)") " nc_diag_cat v1.0"
+            write (*, "(A)") " NetCDF Diag File Concatenator"
+            write (*, "(A)") " Usage: " // trim(prgm_name) // " -o OUTPUT_FILE FILES..."
+            write (*, "(A)") "     Concatenate the NetCDF files listed in FILES into OUTPUT_FILE."
+            write (*, "(A)") "     At least 2 input files must be specified in order for this tool"
+            write (*, "(A)") "     to run. The resulting file will be compressed."
             stop
         end subroutine usage
         
