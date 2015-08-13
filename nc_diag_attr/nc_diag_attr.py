@@ -7,6 +7,8 @@ import sys
 import traceback
 import numpy
 
+__version__ = "0.9b"
+
 try:
     import ujson as json
 except:
@@ -55,12 +57,22 @@ def line_msg_done():
         sys.stdout.flush()
         current_line = ""
 
+VERSION_STR = 'nc_diag_attr v' + __version__ + "\n\n" + \
+    "Using the following library/runtime versions:\n" + \
+    ("    netcdf4-python v%s\n" % netCDF4.__version__) + \
+    ("    NetCDF v%s\n" % getlibversion()) + \
+    ("    HDF5 v%s\n" % netCDF4.__hdf5libversion__) + \
+    ("    Python v%s\n" % sys.version.split("\n")[0].strip())
+    
+
 parser = argparse.ArgumentParser( #prog='ipush',
-    description="Tool to add/modify global and variable attributes for NetCDF files")
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description="Tool to add/modify global and variable attributes for NetCDF files",
+    version = VERSION_STR)
 
 disable_group = parser.add_mutually_exclusive_group()
 
-parser.add_argument("-v", "--verbose", 
+parser.add_argument("-V", "--verbose", 
     dest="verbose", action="store_true", default=False,
     help = "enable verbose output")
 
