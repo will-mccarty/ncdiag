@@ -48,7 +48,7 @@ def parse_cli_args():
         dest="var_attributes", action="store_false", default=True,
         help = "disable variable attribute adding/modifying")
     
-    parser.add_argument("-i", metavar = "RESOURCE_FILE", dest="resource_file",
+    parser.add_argument("-rc", metavar = "RESOURCE_FILE", dest="resource_file",
         help = "input JSON resource file name with attributes to write", required = True)
     parser.add_argument("nc4_files", help = "NetCDF4 files to apply attributes to", nargs="+")
     
