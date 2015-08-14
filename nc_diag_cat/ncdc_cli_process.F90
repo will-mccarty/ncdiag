@@ -1,3 +1,7 @@
+module ncdc_cli_process
+    use ncdc_state
+    
+    contains
         subroutine usage(err)
             character(len=*), intent(in), optional :: err
             
@@ -60,3 +64,4 @@
             
             ! Sanity checks done!
         end subroutine nc_diag_cat_process_args
+end module ncdc_cli_process

@@ -1,5 +1,19 @@
+module ncdc_climsg
+    use kinds
+    use netcdf
+    use ncdc_state
+    
+    implicit none
+    
+#ifdef QUIET
+    logical                            :: enable_info = .FALSE.
+#else
+    logical                            :: enable_info = .TRUE.
+#endif
+    
+    contains
         subroutine check(status)
-          integer, intent ( in) :: status
+          integer(i_long), intent(in) :: status
           
           if(status /= nf90_noerr) then 
             call error(trim(nf90_strerror(status)))
@@ -9,7 +23,7 @@
         subroutine error(err)
             character(len=*), intent(in) :: err
 #ifdef ERROR_TRACEBACK
-            integer                      :: div0
+            integer(i_long)              :: div0
 #endif
 #ifdef USE_MPI
                 write(*, "(A, I0, A)") &
@@ -80,4 +94,4 @@
             write(*, "(A, A)") "D: ", dbg
         end subroutine debug
 #endif
-    
+end module ncdc_climsg

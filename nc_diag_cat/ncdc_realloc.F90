@@ -1,5 +1,6 @@
 module ncdc_realloc
     use kinds
+    use ncdc_types
     
     !===============================================================
     ! nc_diag_realloc - reallocation support (declaration)
@@ -26,13 +27,6 @@ module ncdc_realloc
             nc_diag_realloc_rdouble, nc_diag_realloc_string, &
             nc_diag_realloc_logical, nc_diag_realloc_ncdcdn
     end interface nc_diag_realloc
-    
-    ! Variable dimensions storage
-    type nc_diag_cat_dim_names
-        character(len=100), dimension(:), allocatable :: dim_names
-        integer(i_long),    dimension(:), allocatable :: output_dim_ids
-        integer(i_long)                               :: num_names = 0
-    end type nc_diag_cat_dim_names
     
     contains
         ! nc_diag_realloc_byte(arr, addl_num_entries)

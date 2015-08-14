@@ -1,33 +1,20 @@
 program nc_diag_cat
+    use kinds
     use netcdf
     use netcdf_unlimdims
-    use ncdc_realloc
-    use kinds
+    use ncdc_climsg
+    use ncdc_state
+    use ncdc_cli_process
+    use ncdc_metadata
     
 #ifdef USE_MPI
-    include "mpif.h"
+    use ncdc_data_mpi
+#else
+    use ncdc_data
 #endif
     
     ! NCDC = Net CDF Diag Concatenation
-#include "ncdc_cli_decl.F90"
-#include "ncdc_metadata_decl.F90"
-#include "ncdc_data_decl.F90"
-#ifdef QUIET
-    logical                            :: enable_info = .FALSE.
-#else
-    logical                            :: enable_info = .TRUE.
-#endif
-    
-    integer(i_long)                    :: ncid_output, ncid_input
-    
-    integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 6
-    integer, parameter                 :: NC_DIAG_CAT_CHUNK_SIZE = 16384
-    
     character(len=300)                 :: info_str
-    
-#ifdef USE_MPI
-    integer                            :: cur_proc, num_procs, ierr
-#endif
     
     real :: start_time, stop_time
     
@@ -143,15 +130,4 @@ program nc_diag_cat
 #endif
     
     call info("All done!")
-    
-    contains
-        
-#include "ncdc_util.F90"
-#include "ncdc_cli_imp.F90"
-#include "ncdc_metadata_imp.F90"
-#ifdef USE_MPI
-#include "ncdc_data_imp_MPI.F90"
-#else
-#include "ncdc_data_imp.F90"
-#endif
 end program nc_diag_cat

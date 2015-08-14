@@ -1,3 +1,16 @@
+module ncdc_types
+    use kinds
+    
+    integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 6
+    integer, parameter                 :: NC_DIAG_CAT_CHUNK_SIZE = 16384
+    
+    ! Variable dimensions storage
+    type nc_diag_cat_dim_names
+        character(len=100), dimension(:), allocatable :: dim_names
+        integer(i_long),    dimension(:), allocatable :: output_dim_ids
+        integer(i_long)                               :: num_names = 0
+    end type nc_diag_cat_dim_names
+    
     type data_blob
         integer(i_byte),    dimension(:), allocatable :: byte_buffer
         integer(i_short),   dimension(:), allocatable :: short_buffer
@@ -20,8 +33,4 @@
         integer(i_long)                               :: cur_pos = 1
         integer(i_long),  dimension(3)                :: alloc_size
     end type data_blob
-    
-    ! Data blob stores entire variable's data!
-    ! Indexing uses the metadata indexing system.
-    type(data_blob),    dimension(:), allocatable     :: data_blobs
-    
+end module ncdc_types

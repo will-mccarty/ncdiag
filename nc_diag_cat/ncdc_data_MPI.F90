@@ -1,3 +1,19 @@
+module ncdc_data_MPI
+    use kinds
+    use ncdc_state
+    use ncdc_cli_process
+    use ncdc_dims
+    use ncdc_vars
+    use netcdf
+    
+    implicit none
+    
+#ifdef USE_MPI
+    include "mpif.h"
+#endif
+    
+    contains
+#ifdef USE_MPI
         subroutine nc_diag_cat_data_pass
             integer :: cur_dim_id, cur_dim_len
             integer :: cur_out_var_id, cur_out_var_ndims, cur_out_var_counter
@@ -5,6 +21,18 @@
             integer, dimension(:), allocatable :: cur_out_dim_ids, cur_dim_ids
             integer, dimension(:), allocatable :: cur_out_dim_sizes
             integer, dimension(:), allocatable :: cur_dim_sizes
+            
+            integer(i_long)     :: tmp_dim_index
+            integer(i_long)     :: input_ndims
+            integer(i_long)     :: input_nvars
+            integer(i_long)     :: input_nattrs
+            
+            character(len=NF90_MAX_NAME)               :: tmp_var_name
+            integer(i_long)                            :: tmp_var_type, tmp_var_ndims
+            integer(i_long), dimension(:), allocatable :: tmp_var_dimids
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
+            
+            integer(i_long), dimension(:), allocatable :: tmp_input_varids
             
             integer(i_byte),    dimension(:), allocatable     :: byte_buffer
             integer(i_short),   dimension(:), allocatable     :: short_buffer
@@ -15,8 +43,6 @@
             
             !character(len=1000),dimension(:), allocatable     :: string_buffer
             character(1)     ,dimension(:,:), allocatable     :: string_buffer
-            character(1)     ,dimension(:,:), allocatable     :: string_expanded_buffer
-            character(1)     ,dimension(:),   allocatable     :: string_1d_buffer
             
             integer(i_byte),  dimension(:,:), allocatable     :: byte_2d_buffer
             integer(i_short), dimension(:,:), allocatable     :: short_2d_buffer
@@ -26,7 +52,6 @@
             real(r_double),   dimension(:,:), allocatable     :: rdouble_2d_buffer
             
             character(1),   dimension(:,:,:), allocatable     :: string_2d_buffer
-            character(1),   dimension(:,:,:), allocatable     :: string_2d_expanded_buffer
             
             type temp_storage
                 integer(i_byte),    dimension(:), allocatable     :: byte_buffer
@@ -54,10 +79,8 @@
             
             type(temp_storage), dimension(:), allocatable         :: temp_storage_arr
             
-            character(1) ,  dimension(:), allocatable         :: tmp_str_buffer
-            
-            integer :: i, j, i_proc, procs_done = 0, base_proc = 1
-            integer :: num_count, read_count = 0, file_count = 0
+            integer :: i, i_proc, procs_done = 0, base_proc = 1
+            integer :: num_count, file_count = 0
             
             integer(i_long),  dimension(:),   allocatable     :: procs_done_arr
             
@@ -1354,5 +1377,5 @@
                 end if
             end do
         end subroutine nc_diag_cat_data_commit
-
-
+#endif
+end module ncdc_data_MPI

@@ -1,4 +1,6 @@
 program test_nc_unlimdims
+    use kinds
+    use ncdc_climsg
     use netcdf
     use netcdf_unlimdims
     
@@ -7,11 +9,8 @@ program test_nc_unlimdims
 ! with ncdc_util.F90, so let's unset it.
 #undef USE_MPI
 #endif
-    logical :: enable_info = .TRUE.
     
-    integer :: cli_arg_count, ncid_input, num_unlims, tmp_dim_size, i
-    integer, dimension(:), allocatable :: unlim_dims
-    character(len=10000000) :: input_file, prgm_name
+    integer(i_long) :: tmp_dim_size
     character(len=NF90_MAX_NAME) :: tmp_dim_name
     
     call get_command_argument(0, prgm_name)
@@ -41,8 +40,4 @@ program test_nc_unlimdims
     end do
     
     deallocate(unlim_dims)
-    
-    contains
-#include "ncdc_util.F90"
-
 end program test_nc_unlimdims

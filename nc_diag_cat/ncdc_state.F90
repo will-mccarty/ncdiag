@@ -1,24 +1,15 @@
+module ncdc_state
+    use kinds
+    use ncdc_types
     
-    integer(i_long)                            :: input_ndims, cached_ndims = -1
-    integer(i_long)                            :: input_nvars, cached_nvars = -1
-    integer(i_long)                            :: input_nattrs
+#ifdef USE_MPI
+    integer(i_long)                    :: cur_proc, num_procs, ierr
+#endif
     
-    integer(i_long)                            :: tmp_dim_index, tmp_attr_index
+    character(len=10000000) :: prgm_name, dummy_arg, output_file, input_file
+    integer(i_long)         :: cli_arg_count, input_count, arg_index, var_index
     
-    character(len=NF90_MAX_NAME)               :: tmp_dim_name, tmp_attr_name
-    integer(i_long)                            :: tmp_dim_size
-    
-    character(len=NF90_MAX_NAME)               :: tmp_var_name
-    integer(i_long)                            :: tmp_var_type, tmp_var_ndims
-    integer(i_long), dimension(:), allocatable :: tmp_var_dimids
-    character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
-    
-    integer(i_long), dimension(:), allocatable :: tmp_input_dimids, tmp_input_varids
-    
-    logical                                    :: is_unlim = .FALSE.
-    
-    integer(i_long), parameter                 :: DIM_START_SIZE = 256
-    integer(i_long), parameter                 :: VAR_START_SIZE = 1024
+    integer(i_long)                    :: ncid_output, ncid_input
     
     ! Dimension storage
     character(len=100), dimension(:), allocatable     :: dim_names
@@ -50,3 +41,8 @@
     ! Array storage info for variable storage
     integer(i_long)                                   :: var_arr_total = 0
     integer(i_long)                                   :: var_arr_size = 0
+    
+    ! Data blob stores entire variable's data!
+    ! Indexing uses the metadata indexing system.
+    type(data_blob),    dimension(:), allocatable     :: data_blobs
+end module ncdc_state

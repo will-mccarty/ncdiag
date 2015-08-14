@@ -1,15 +1,36 @@
+module ncdc_data
+    use kinds
+    use netcdf
+    use ncdc_state
+    use ncdc_cli_process
+    use ncdc_dims
+    use ncdc_vars
+    
+    contains
         subroutine nc_diag_cat_data_pass
-            integer :: cur_dim_id, cur_dim_len
-            integer :: cur_out_var_id, cur_out_var_ndims, cur_out_var_counter
-            integer :: cur_out_dim_ind, cur_out_var_ind
-            integer, dimension(:), allocatable :: cur_out_dim_ids, cur_dim_ids
-            integer, dimension(:), allocatable :: cur_out_dim_sizes
-            integer, dimension(:), allocatable :: cur_dim_sizes
+            integer(i_long) :: cur_dim_id, cur_dim_len
+            integer(i_long) :: cur_out_var_id, cur_out_var_ndims, cur_out_var_counter
+            integer(i_long) :: cur_out_dim_ind, cur_out_var_ind
+            integer(i_long), dimension(:), allocatable :: cur_out_dim_ids, cur_dim_ids
+            integer(i_long), dimension(:), allocatable :: cur_out_dim_sizes
+            integer(i_long), dimension(:), allocatable :: cur_dim_sizes
+            
+            integer(i_long)     :: tmp_dim_index
+            integer(i_long)     :: input_ndims
+            integer(i_long)     :: input_nvars
+            integer(i_long)     :: input_nattrs
+            
+            character(len=NF90_MAX_NAME)               :: tmp_var_name
+            integer(i_long)                            :: tmp_var_type, tmp_var_ndims
+            integer(i_long), dimension(:), allocatable :: tmp_var_dimids
+            character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
+            
+            integer(i_long), dimension(:), allocatable :: tmp_input_varids
             
             character(1) ,dimension(:,:), allocatable :: tmp_string_buffer
             character(1),dimension(:,:,:),allocatable :: string_2d_buffer
             
-            integer :: i, j
+            integer :: i
             
             character(len=NF90_MAX_NAME) , allocatable :: tmp_in_dim_names(:)
             
@@ -482,5 +503,4 @@
                 end if
             end do
         end subroutine nc_diag_cat_data_commit
-
-
+end module ncdc_data
