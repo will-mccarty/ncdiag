@@ -42,10 +42,8 @@ program nc_diag_cat
         call info("Using MPI for faster concatenation.")
 #endif
     
-#ifndef NO_NETCDF
     call info('Initializing netcdf layer library, version ' // trim(nf90_inq_libvers()) // '...')
     !call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
-#endif
     
     ! nc_diag_cat steps:
     !   1) Do a quick pass to read metadata, then allocate space as
@@ -60,10 +58,8 @@ program nc_diag_cat
     if (cur_proc == 0) then
 #endif
         call info("Creating new NetCDF file: " // trim(output_file))
-#ifndef NO_NETCDF
         call check( nf90_create(output_file, OR(NF90_NETCDF4, NF90_CLOBBER), ncid_output, &
             0) )
-#endif
 #ifdef USE_MPI
     end if
 #endif
