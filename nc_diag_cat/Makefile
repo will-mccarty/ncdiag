@@ -109,10 +109,10 @@ ncdc_cli_process.mod: ncdc_cli_process.F90 ncdc_state.mod kinds.mod
 ncdc_dims.mod: ncdc_dims.F90 ncdc_realloc.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
 	$(FORT90C) $(F90FLAGS) -c ncdc_dims.F90 $(COMPILE_FLAGS) $(NETCDF_FLAGS)
 
-ncdc_vars.mod: ncdc_vars.F90 ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
+ncdc_vars.mod: ncdc_vars.F90 ncdc_dims.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
 	$(FORT90C) $(F90FLAGS) -c ncdc_vars.F90 $(COMPILE_FLAGS) $(NETCDF_FLAGS)
 
-ncdc_metadata.mod: ncdc_metadata.F90 ncdc_dims.mod ncdc_vars.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
+ncdc_metadata.mod: ncdc_metadata.F90 ncdc_cli_process.mod netcdf_unlimdims.mod ncdc_dims.mod ncdc_vars.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
 	$(FORT90C) $(F90FLAGS) -c ncdc_metadata.F90 $(COMPILE_FLAGS) $(NETCDF_FLAGS)
 
 ncdc_data.mod: ncdc_data.F90 ncdc_cli_process.mod ncdc_dims.mod ncdc_vars.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
@@ -126,11 +126,6 @@ nc_diag_cat.x: $(NC_DIAG_CAT_DEPS) ncdc_realloc.mod netcdf_unlimdims.mod nc_diag
 
 test_nc_unlimdims.x: netcdf_unlimdims.mod ncdc_climsg.mod test_nc_unlimdims.F90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) test_nc_unlimdims.F90 ncdc_climsg.o ncdc_state.o netcdf_unlimdims.o $(NETCDF_FLAGS) -o test_nc_unlimdims.x
-
-gen_diff_size_netcdf.x: gen_diff_size_netcdf.f90
-	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) gen_diff_size_netcdf.f90 \
-		../nc_diag/netcdf_layer.o ../nc_diag/utils.o -I../nc_diag -L../nc_diag \
-		$(NETCDF_FLAGS) -o gen_diff_size_netcdf.x
 
 netcdf_unlimdims.mod: Makefile netcdf_unlimdims.F90
 	$(FORT90C) $(F90FLAGS) $(COMPILE_FLAGS) -c netcdf_unlimdims.F90 $(NETCDF_FLAGS)
