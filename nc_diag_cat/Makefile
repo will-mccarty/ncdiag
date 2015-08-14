@@ -72,7 +72,7 @@ ncdc_data_mpi.mod: ncdc_data_MPI.F90 ncdc_cli_process.mod ncdc_dims.mod ncdc_var
 	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_data_MPI.F90 $(NCDC_NETCDF_FLAGS)
 	$(NCDC_MAKE_FANCY_END)
 
-nc_diag_cat.x: $(NC_DIAG_CAT_DEPS) ncdc_realloc.mod netcdf_unlimdims.mod nc_diag_cat.F90
+nc_diag_cat.x: nc_diag_cat.F90 $(NC_DIAG_CAT_DEPS)
 	$(NCDC_MAKE_FANCY_BIGLIB_BEGIN)
 	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) nc_diag_cat.F90 $(NC_DIAG_CAT_OBJS) $(NCDC_NETCDF_FLAGS) -o nc_diag_cat.x
 	$(NCDC_MAKE_FANCY_BIGLIB_END)
