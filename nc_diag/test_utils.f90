@@ -2,7 +2,7 @@
 ! Test utilities module
 
 program test_utils
-    use utils
+    use nclayer_strarrutils
     
     character(len=100) :: str1, str2
     character(len=:), allocatable :: strpart

@@ -1,3 +1,11 @@
+module nclayer_mresize
+    use kinds
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_realloc
+    implicit none
+    
+    contains
         !===============================================================
         ! nc_diag_metadata_resize - metadata resizing support
         !===============================================================
@@ -465,3 +473,4 @@
             end if
             !write (*, "(A, I0, A, I0, A, I0)") "iarr resize result on index ", iarr_index, ": count / size => ", diag_metadata_store%stor_i_arr(iarr_index)%icount, " / ", diag_metadata_store%stor_i_arr(iarr_index)%isize
         end subroutine nc_diag_metadata_resize_iarr
+end module nclayer_mresize

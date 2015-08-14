@@ -1,3 +1,45 @@
+module nclayer_chaninfo
+    use kinds
+    use nclayer_climsg
+    use nclayer_state
+    use nclayer_types
+    use nclayer_strarrutils
+    use nclayer_varattr
+    use nclayer_ciresize
+    use nclayer_realloc
+    use netcdf
+    
+    implicit none
+    
+    !===============================================================
+    ! nc_diag_chaninfo - channel info handling (declaration)
+    !===============================================================
+    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
+    ! INSIDE A LARGER F90 SOURCE!
+    ! If you compile this directly, you WILL face the WRATH of your
+    ! compiler!
+    !---------------------------------------------------------------
+    ! Depends on: nothing
+    ! 
+    ! (Note that the subroutines portion of this part of the program
+    ! has dependencies - but the declaration part doesn't require
+    ! anything!)
+    !---------------------------------------------------------------
+    ! nc_diag_chaninfo stuff stuff
+    !---------------------------------------------------------------
+    ! This file provides the actual subroutines, referred to by the
+    ! interface.
+    
+    interface nc_diag_chaninfo
+        module procedure nc_diag_chaninfo_byte, &
+            nc_diag_chaninfo_short, nc_diag_chaninfo_long, &
+            nc_diag_chaninfo_rsingle, nc_diag_chaninfo_rdouble, &
+            nc_diag_chaninfo_string!, nc_diag_chaninfo_byte_v, &
+            !nc_diag_chaninfo_short_v, nc_diag_chaninfo_long_v, &
+            !nc_diag_chaninfo_rsingle_v, nc_diag_chaninfo_rdouble_v
+    end interface nc_diag_chaninfo
+    
+    contains
         !===============================================================
         ! nc_diag_chaninfo - channel info handling (implementation)
         !===============================================================
@@ -158,13 +200,13 @@
                             allocate(byte_buffer(diag_chaninfo_store%nchans))
                             call check(nf90_get_var(ncid, var_index, byte_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (byte_buffer(j) /= NLAYER_FILL_BYTE) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(byte_buffer)
                             
@@ -175,13 +217,13 @@
                             allocate(short_buffer(diag_chaninfo_store%nchans))
                             call check(nf90_get_var(ncid, var_index, short_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (short_buffer(j) /= NLAYER_FILL_SHORT) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(short_buffer)
                             
@@ -192,13 +234,13 @@
                             allocate(long_buffer(diag_chaninfo_store%nchans))
                             call check(nf90_get_var(ncid, var_index, long_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (long_buffer(j) /= NLAYER_FILL_LONG) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(long_buffer)
                             
@@ -209,13 +251,13 @@
                             allocate(rsingle_buffer(diag_chaninfo_store%nchans))
                             call check(nf90_get_var(ncid, var_index, rsingle_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (rsingle_buffer(j) /= NLAYER_FILL_FLOAT) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(rsingle_buffer)
                             
@@ -226,13 +268,13 @@
                             allocate(rdouble_buffer(diag_chaninfo_store%nchans))
                             call check(nf90_get_var(ncid, var_index, rdouble_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (rdouble_buffer(j) /= NLAYER_FILL_DOUBLE) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(rdouble_buffer)
                             
@@ -243,13 +285,13 @@
                             allocate(string_buffer(diag_chaninfo_store%nchans, tmp_var_dim_sizes(1)))
                             call check(nf90_get_var(ncid, var_index, string_buffer))
                             
-                            do j = 1, diag_chaninfo_store%nchans
+                            do j = diag_chaninfo_store%nchans, 1, -1
                                 if (string_buffer(j, 1) /= NLAYER_FILL_CHAR) then
-                                    rel_index = rel_index + 1
-                                else
                                     exit
                                 end if
                             end do
+                            
+                            rel_index = j
                             
                             deallocate(string_buffer)
                             
@@ -1470,189 +1512,4 @@
                         * diag_chaninfo_store%nchans) &
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_string
-        
-        !=============================================================
-        ! VECTOR TYPES
-        !=============================================================
-        
-        ! nc_diag_chaninfo - input integer(i_byte), dimension(:)
-        ! Corresponding NetCDF4 type: byte
-        !subroutine nc_diag_chaninfo_byte_v(chaninfo_name, chaninfo_value)
-        !    character(len=*), intent(in)               :: chaninfo_name
-        !    integer(i_byte), dimension(:), intent(in)  :: chaninfo_value
-        !    
-        !    integer(i_long)                            :: endpos
-        !    integer(i_long)                            :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_byte(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(1)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_byte_vi(diag_chaninfo_store%acount(6+1)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_byte(endpos - size(chaninfo_value) + 1:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_byte_v
-        
-        ! nc_diag_chaninfo - input integer(i_short)
-        ! Corresponding NetCDF4 type: short
-        !subroutine nc_diag_chaninfo_short_v(chaninfo_name, chaninfo_value)
-        !    character(len=*), intent(in)               :: chaninfo_name
-        !    integer(i_short), dimension(:), intent(in) :: chaninfo_value
-        !    
-        !    integer(i_long)                            :: endpos
-        !    integer(i_long)                            :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_short(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(2)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_short_vi(diag_chaninfo_store%acount(6+2)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_short(endpos - size(chaninfo_value) + 1:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_short_v
-        
-        ! nc_diag_chaninfo - input integer(i_long)
-        ! Corresponding NetCDF4 type: int (old: long)
-        !subroutine nc_diag_chaninfo_long_v(chaninfo_name, chaninfo_value)
-        !    character(len=*), intent(in)               :: chaninfo_name
-        !    integer(i_long), dimension(:), intent(in)  :: chaninfo_value
-        !    
-        !    integer(i_long)                            :: endpos
-        !    integer(i_long)                            :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_long(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(3)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_long_vi(diag_chaninfo_store%acount(6+3)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_long(endpos - size(chaninfo_value) + 1:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_long_v
-        
-        ! nc_diag_chaninfo - input real(r_single)
-        ! Corresponding NetCDF4 type: float (or real)
-        !subroutine nc_diag_chaninfo_rsingle_v(chaninfo_name, chaninfo_value)
-        !    character(len=*), intent(in)               :: chaninfo_name
-        !    real(r_single), dimension(:), intent(in)   :: chaninfo_value
-        !    
-        !    integer(i_long)                            :: endpos
-        !    integer(i_long)                            :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_rsingle(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(4)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_rsingle_vi(diag_chaninfo_store%acount(6+4)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_rsingle(endpos - size(chaninfo_value) + 1:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_rsingle_v
-        
-        ! nc_diag_chaninfo - input real(r_double)
-        ! Corresponding NetCDF4 type: double
-        !subroutine nc_diag_chaninfo_rdouble_v(chaninfo_name, chaninfo_value)
-        !    character(len=*), intent(in)               :: chaninfo_name
-        !    real(r_double), dimension(:), intent(in)   :: chaninfo_value
-        !    
-        !    integer(i_long)                            :: endpos
-        !    integer(i_long)                            :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_rdouble(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(5)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_rdouble_vi(diag_chaninfo_store%acount(6+5)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_rdouble(endpos - value_size:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_rdouble_v
-        
-        ! String array not available with NF90 attributes
-        
-        ! nc_diag_chaninfo - input character(len=1000)
-        ! Corresponding NetCDF4 type: string
-        !subroutine nc_diag_chaninfo_string_v(chaninfo_name, chaninfo_value)
-        !    character(len=*),    intent(in)               :: chaninfo_name
-        !    character(len=1000), dimension(:), intent(in) :: chaninfo_value
-        !    
-        !    integer(i_long)                               :: endpos
-        !    integer(i_long)                               :: value_size
-        !    
-        !    value_size = size(chaninfo_value)
-        !    
-        !    call nc_diag_chaninfo_expand
-        !    
-        !    diag_chaninfo_store%total = diag_chaninfo_store%total + 1
-        !    
-        !    diag_chaninfo_store%names(diag_chaninfo_store%total) = chaninfo_name
-        !    diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
-        !    
-        !    ! Resize to add value_size
-        !    call nc_diag_chaninfo_resize_string(value_size)
-        !    
-        !    endpos = diag_chaninfo_store%acount(6)
-        !    
-        !    ! Add the size of the array in:
-        !    diag_chaninfo_store%ci_string_vi(diag_chaninfo_store%acount(6+6)) = value_size
-        !    
-        !    ! Now add the actual entry!
-        !    diag_chaninfo_store%ci_string(endpos - value_size:endpos) = chaninfo_value
-        !end subroutine nc_diag_chaninfo_string_v
+end module nclayer_chaninfo

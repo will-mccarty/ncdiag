@@ -1,3 +1,24 @@
+module nclayer_varattr
+    use kinds
+    use nclayer_types
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_realloc
+    use netcdf
+    
+    implicit none
+    
+    interface nc_diag_varattr
+        module procedure nc_diag_varattr_byte, &
+            nc_diag_varattr_short, nc_diag_varattr_long, &
+            nc_diag_varattr_rsingle, nc_diag_varattr_rdouble, &
+            nc_diag_varattr_string, &
+            nc_diag_varattr_byte_v, nc_diag_varattr_short_v, &
+            nc_diag_varattr_long_v, nc_diag_varattr_rsingle_v, &
+            nc_diag_varattr_rdouble_v
+    end interface nc_diag_varattr
+    
+    contains
         function nc_diag_varattr_check_var(var_name) result(found)
             character(len=*), intent(in)    :: var_name
             integer :: i
@@ -418,3 +439,4 @@
 #endif
             end if
         end subroutine nc_diag_varattr_rdouble_v
+end module nclayer_varattr

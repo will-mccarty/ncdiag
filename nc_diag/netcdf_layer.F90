@@ -5,69 +5,25 @@ module netcdf_layer
 #warning NetCDF library usage disabled. Filler routines will be used.
 #endif
     use kinds
-    use utils
+    use nclayer_strarrutils
+    use nclayer_state
+    use nclayer_climsg
+    
+    use nclayer_lheader
+    use nclayer_chaninfo
+    use nclayer_metadata
+    use nclayer_data2d
+    
     implicit none
     
-    logical,dimension(:),allocatable        :: def_locked
-    real(r_single),dimension(:),allocatable :: bifix
-    !real(r_single),dimension(:),allocatable    :: bifix
-    
-    ! NetCDF4 type struct constants
-    integer(i_byte), parameter              :: NLAYER_BYTE   = 1
-    integer(i_byte), parameter              :: NLAYER_SHORT  = 2
-    integer(i_byte), parameter              :: NLAYER_LONG   = 3
-    integer(i_byte), parameter              :: NLAYER_FLOAT  = 4
-    integer(i_byte), parameter              :: NLAYER_DOUBLE = 5
-    integer(i_byte), parameter              :: NLAYER_STRING = 6
-    
-    ! Default number of starting entries
-    integer(i_short), parameter             :: NLAYER_DEFAULT_ENT = 1024
-    
-    ! NetCDF zlib (/gzip) compression level
-    integer(i_byte), parameter              :: NLAYER_COMPRESSION = 9
-    
-    ! NetCDF chunking size
-    integer(i_long), parameter              :: NLAYER_CHUNKING = 16384
-    
-    ! Base used when exponentiated.
-#define NLAYER_MULTI_BASE 2
-    
-    integer :: ncid
-    logical :: init_done = .FALSE.
-    logical :: append_only = .FALSE.
-    
-    logical :: enable_info = .FALSE.
-    logical :: enable_action = .FALSE.
-    
-    logical :: enable_trim = .FALSE.
-    
-    character(len=200) :: cur_nc_file
-    
 #ifdef NO_NETCDF
-#include "netcdf_nonetcdf_decl.F90"
-#endif
 
-#include "netcdf_realloc_decl.f90"
-#include "netcdf_lheader_decl.f90"
-#include "netcdf_chaninfo_decl.F90"
-#include "netcdf_metadata_decl.f90"
-#include "netcdf_data2d_decl.f90"
-#include "netcdf_varattr_decl.F90"
+#endif
     
     contains
 #ifdef NO_NETCDF
-#include "netcdf_nonetcdf_imp.F90"
+
 #endif
-        
-#include "netcdf_realloc_imp.f90"
-#include "netcdf_ciresize.F90"
-#include "netcdf_mresize.F90"
-#include "netcdf_dresize.F90"
-#include "netcdf_lheader_imp.F90"
-#include "netcdf_chaninfo_imp.F90"
-#include "netcdf_metadata_imp.F90"
-#include "netcdf_data2d_imp.F90"
-#include "netcdf_varattr_imp.F90"
         
         subroutine nc_diag_init(filename, append)
             character(len=*),intent(in)    :: filename
@@ -340,104 +296,4 @@ module netcdf_layer
             
             enable_trim = do_trim
         end subroutine nc_diag_set_trim
-        
-        subroutine check(status)
-          integer, intent ( in) :: status
-          
-          if(status /= nf90_noerr) then 
-            call error(trim(nf90_strerror(status)))
-          end if
-        end subroutine check
-        
-        subroutine error(err)
-            character(len=*), intent(in) :: err
-#ifdef ERROR_TRACEBACK
-            integer                      :: div0
-#endif
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m" // &
-                            " **   ERROR: " // err // &
-                            CHAR(27) // "[0m"
-#else
-            write(*, "(A)") " **   ERROR: " // err
-#endif
-#ifdef ERROR_TRACEBACK
-            write(*, "(A)") " ** Failed to process data/write NetCDF4."
-            write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
-            div0 = 1 / 0
-#else
-            stop " ** Failed to process data/write NetCDF4."
-#endif
-        end subroutine error
-        
-        subroutine warning(warn)
-            character(len=*), intent(in) :: warn
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[33m" // &
-                            " ** WARNING: " // warn // &
-                            CHAR(27) // "[0m"
-#else
-            write(*, "(A)") " ** WARNING: " // warn
-#endif
-        end subroutine warning
-        
-        subroutine nc_set_action_display(action_on_off)
-            logical :: action_on_off
-#ifdef ENABLE_ACTION_MSGS
-            character(len=1000)                   :: action_str
-            
-            if (enable_action) then
-                write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
-                call actionm(trim(action_str))
-            end if
-#endif
-            enable_action = action_on_off
-        end subroutine nc_set_action_display
-        
-#ifdef ENABLE_ACTION_MSGS
-        subroutine actionm(act)
-            character(len=*), intent(in) :: act
-            if (enable_action) &
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[36m" // &
-                                " **  ACTION: " // act // &
-                                CHAR(27) // "[0m"
-#else
-                write(*, "(A)") " **  ACTION: " // act
-#endif
-        end subroutine actionm
-#endif
-        
-        subroutine nc_set_info_display(info_on_off)
-            logical :: info_on_off
-#ifdef ENABLE_ACTION_MSGS
-            character(len=1000)                   :: action_str
-            
-            if (enable_action) then
-                write(action_str, "(A, L, A)") "nc_set_info_display(info_on_off = ", info_on_off, ")"
-                call actionm(trim(action_str))
-            end if
-#endif
-            enable_info = info_on_off
-        end subroutine nc_set_info_display
-        
-        subroutine info(ifo)
-            character(len=*), intent(in) :: ifo
-            if (enable_info) &
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[34m" // &
-                                " **    INFO: " // ifo // &
-                                CHAR(27) // "[0m"
-#else
-                write(*, "(A)") " **    INFO: " // ifo
-#endif
-        end subroutine info
-        
-#ifdef _DEBUG_MEM_
-        subroutine debug(dbg)
-            character(len=*), intent(in) :: dbg
-            write(*, "(A, A)") "D: ", dbg
-        end subroutine debug
-#endif
-    
 end module netcdf_layer

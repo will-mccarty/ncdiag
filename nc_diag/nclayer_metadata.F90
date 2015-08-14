@@ -1,3 +1,23 @@
+module nclayer_metadata
+    use kinds
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_strarrutils
+    use nclayer_varattr
+    use nclayer_mresize
+    use nclayer_realloc
+    use netcdf
+    
+    implicit none
+    
+    interface nc_diag_metadata
+        module procedure nc_diag_metadata_byte, &
+            nc_diag_metadata_short, nc_diag_metadata_long, &
+            nc_diag_metadata_rsingle, nc_diag_metadata_rdouble, &
+            nc_diag_metadata_string
+    end interface nc_diag_metadata
+    
+    contains
         !===============================================================
         ! nc_diag_metadata - metadata handling (implementation)
         !===============================================================
@@ -1272,4 +1292,4 @@
             diag_metadata_store%stor_i_arr(var_index)%index_arr(diag_metadata_store%stor_i_arr(var_index)%icount) = &
                 diag_metadata_store%acount(6)
         end subroutine nc_diag_metadata_string
-
+end module nclayer_metadata

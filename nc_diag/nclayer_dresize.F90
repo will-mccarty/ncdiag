@@ -1,3 +1,12 @@
+module nclayer_dresize
+    use kinds
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_realloc
+    
+    implicit none
+    
+    contains
         !===============================================================
         ! nc_diag_data2d_resize - data2d resizing support
         !===============================================================
@@ -472,3 +481,4 @@
             end if
             !write (*, "(A, I0, A, I0, A, I0)") "iarr resize result on index ", iarr_index, ": count / size => ", diag_data2d_store%stor_i_arr(iarr_index)%icount, " / ", diag_data2d_store%stor_i_arr(iarr_index)%isize
         end subroutine nc_diag_data2d_resize_iarr
+end module nclayer_dresize

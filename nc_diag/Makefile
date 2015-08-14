@@ -1,4 +1,4 @@
-all: test_netcdf_layer.x test_nclayer_allcov.x test_nclayer_stress.x generic_data.x test_utils.x
+all: test_netcdf_layer.x test_nclayer_allcov.x test_nclayer_stress.x test_utils.x
 
 FORT90C=ifort
 
@@ -60,42 +60,104 @@ endif
 COMPILE_FLAGS+=-D_REAL8_ -DANSI_TERM_COLORS -DERROR_TRACEBACK -DENABLE_ACTION_MSGS
 
 NETCDF_LAYER_DEPS+=Makefile \
-	netcdf_realloc_decl.f90 \
-	netcdf_lheader_decl.f90 netcdf_chaninfo_decl.F90 \
-	netcdf_metadata_decl.f90 \
-	netcdf_realloc_imp.f90 netcdf_mresize.F90 \
-	netcdf_ciresize.F90 netcdf_lheader_imp.F90 \
-	netcdf_chaninfo_imp.F90 netcdf_metadata_imp.F90 \
-	netcdf_data2d_decl.f90 netcdf_data2d_imp.F90 \
-	netcdf_dresize.F90 \
-	netcdf_varattr_decl.F90 netcdf_varattr_imp.F90
+    nclayer_climsg.mod \
+    nclayer_chaninfo.mod nclayer_ciresize.mod \
+    nclayer_data2d.mod nclayer_dresize.mod \
+    nclayer_lheader.mod \
+    nclayer_metadata.mod nclayer_mresize.mod \
+    nclayer_realloc.mod \
+    nclayer_types.mod nclayer_state.mod \
+    nclayer_strarrutils.mod \
+    nclayer_varattr.mod
+
+NETCDF_LAYER_OBJS+=netcdf_layer.o \
+    nclayer_climsg.o \
+    nclayer_chaninfo.o nclayer_ciresize.o \
+    nclayer_data2d.o nclayer_dresize.o \
+    nclayer_lheader.o \
+    nclayer_metadata.o nclayer_mresize.o \
+    nclayer_realloc.o \
+    nclayer_types.o nclayer_state.o \
+    nclayer_strarrutils.o \
+    nclayer_varattr.o
+
+NETCDF_LAYER_VAR_DEPS+= kinds.mod \
+    nclayer_climsg.mod \
+    nclayer_types.mod nclayer_state.mod \
+    nclayer_realloc.mod \
+    nclayer_strarrutils.mod \
+    nclayer_varattr.mod \
+
+NETCDF_LAYER_VAR_RESIZE_DEPS+= kinds.mod \
+    nclayer_state.mod \
+    nclayer_climsg.mod \
+    nclayer_realloc.mod
 
 kinds.mod: Makefile kinds.F90
 	$(FORT90C) $(F90FLAGS) -c kinds.F90 $(COMPILE_FLAGS)
 
-netcdf_layer.mod: Makefile kinds.mod utils.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
+netcdf_layer.mod: kinds.mod $(NETCDF_LAYER_DEPS) netcdf_layer.F90
 	$(FORT90C) $(F90FLAGS) -c netcdf_layer.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
-test_netcdf_layer.x: netcdf_layer.mod test_netcdf_layer.f90
+libnetcdf_layer.a: netcdf_layer.mod
+	ar rcs libnetcdf_layer.a $(NETCDF_LAYER_OBJS)
+
+nclayer_chaninfo.mod: nclayer_chaninfo.F90 $(NETCDF_LAYER_VAR_DEPS) nclayer_ciresize.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_chaninfo.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_ciresize.mod: nclayer_ciresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
+	$(FORT90C) $(F90FLAGS) -c nclayer_ciresize.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_climsg.mod: nclayer_climsg.F90 kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_climsg.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_state.mod: nclayer_state.f90 nclayer_types.mod kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_state.f90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_types.mod: nclayer_types.F90 kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_types.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_strarrutils.mod: nclayer_strarrutils.F90
+	$(FORT90C) $(F90FLAGS) -c nclayer_strarrutils.F90
+
+nclayer_varattr.mod: nclayer_varattr.F90 nclayer_types.mod nclayer_state.mod nclayer_climsg.mod kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_varattr.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_metadata.mod: nclayer_metadata.F90 $(NETCDF_LAYER_VAR_DEPS) nclayer_mresize.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_metadata.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_mresize.mod: nclayer_mresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
+	$(FORT90C) $(F90FLAGS) -c nclayer_mresize.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_data2d.mod: nclayer_data2d.F90 nclayer_dresize.mod $(NETCDF_LAYER_VAR_DEPS)
+	$(FORT90C) $(F90FLAGS) -c nclayer_data2d.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_dresize.mod: nclayer_dresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
+	$(FORT90C) $(F90FLAGS) -c nclayer_dresize.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_realloc.mod: nclayer_realloc.F90 nclayer_climsg.mod kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_realloc.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+nclayer_lheader.mod: nclayer_lheader.F90 nclayer_state.mod nclayer_climsg.mod kinds.mod
+	$(FORT90C) $(F90FLAGS) -c nclayer_lheader.F90 $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+
+test_netcdf_layer.x: libnetcdf_layer.a test_netcdf_layer.f90
 	$(FORT90C) $(F90FLAGS) -o test_netcdf_layer.x test_netcdf_layer.f90 \
-		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+		-L. -lnetcdf_layer $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
-test_nclayer_allcov.x: netcdf_layer.mod test_nclayer_allcov.f90
+test_nclayer_allcov.x: libnetcdf_layer.a test_nclayer_allcov.f90
 	$(FORT90C) $(F90FLAGS) -o test_nclayer_allcov.x test_nclayer_allcov.f90 \
-		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+		-L. -lnetcdf_layer $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
-test_nclayer_stress.x: netcdf_layer.mod test_nclayer_stress.f90
+test_nclayer_stress.x: libnetcdf_layer.a test_nclayer_stress.f90
 	$(FORT90C) $(F90FLAGS) -o test_nclayer_stress.x test_nclayer_stress.f90 \
-		netcdf_layer.o utils.o $(NETCDF_FLAGS) $(COMPILE_FLAGS)
+		-L. -lnetcdf_layer $(NETCDF_FLAGS) $(COMPILE_FLAGS)
 
-generic_data.x: netcdf_layer.mod generic_data.f90
+generic_data.x: libnetcdf_layer.a generic_data.f90
 	$(FORT90C) $(F90FLAGS) -o generic_data.x generic_data.f90
 
-test_utils.x: utils.mod test_utils.f90
-	$(FORT90C) $(F90FLAGS) -o test_utils.x utils.o test_utils.f90
-
-utils.mod: Makefile utils.f90
-	$(FORT90C) $(F90FLAGS) -c utils.f90
+test_utils.x: libnetcdf_layer.a test_utils.f90
+	$(FORT90C) $(F90FLAGS) -o test_utils.x test_utils.f90 -L. -lnetcdf_layer
 
 check: test_netcdf_layer.x test_nclayer_allcov.x test_nclayer_stress.x
 	./test_netcdf_layer.x

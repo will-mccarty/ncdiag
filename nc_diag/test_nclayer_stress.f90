@@ -130,6 +130,20 @@ program test_nclayer_stress
         
         write (string, "(A, I0)") "mystr_", (i * 6)
         
+        call nc_diag_chaninfo("chaninfosimple_ibyte",   int_byte)
+        call nc_diag_chaninfo("chaninfosimple_ishort",  int_short)
+        call nc_diag_chaninfo("chaninfosimple_ilong",   int_long)
+        call nc_diag_chaninfo("chaninfosimple_rsingle", real_single)
+        call nc_diag_chaninfo("chaninfosimple_rdouble", real_double)
+        call nc_diag_chaninfo("chaninfosimple_string",  string)
+        
+        call nc_diag_metadata("metadatasimple_ibyte",   int_byte)
+        call nc_diag_metadata("metadatasimple_ishort",  int_short)
+        call nc_diag_metadata("metadatasimple_ilong",   int_long)
+        call nc_diag_metadata("metadatasimple_rsingle", real_single)
+        call nc_diag_metadata("metadatasimple_rdouble", real_double)
+        call nc_diag_metadata("metadatasimple_string",  string)
+        
         call nc_diag_varattr("chaninfosimple_ibyte", "int_byte_simple",    int_byte)
         call nc_diag_varattr("chaninfosimple_ibyte", "int_short_simple",   int_short)
         call nc_diag_varattr("chaninfosimple_ibyte", "int_long_simple",    int_long)
@@ -153,6 +167,13 @@ program test_nclayer_stress
             write (string_arr(j), "(A, I0, A, I0)") "mystr_", j, "_", (i * 6)
         end do
         
+        call nc_diag_data2d("data2darr_ibyte",   int_byte_arr)
+        call nc_diag_data2d("data2darr_ishort",  int_short_arr)
+        call nc_diag_data2d("data2darr_ilong",   int_long_arr)
+        call nc_diag_data2d("data2darr_rsingle", real_single_arr)
+        call nc_diag_data2d("data2darr_rdouble", real_double_arr)
+        call nc_diag_data2d("data2darr_string",  string_arr)
+        
         call nc_diag_varattr("chaninfosimple_ibyte", "int_byte_arr",    int_byte_arr)
         call nc_diag_varattr("chaninfosimple_ibyte", "int_short_arr",   int_short_arr)
         call nc_diag_varattr("chaninfosimple_ibyte", "int_long_arr",    int_long_arr)
@@ -167,7 +188,7 @@ program test_nclayer_stress
     !       This will be fixed in a future release.
     
     do i = 7000, 7999
-        int_byte    = i
+        int_byte    = 12
         int_short   = i * 2
         int_long    = i * 3
         real_single = i * 4 + 0.1234
@@ -230,7 +251,7 @@ program test_nclayer_stress
     call nc_diag_flush_buffer
     
     do i = 8000, 8999
-        int_byte    = i
+        int_byte    = 123
         int_short   = i * 2
         int_long    = i * 3
         real_single = i * 4 + 0.1234
@@ -293,7 +314,7 @@ program test_nclayer_stress
     call nc_diag_flush_buffer
     
     do i = 9000, 10000
-        int_byte    = i
+        int_byte    = 23
         int_short   = i * 2
         int_long    = i * 3
         real_single = i * 4 + 0.1234
@@ -365,7 +386,7 @@ program test_nclayer_stress
     call nc_diag_init("test_stress.nc", .TRUE.)
     
     do i = 10001, 11000
-        int_byte    = i
+        int_byte    = 45
         int_short   = i * 2
         int_long    = i * 3
         real_single = i * 4 + 0.1234

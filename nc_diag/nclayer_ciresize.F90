@@ -1,3 +1,11 @@
+module nclayer_ciresize
+    use kinds
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_realloc
+    implicit none
+    
+    contains
         !===============================================================
         ! nc_diag_chaninfo_resize - channel info resizing support (impl)
         !===============================================================
@@ -334,4 +342,4 @@
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
         end subroutine nc_diag_chaninfo_resize_string
-        
+end module nclayer_ciresize

@@ -1,3 +1,45 @@
+module nclayer_data2d
+    use kinds
+    use nclayer_state
+    use nclayer_climsg
+    use nclayer_varattr
+    use nclayer_strarrutils
+    use nclayer_dresize
+    use nclayer_realloc
+    use netcdf
+    
+    implicit none
+    
+    !===============================================================
+    ! nc_diag_data2d - data2d handling (declaration)
+    !===============================================================
+    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
+    ! INSIDE A LARGER F90 SOURCE!
+    ! If you compile this directly, you WILL face the WRATH of your
+    ! compiler!
+    !---------------------------------------------------------------
+    ! Depends on: nothing
+    ! 
+    ! (Note that the subroutines portion of this part of the program
+    ! has dependencies - but the declaration part doesn't require
+    ! anything!)
+    !---------------------------------------------------------------
+    ! nc_diag_data2d stores data2d data as NetCDF4 global
+    ! attributes. The nc_diag_data2d subroutines temporarily cache
+    ! any data2d data until write, where it will be set by
+    ! NF90_PUT_ATT().
+    !---------------------------------------------------------------
+    ! This file provides the interface wrapper for the specific
+    ! subroutines.
+    
+    interface nc_diag_data2d
+        module procedure nc_diag_data2d_byte, &
+            nc_diag_data2d_short, nc_diag_data2d_long, &
+            nc_diag_data2d_rsingle, nc_diag_data2d_rdouble, &
+            nc_diag_data2d_string
+    end interface nc_diag_data2d
+    
+    contains
         !===============================================================
         ! nc_diag_data2d - data2d handling (implementation)
         !===============================================================
@@ -161,7 +203,7 @@
                             !call nc_diag_data2d_resize_rdouble(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 5
                         else if (tmp_var_type == NF90_CHAR) then
-                            diag_data2d_store%max_str_lens(diag_metadata_store%total) = tmp_var_dim_sizes(1)
+                            diag_data2d_store%max_str_lens(diag_data2d_store%total) = tmp_var_dim_sizes(1)
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_STRING
                             !call nc_diag_data2d_resize_string(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 6
@@ -1781,4 +1823,4 @@
             diag_data2d_store%stor_i_arr(var_index)%length_arr(diag_data2d_store%stor_i_arr(var_index)%icount) = &
                 input_size
         end subroutine nc_diag_data2d_string
-
+end module nclayer_data2d
