@@ -67,7 +67,7 @@ ncdc_data.mod: ncdc_data.F90 ncdc_cli_process.mod ncdc_dims.mod ncdc_vars.mod nc
 	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_data.F90 $(NCDC_NETCDF_FLAGS)
 	$(NCDC_MAKE_FANCY_END)
 
-ncdc_data_MPI.mod: ncdc_data_MPI.F90 ncdc_cli_process.mod ncdc_dims.mod ncdc_vars.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
+ncdc_data_mpi.mod: ncdc_data_MPI.F90 ncdc_cli_process.mod ncdc_dims.mod ncdc_vars.mod ncdc_climsg.mod ncdc_state.mod ncdc_types.mod kinds.mod
 	$(NCDC_MAKE_FANCY_BEGIN)
 	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_data_MPI.F90 $(NCDC_NETCDF_FLAGS)
 	$(NCDC_MAKE_FANCY_END)
