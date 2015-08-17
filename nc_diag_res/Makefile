@@ -2,7 +2,8 @@
 include Makefile.config
 
 NC_DIAG_READ_DEPS+=Makefile \
-    ncdres_climsg.mod
+    ncdres_climsg.o \
+    kinds.o
 
 NC_DIAG_READ_OBJS+= \
     nc_diag_res.o \
@@ -11,11 +12,6 @@ NC_DIAG_READ_OBJS+= \
 .PHONY: all clean tests check
 
 all: libnc_diag_res.a nc_diag_res.mod tests
-
-kinds.mod: kinds.F90 Makefile Makefile.config Makefile.libconfig
-	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) -c kinds.F90 $(NCDRES_CONFIG_FLAGS)
-	$(NCDRES_MAKE_FANCY_END)
 
 tests:
 	make -C tests
@@ -28,14 +24,19 @@ libnc_diag_res.a: $(NC_DIAG_READ_OBJS)
 	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_READ_OBJS)
 	$(NCDRES_MAKE_FANCY_BIGLIB_END)
 
-nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a kinds.mod $(NC_DIAG_READ_DEPS)
+nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_READ_DEPS)
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c nc_diag_res.f90 \
 		-Ifson/lib -Lfson/lib -lfson
 	$(NCDRES_MAKE_FANCY_END)
 
-ncdres_climsg.mod: ncdres_climsg.F90 kinds.mod
+kinds.o: kinds.F90 Makefile Makefile.config Makefile.libconfig
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) -c kinds.F90 $(NCDRES_CONFIG_FLAGS)
+	$(NCDRES_MAKE_FANCY_END)
+
+ncdres_climsg.o: ncdres_climsg.F90 kinds.o
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c ncdres_climsg.F90
