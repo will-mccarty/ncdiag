@@ -79,32 +79,20 @@
 # Check if we are using an absolute path - aka we have a slash.
 # If we don't, process with relative path...
 
-#$(warning DEBUG - $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-#$(warning DEBUG - $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))
-
 NCDRES_MKFILE_TMP := $(strip $(word 1, $(subst /,/ ,$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))))
 
-#$(warning DEBUG - [$(NCDRES_MKFILE_TMP)])
-
 ifeq ($(NCDRES_MKFILE_TMP),/)
-    #$(warning Using absolute paths!)
+    # We're using absolute paths here!
     NCDRES_MAKEFILE := $(abspath $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
     # Then, get the directory for this file:
     NCDRES_PATH := $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE)))
 else
-    #$(warning Using relative paths!)
+    # We're using relative paths here!
     NCDRES_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
     # Then, get the directory for this file.
     # We yank out the directory to get a relative path.
-    #$(warning $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
-    #$(warning $(CURDIR))
-    #$(warning $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDRES_MAKEFILE)))))
-    
-    #NCDRES_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
     NCDRES_PATH := $(patsubst $(CURDIR)/%,%,$(patsubst %/,%,$(dir $(NCDRES_MAKEFILE))))
 endif
-
-#$(warning DEBUG - [$(NCDRES_MAKEFILE)] [$(NCDRES_PATH)])
 
 # Define the NC_DIAG_RES library name and filename:
 NCDRES_LIB_NAME=nc_diag_res
