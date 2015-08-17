@@ -8,12 +8,6 @@ module ncdr_global_attrs
         nf90_inq_attname, NF90_GLOBAL, NF90_MAX_NAME, NF90_ENOTATT, &
         NF90_NOERR
     
-    !use netcdf
-    !use ncdr_types
-    !use ncdr_state
-    !use ncdr_alloc_assert
-    !use ncdr_global_attrs_fetch
-    
     implicit none
     
     interface nc_diag_read_check_global_attr
