@@ -1,7 +1,41 @@
+! NetCDF Diag Resource file library
+
 module nc_diag_res
-    use kinds
-    use ncdres_climsg
-    use fson
+    ! Library to read a resource file and check if a variable is
+    ! enabled within the resource file.
+    ! 
+    ! This library reads a JSON resource file with the following format:
+    !   {
+    !     "variables" : {
+    !       "some_var" : true,
+    !       "more_var" : false
+    !     }
+    !   }
+    ! 
+    ! Based on this sample file, we can check whether a certain variable
+    ! is enabled or not using this library:
+    ! 
+    !     call nc_diag_load_resource_file("resource.json")
+    !     ! This will return true:
+    !     if (nc_diag_load_check_variable("some_var")) then
+    !         print *, "This variable exists!"
+    !         ! Do some other things here
+    !     end if
+    !     ! This will return false:
+    !     if (nc_diag_load_check_variable("more_var")) then
+    !         print *, "This variable exists!"
+    !         ! Do some other things here
+    !     end if
+    !     ! Note that we can specify non-existent variables - these
+    !     ! will also return false.
+    !     if (nc_diag_load_check_variable("hmmm_var")) then
+    !         print *, "This variable exists!"
+    !         ! Do some other things here
+    !     end if
+    !     call nc_diag_close_resource_file
+    
+    use ncdres_climsg, only: ncdres_error
+    use fson, only: fson_value, fson_parse, fson_get, fson_destroy
     
     type(fson_value), pointer :: nc_diag_json => null()
     
@@ -9,14 +43,21 @@ module nc_diag_res
         ! Opens a given resource file for reading.
         ! 
         ! Given the resource file name, open the file and set everything
-        ! up for reading the file.
+        ! up for reading the file. This includes any internal memory
+        ! allocation required for reading the resource file.
+        ! 
+        ! In order for memory allocation to be freed, the
+        ! subroutine nc_diag_close_resource_file MUST be called.
+        ! 
+        ! If a resource file is already open, this will raise an error
+        ! and the program will terminate.
         ! 
         ! Args:
         !     filename (character(len=*): resource file name to load.
         ! 
-        ! Returns:
-        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
-        !         for use in other subroutines and functions. 
+        ! Raises:
+        !     Resource file already open error if there is already a
+        !     resource file currently open.
         ! 
         subroutine nc_diag_load_resource_file(filename)
             character(len=*), intent(in) :: filename
@@ -30,17 +71,20 @@ module nc_diag_res
         ! Lookup a variable and check its status.
         ! 
         ! Given the variable name, lookup its status within the JSON
-        ! resource file. If the variable is present in the JSON file,
-        ! and if it is enabled, this will return true. Otherwise, if
-        ! the variable doesn't exist in the resource file, or it is
-        ! disabled, return false.
+        ! resource file.
+        ! 
+        ! If the variable is present in the JSON file, and it is
+        ! enabled, this will return true. Otherwise, if the variable
+        ! doesn't exist in the resource file, or it is disabled,
+        ! this will return false.
         ! 
         ! Args:
-        !     filename (character(len=*): resource file name to load.
+        !     var_name (character(len=*)): variable name to lookup
+        !         within the resource file.
         ! 
         ! Returns:
-        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
-        !         for use in other subroutines and functions. 
+        !     var_enabled (logical): whether the variable is enabled or
+        !         not within the resource file.
         ! 
         function nc_diag_load_check_variable(var_name) result(var_enabled)
             character(len=*), intent(in)  :: var_name
@@ -55,17 +99,19 @@ module nc_diag_res
             call fson_get(nc_diag_json, trim(var_str), var_enabled)
         end function nc_diag_load_check_variable
         
-        ! Opens a given resource file for reading.
+        ! Closes the current resource file.
         ! 
-        ! Given the resource file name, open the file and set everything
-        ! up for reading the file.
+        ! Closes a previously opened resource file. This will free any
+        ! resources allocated towards the previous resource file, and
+        ! allow for opening a new resource file.
         ! 
-        ! Args:
-        !     filename (character(len=*): resource file name to load.
+        ! If no file has been opened previously, or if the file is
+        ! already closed, this will raise an error and the program will
+        ! terminate.
         ! 
-        ! Returns:
-        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
-        !         for use in other subroutines and functions. 
+        ! Raises:
+        !     No resource file open error will occur if there is no
+        !     resource file currently open.
         ! 
         subroutine nc_diag_close_resource_file
             if (associated(nc_diag_json)) then

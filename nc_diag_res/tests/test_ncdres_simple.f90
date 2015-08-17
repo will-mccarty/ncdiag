@@ -1,6 +1,8 @@
 program test_ncdres_simple
-    use kinds
-    use nc_diag_res
+    use nc_diag_res, only: nc_diag_load_resource_file, &
+        nc_diag_load_check_variable, nc_diag_close_resource_file
+    use ncdres_climsg, only: ncdres_set_info_display, ncdres_error, &
+        ncdres_info
     
     call ncdres_set_info_display(.TRUE.)
     
