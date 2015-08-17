@@ -1,11 +1,12 @@
 module ncdr_dims
-    use kinds
-    use ncdr_climsg
-    use ncdr_types
-    use ncdr_state
-    use ncdr_check
-    use netcdf
-    use netcdf_unlimdims
+    use kinds, only: i_long
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id
+    use netcdf, only: nf90_inquire_dimension, NF90_MAX_NAME
+    use netcdf_unlimdims, only: pf_nf90_inq_unlimdims
+    
     implicit none
     
     interface nc_diag_read_lookup_dim
@@ -54,16 +55,16 @@ module ncdr_dims
             allocate(ncdr_files(file_index)%dims(num_dims))
             
             ! Get unlimited dimension information
-            call check(pf_nf90_inq_unlimdims(file_ncid, num_unlims))
+            call ncdr_nc_check(pf_nf90_inq_unlimdims(file_ncid, num_unlims))
             
             allocate(unlim_dims(num_unlims))
             
-            call check(pf_nf90_inq_unlimdims(file_ncid, num_unlims, unlim_dims))
+            call ncdr_nc_check(pf_nf90_inq_unlimdims(file_ncid, num_unlims, unlim_dims))
             
             do i = 1, num_dims
                 ncdr_files(file_index)%dims(i)%dim_id = i
                 
-                call check(nf90_inquire_dimension(file_ncid, i, &
+                call ncdr_nc_check(nf90_inquire_dimension(file_ncid, i, &
                         dim_name, &
                         ncdr_files(file_index)%dims(i)%dim_size))
                 
@@ -80,10 +81,10 @@ module ncdr_dims
         end subroutine nc_diag_read_parse_file_dims
         
         function nc_diag_read_id_lookup_dim(file_ncdr_id, dim_name) result(dim_index)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
-            integer                        :: dim_index
+            integer(i_long)                :: dim_index
             
             call ncdr_check_ncdr_id(file_ncdr_id)
             
@@ -99,7 +100,7 @@ module ncdr_dims
         function nc_diag_read_noid_lookup_dim(dim_name) result(dim_index)
             character(len=*), intent(in)   :: dim_name
             
-            integer                        :: dim_index
+            integer(i_long)                :: dim_index
             
             call ncdr_check_current_ncdr_id
             
@@ -107,10 +108,10 @@ module ncdr_dims
         end function nc_diag_read_noid_lookup_dim
         
         function nc_diag_read_id_assert_dim(file_ncdr_id, dim_name) result(dim_index)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
-            integer                        :: dim_index
+            integer(i_long)                :: dim_index
             
             call ncdr_check_ncdr_id(file_ncdr_id)
             
@@ -119,13 +120,13 @@ module ncdr_dims
             
             ! ...except don't, since we're asserting!
             if (dim_index == -1) &
-                call error("The specified dimension '" // dim_name // "' does not exist!")
+                call ncdr_error("The specified dimension '" // dim_name // "' does not exist!")
         end function nc_diag_read_id_assert_dim
         
         function nc_diag_read_noid_assert_dim(dim_name) result(dim_index)
             character(len=*), intent(in)   :: dim_name
             
-            integer                        :: dim_index
+            integer(i_long)                :: dim_index
             
             call ncdr_check_current_ncdr_id
             
@@ -133,7 +134,7 @@ module ncdr_dims
         end function nc_diag_read_noid_assert_dim
         
         function nc_diag_read_id_check_dim(file_ncdr_id, dim_name) result(dim_exists)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             logical                        :: dim_exists
@@ -164,7 +165,7 @@ module ncdr_dims
         end function nc_diag_read_noid_check_dim
         
         function nc_diag_read_id_get_dim(file_ncdr_id, dim_name) result(dim_size)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer(i_long)                :: dim_index, dim_size
@@ -187,7 +188,7 @@ module ncdr_dims
         end function nc_diag_read_noid_get_dim
         
         function nc_diag_read_id_check_dim_unlim(file_ncdr_id, dim_name) result(dim_isunlim)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: dim_name
             
             integer(i_long)                :: dim_index
@@ -211,9 +212,9 @@ module ncdr_dims
         end function nc_diag_read_noid_check_dim_unlim
         
         subroutine nc_diag_read_id_get_dim_names(file_ncdr_id, num_dims, dim_name_mlen, dim_names)
-            integer, intent(in)                      :: file_ncdr_id
-            integer, intent(out), optional           :: num_dims
-            integer, intent(out), optional           :: dim_name_mlen
+            integer(i_long), intent(in)              :: file_ncdr_id
+            integer(i_long), intent(out), optional   :: num_dims
+            integer(i_long), intent(out), optional   :: dim_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
             
             integer(i_long)                :: dim_index, ndims, max_dim_name_len
@@ -241,9 +242,9 @@ module ncdr_dims
                     allocate(character(max_dim_name_len) :: dim_names(ndims))
                 else
                     if (size(dim_names) /= ndims) &
-                        call error("Invalid allocated array size for dimension names storage!")
+                        call ncdr_error("Invalid allocated array size for dimension names storage!")
                     if (len(dim_names) < max_dim_name_len) &
-                        call error("Invalid allocated array size for dimension names storage! (String length does not match!)")
+                        call ncdr_error("Invalid allocated array size for dimension names storage! (String length does not match!)")
                 end if
                 
                 do dim_index = 1, ndims
@@ -253,8 +254,8 @@ module ncdr_dims
         end subroutine nc_diag_read_id_get_dim_names
         
         subroutine nc_diag_read_noid_get_dim_names(num_dims, dim_name_mlen, dim_names)
-            integer, intent(out), optional           :: num_dims
-            integer, intent(out), optional           :: dim_name_mlen
+            integer(i_long), intent(out), optional   :: num_dims
+            integer(i_long), intent(out), optional   :: dim_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: dim_names
             
             call ncdr_check_current_ncdr_id

@@ -1,6 +1,14 @@
-program test_ncdr_get
-    use nc_diag_read
-    use netcdf
+program test_ncdr_vars
+    use kinds, only: i_long
+    
+    use nc_diag_read, only: nc_diag_read_init, nc_diag_read_close, &
+        nc_diag_read_lookup_var, nc_diag_read_assert_var, &
+        nc_diag_read_check_var, nc_diag_read_get_var_ndims, &
+        nc_diag_read_ret_var_dims, nc_diag_read_get_type_str, &
+        nc_diag_read_get_var_type, nc_diag_read_id_init, &
+        nc_diag_read_get_var_names, ncdr_error
+    
+    implicit none
     
     integer(i_long) :: nvars, nvars_len
     character(len=:), dimension(:), allocatable :: var_names
@@ -44,7 +52,7 @@ program test_ncdr_get
         ind = nc_diag_read_lookup_var(var_name)
         ind = nc_diag_read_assert_var(var_name)
         if (nc_diag_read_check_var(var_name) == .FALSE.) &
-            call error("Can't find var with check(), even when it's listed!")
+            call ncdr_error("Can't find var with check(), even when it's listed!")
         write (*, "(A, I0, A)", advance = "no") &
             "    -> Variable: " // var_name // " | Number of dimensions : ", &
             nc_diag_read_get_var_ndims(var_name), " | Type " // &
@@ -64,10 +72,10 @@ program test_ncdr_get
     end do
     
     if (nc_diag_read_lookup_var("INVALID_VAR_INVALID") /= -1) &
-        call error("Invalid variable lookup result check failed.")
+        call ncdr_error("Invalid variable lookup result check failed.")
     
     if (nc_diag_read_check_var("INVALID_VAR_INVALID")) &
-        call error("Invalid variable check result check = TRUE failed.")
+        call ncdr_error("Invalid variable check result check = TRUE failed.")
     
     ! These will result in an error:
     !i = nc_diag_read_assert_var("INVALID_VAR_INVALID")
@@ -96,7 +104,7 @@ program test_ncdr_get
         ind = nc_diag_read_lookup_var(tmp_ncdr_id_2, var_name)
         ind = nc_diag_read_assert_var(tmp_ncdr_id_2, var_name)
         if (nc_diag_read_check_var(tmp_ncdr_id_2, var_name) == .FALSE.) &
-            call error("Can't find var with check(), even when it's listed!")
+            call ncdr_error("Can't find var with check(), even when it's listed!")
         write (*, "(A, I0, A)", advance = "no") &
             "    -> Variable: " // var_name // " | Number of dimensions : ", &
             nc_diag_read_get_var_ndims(tmp_ncdr_id_2, var_name), " | Type " // &
@@ -117,4 +125,4 @@ program test_ncdr_get
     
     call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id)
     call nc_diag_read_close(file_ncdr_id = tmp_ncdr_id_2)
-end program test_ncdr_get
+end program test_ncdr_vars

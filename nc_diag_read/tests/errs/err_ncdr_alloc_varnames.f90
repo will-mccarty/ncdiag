@@ -1,6 +1,9 @@
 program err_ncdr_alloc_varnames
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_long
+    use nc_diag_read, only: nc_diag_read_init, &
+        nc_diag_read_get_dim_names, nc_diag_read_get_var_names
+    
+    implicit none
     
     integer(i_long) :: nvars, nvars_len
     character(len=:), dimension(:), allocatable :: var_names

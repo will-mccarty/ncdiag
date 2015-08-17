@@ -4,8 +4,15 @@
 !   -> ALLOCATED GET: allocated dimensions manually with ndims before
 !                     fetch, with additional checks from get()
 program test_ncdr_get_ardag
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use nc_diag_read, only: nc_diag_read_init, nc_diag_read_close, &
+        nc_diag_read_get_var, &
+        nc_diag_read_get_var_ndims, &
+        nc_diag_read_get_var_dims
+    use netcdf, only: NF90_FILL_BYTE, NF90_FILL_SHORT, NF90_FILL_INT, &
+        NF90_FILL_FLOAT, NF90_FILL_DOUBLE, NF90_FILL_CHAR
+    
+    implicit none
     
     !------------------------------------------------------------------
     ! Subroutine allocation method testing

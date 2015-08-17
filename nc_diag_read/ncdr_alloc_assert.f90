@@ -4,8 +4,15 @@ module ncdr_alloc_assert
     ! 
     ! Other parts include just assertion functions (e.g. asserting
     ! that a variable exists).
-    use kinds
-    use ncdr_check
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id
+    use netcdf, only: nf90_inquire_attribute, NF90_GLOBAL, NF90_BYTE, &
+        NF90_SHORT, NF90_INT, NF90_FLOAT, NF90_DOUBLE, NF90_CHAR, &
+        NF90_STRING
+    
     implicit none
     
     interface nc_diag_read_assert_var
@@ -62,7 +69,7 @@ module ncdr_alloc_assert
             end do
             
             ! If we didn't find anything, show an error!
-            call error("The specified variable '" // var_name // "' does not exist!")
+            call ncdr_error("The specified variable '" // var_name // "' does not exist!")
         end function nc_diag_read_id_assert_var
         
         function nc_diag_read_noid_assert_var(var_name) result(var_index)
@@ -89,7 +96,7 @@ module ncdr_alloc_assert
             var_id = ncdr_files(file_ncdr_id)%vars( &
                 nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
             
-            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
                 var_id, &
                 attr_name, attr_type, attr_len))
         end subroutine nc_diag_read_id_assert_attr
@@ -113,7 +120,7 @@ module ncdr_alloc_assert
             
             call ncdr_check_ncdr_id(file_ncdr_id)
             
-            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
                 NF90_GLOBAL, &
                 attr_name, attr_type, attr_len))
         end subroutine nc_diag_read_id_assert_global_attr
@@ -133,7 +140,7 @@ module ncdr_alloc_assert
             integer(i_long)                            :: correct_var_type
             
             if (var_type /= correct_var_type) &
-                call error("Mismatched type for variable! Got " // &
+                call ncdr_error("Mismatched type for variable! Got " // &
                     nc_diag_read_get_type_str(var_type) // &
                     " when " // &
                     nc_diag_read_get_type_str(correct_var_type) // &
@@ -145,7 +152,7 @@ module ncdr_alloc_assert
             integer(i_long)                            :: correct_attr_type
             
             if (attr_type /= correct_attr_type) &
-                call error("Mismatched type for attribute! Got " // &
+                call ncdr_error("Mismatched type for attribute! Got " // &
                     nc_diag_read_get_type_str(attr_type) // &
                     " when " // &
                     nc_diag_read_get_type_str(correct_attr_type) // &
@@ -157,7 +164,7 @@ module ncdr_alloc_assert
             integer(i_long)                            :: correct_attr_type
             
             if (attr_type /= correct_attr_type) &
-                call error("Mismatched type for global attribute! Got " // &
+                call ncdr_error("Mismatched type for global attribute! Got " // &
                     nc_diag_read_get_type_str(attr_type) // &
                     " when " // &
                     nc_diag_read_get_type_str(correct_attr_type) // &
@@ -192,7 +199,7 @@ module ncdr_alloc_assert
             integer(i_long)                            :: correct_var_ndims
             
             if (var_ndims /= correct_var_ndims) &
-                call error("Mismatched dimensions for variable!")
+                call ncdr_error("Mismatched dimensions for variable!")
         end subroutine nc_diag_read_assert_var_ndims
         
         !-------------------------------------------------------------
@@ -204,9 +211,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (len(var_stor) < correct_dims(1)) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_string
         
         subroutine nc_diag_read_assert_dims_single_byte(var_stor, correct_dims)
@@ -215,9 +222,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (correct_dims(1) /= 1) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_single_byte
         
         subroutine nc_diag_read_assert_dims_single_short(var_stor, correct_dims)
@@ -226,9 +233,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (correct_dims(1) /= 1) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_single_short
         
         subroutine nc_diag_read_assert_dims_single_long(var_stor, correct_dims)
@@ -237,9 +244,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (correct_dims(1) /= 1) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_single_long
         
         subroutine nc_diag_read_assert_dims_single_float(var_stor, correct_dims)
@@ -248,9 +255,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (correct_dims(1) /= 1) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_single_float
         
         subroutine nc_diag_read_assert_dims_single_double(var_stor, correct_dims)
@@ -259,9 +266,9 @@ module ncdr_alloc_assert
             integer(i_long), parameter :: correct_ndims = 1
             
             if (size(correct_dims) /= correct_ndims) &
-                call error("Invalid number of dimensions for variable!")
+                call ncdr_error("Invalid number of dimensions for variable!")
             if (correct_dims(1) /= 1) &
-                call error("Mismatched dimensions for variable storage!")
+                call ncdr_error("Mismatched dimensions for variable storage!")
         end subroutine nc_diag_read_assert_dims_single_double
         
         subroutine nc_diag_read_assert_dims_alloc_string(var_stor, correct_dims)
@@ -273,9 +280,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (len(var_stor) /= correct_dims(1)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(character(len=correct_dims(1)) :: var_stor)
             end if
@@ -290,9 +297,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1)))
             end if
@@ -307,9 +314,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1)))
             end if
@@ -324,9 +331,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1)))
             end if
@@ -341,9 +348,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1)))
             end if
@@ -358,9 +365,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1)))
             end if
@@ -375,11 +382,11 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (len(var_stor) /= correct_dims(1)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
                 if (size(var_stor) /= correct_dims(2)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(character(len=correct_dims(1)) :: var_stor(correct_dims(2)))
             end if
@@ -394,9 +401,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
@@ -411,9 +418,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
@@ -428,9 +435,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
@@ -445,9 +452,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
@@ -462,9 +469,9 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (any(shape(var_stor) /= correct_dims)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(var_stor(correct_dims(1), correct_dims(2)))
             end if
@@ -479,11 +486,11 @@ module ncdr_alloc_assert
             ! If not, go ahead and allocate it ourselves.
             if (allocated(var_stor)) then
                 if (size(correct_dims) /= correct_ndims) &
-                    call error("Invalid number of dimensions for variable!")
+                    call ncdr_error("Invalid number of dimensions for variable!")
                 if (len(var_stor) /= correct_dims(1)) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
                 if (any(shape(var_stor) /= correct_dims(2:3))) &
-                    call error("Mismatched dimensions for variable storage!")
+                    call ncdr_error("Mismatched dimensions for variable storage!")
             else
                 allocate(character(len=correct_dims(1)) :: var_stor(correct_dims(2), correct_dims(3)))
             end if

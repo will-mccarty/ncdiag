@@ -1,24 +1,26 @@
 module ncdr_check
-    use kinds
-    use ncdr_climsg
-    use ncdr_types
-    use ncdr_state
-    use netcdf
+    use kinds, only: i_long
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_state, only: ncdr_files, current_ncdr_id, ncdr_file_count
+    use netcdf, only: nf90_noerr, nf90_strerror, nf90_inquire, &
+        nf90_ebadid
+    
+    implicit none
     
     contains
         subroutine ncdr_check_ncdr_id(file_ncdr_id)
             integer(i_long), intent(in) :: file_ncdr_id
             
             if (file_ncdr_id > ncdr_file_count) &
-                call error("The specified NCDR ID does not exist and/or is already closed!")
+                call ncdr_error("The specified NCDR ID does not exist and/or is already closed!")
             
             if (.NOT. ncdr_files(file_ncdr_id)%file_open) &
-                call error("The specified NCDR ID does not exist or is already closed! (Still in DB, but closed!)")
+                call ncdr_error("The specified NCDR ID does not exist or is already closed! (Still in DB, but closed!)")
         end subroutine ncdr_check_ncdr_id
         
         subroutine ncdr_check_current_ncdr_id
             if (current_ncdr_id == -1) &
-                call error("Current NCDR ID indicates that no files are open.")
+                call ncdr_error("Current NCDR ID indicates that no files are open.")
             call ncdr_check_ncdr_id(current_ncdr_id)
         end subroutine ncdr_check_current_ncdr_id
         
@@ -29,11 +31,11 @@ module ncdr_check
             nc_err = nf90_inquire(file_ncid)
             
             if (nc_err == NF90_EBADID) &
-                call error("The specified NCID does not exist and/or is already closed!")
+                call ncdr_error("The specified NCID does not exist and/or is already closed!")
             
             ! General error - something we can't handle!
             if (nc_err /= NF90_NOERR) &
-                call check(nc_err)
+                call ncdr_nc_check(nc_err)
         end subroutine ncdr_check_ncid
         
         subroutine ncdr_check_current_ncid
@@ -87,11 +89,11 @@ module ncdr_check
             file_ind = -1
         end function nc_diag_read_get_index_from_filename
         
-        subroutine check(status)
-          integer, intent ( in) :: status
+        subroutine ncdr_nc_check(status)
+          integer(i_long), intent ( in) :: status
           
           if(status /= nf90_noerr) then 
-            call error(trim(nf90_strerror(status)))
+            call ncdr_error(trim(nf90_strerror(status)))
           end if
-        end subroutine check
+        end subroutine ncdr_nc_check
 end module ncdr_check

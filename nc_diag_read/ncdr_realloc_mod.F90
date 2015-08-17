@@ -1,6 +1,8 @@
 module ncdr_realloc_mod
-    use kinds
-    use ncdr_types
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use ncdr_types, only: ncdr_file
+    
+    implicit none
     
     !===============================================================
     ! ncdr_realloc - reallocation support (declaration)
@@ -23,9 +25,9 @@ module ncdr_realloc_mod
     interface ncdr_realloc
         module procedure ncdr_realloc_byte, &
             ncdr_realloc_short, ncdr_realloc_long, &
-            ncdr_realloc_llong, ncdr_realloc_rsingle, &
-            ncdr_realloc_rdouble, ncdr_realloc_string, &
-            ncdr_realloc_logical, ncdr_realloc_file_type
+            ncdr_realloc_rsingle, ncdr_realloc_rdouble, &
+            ncdr_realloc_string, ncdr_realloc_logical, &
+            ncdr_realloc_file_type
     end interface ncdr_realloc
     
     ! Variable dimensions storage
@@ -140,45 +142,6 @@ module ncdr_realloc_mod
 #endif
         end subroutine ncdr_realloc_long
         
-        ! ncdr_realloc_llong(arr, addl_num_entries)
-        !   input:
-        !     integer(i_long), dimension(:)  :: arr
-        !         array to reallocate
-        !     integer(i_long), intent(in)    :: addl_num_entries
-        !         additional number of elements to allocate to the
-        !         specified array
-        subroutine ncdr_realloc_llong(arr, addl_num_entries)
-            integer(i_llong), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long),intent(in) :: addl_num_entries
-            
-            integer(i_llong), dimension(:), allocatable   :: tmp
-            integer(i_long)                             :: new_size
-            
-            integer(i_byte)                              :: alloc_err
-            character(len=100)                           :: err_msg
-            
-#ifdef _DEBUG_MEM_
-            call debug("Reallocating long array...")
-#endif
-            
-            new_size = size(arr) + addl_num_entries
-            
-            allocate(tmp(new_size), STAT=alloc_err)
-            if (alloc_err /= 0) then
-                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call ncdr_realloc_error(trim(err_msg))
-            end if
-            
-            tmp(1:size(arr)) = arr
-            deallocate(arr)
-            allocate(arr(new_size))
-            arr = tmp
-            
-#ifdef _DEBUG_MEM_
-            call debug("Realloc finished for long")
-#endif
-        end subroutine ncdr_realloc_llong
-        
         ! ncdr_realloc_rsingle(arr, addl_num_entries)
         !   input:
         !     real(r_single), dimension(:)   :: arr
@@ -257,7 +220,7 @@ module ncdr_realloc_mod
             character(len=100)                           :: err_msg
             
 #ifdef _DEBUG_MEM_
-            integer :: string_len, string_arr_size
+            integer(i_long) :: string_len, string_arr_size
             
             string_len = len(arr(1))
             string_arr_size = size(arr)
@@ -369,8 +332,13 @@ module ncdr_realloc_mod
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
             div0 = 1 / 0
+            write(*, "(A)") "    Couldn't trigger traceback, ending gracefully."
+            write(*, "(A)") "    (Ensure floating point exceptions are enabled,"
+            write(*, "(A)") "    and that you have debugging (-g) and tracebacks"
+            write(*, "(A)") "    compiler flags enabled!)"
+            stop 1
 #else
-            stop " ** Failed to process data/write NetCDF4."
+            stop " ** Failed to read data/write NetCDF4."
 #endif
         end subroutine ncdr_realloc_error
 end module ncdr_realloc_mod

@@ -1,7 +1,12 @@
 ! Use ncdr_ids and keep track of things ourselves!
 program test_ncdr_get_id
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use nc_diag_read, only: nc_diag_read_id_init, nc_diag_read_close, &
+        nc_diag_read_get_var
+    use netcdf, only: NF90_FILL_BYTE, NF90_FILL_SHORT, NF90_FILL_INT, &
+        NF90_FILL_FLOAT, NF90_FILL_DOUBLE, NF90_FILL_CHAR
+    
+    implicit none
     
     integer(i_long) :: ncdr_id_1, ncdr_id_2
     

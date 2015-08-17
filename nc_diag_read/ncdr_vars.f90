@@ -1,10 +1,12 @@
 module ncdr_vars
-    use kinds
-    use netcdf
-    use ncdr_types
-    use ncdr_state
-    use ncdr_alloc_assert
-    use ncdr_vars_fetch
+    use kinds, only: i_long
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id
+    use ncdr_alloc_assert, only: nc_diag_read_id_assert_var
+    use netcdf, only: nf90_inquire_variable, NF90_MAX_NAME
+    
     implicit none
     
     interface nc_diag_read_lookup_var
@@ -58,7 +60,7 @@ module ncdr_vars
             do i = 1, num_vars
                 ncdr_files(file_index)%vars(i)%var_id = i
                 
-                call check(nf90_inquire_variable(file_ncid, i, &
+                call ncdr_nc_check(nf90_inquire_variable(file_ncid, i, &
                     name = var_name, &
                     ndims = ncdr_files(file_index)%vars(i)%var_ndims, &
                     xtype = ncdr_files(file_index)%vars(i)%var_type))
@@ -68,7 +70,7 @@ module ncdr_vars
                 allocate(ncdr_files(file_index)%vars(i)%var_dim_inds( &
                     ncdr_files(file_index)%vars(i)%var_ndims))
                 
-                call check(nf90_inquire_variable(file_ncid, i, &
+                call ncdr_nc_check(nf90_inquire_variable(file_ncid, i, &
                     dimids = ncdr_files(file_index)%vars(i)%var_dim_inds))
                 
                 ! Since the dimensions indicies are aligned to NetCDF's
@@ -89,10 +91,10 @@ module ncdr_vars
         end subroutine nc_diag_read_parse_file_vars
         
         function nc_diag_read_id_lookup_var(file_ncdr_id, var_name) result(var_index)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
-            integer                        :: var_index
+            integer(i_long)                :: var_index
             
             call ncdr_check_ncdr_id(file_ncdr_id)
             
@@ -108,7 +110,7 @@ module ncdr_vars
         function nc_diag_read_noid_lookup_var(var_name) result(var_index)
             character(len=*), intent(in)   :: var_name
             
-            integer                        :: var_index
+            integer(i_long)                :: var_index
             
             call ncdr_check_current_ncdr_id
             
@@ -116,7 +118,7 @@ module ncdr_vars
         end function nc_diag_read_noid_lookup_var
         
         function nc_diag_read_id_check_var(file_ncdr_id, var_name) result(var_exists)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             logical                        :: var_exists
@@ -147,7 +149,7 @@ module ncdr_vars
         end function nc_diag_read_noid_check_var
         
         function nc_diag_read_id_get_var_ndims(file_ncdr_id, var_name) result(var_ndims)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             integer(i_long)                :: var_index, var_ndims
@@ -170,7 +172,7 @@ module ncdr_vars
         end function nc_diag_read_noid_get_var_ndims
         
         function nc_diag_read_id_get_var_type(file_ncdr_id, var_name) result(var_type)
-            integer, intent(in)            :: file_ncdr_id
+            integer(i_long), intent(in)    :: file_ncdr_id
             character(len=*), intent(in)   :: var_name
             
             integer(i_long)                :: var_index, var_type
@@ -193,7 +195,7 @@ module ncdr_vars
         end function nc_diag_read_noid_get_var_type
         
         function nc_diag_read_id_ret_var_dims(file_ncdr_id, var_name) result(var_dims)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: var_name
             
             integer(i_long)                            :: var_index, var_ndims, i
@@ -231,7 +233,7 @@ module ncdr_vars
         end function nc_diag_read_noid_ret_var_dims
         
         subroutine nc_diag_read_id_get_var_dims(file_ncdr_id, var_name, var_ndims, var_dims)
-            integer, intent(in)                      :: file_ncdr_id
+            integer(i_long), intent(in)              :: file_ncdr_id
             character(len=*), intent(in)             :: var_name
             integer(i_long), intent(inout), optional :: var_ndims
             integer(i_long), intent(inout), dimension(:), allocatable, optional :: var_dims
@@ -252,7 +254,7 @@ module ncdr_vars
                     allocate(var_dims(v_ndims))
                 else
                     if (size(var_dims) /= v_ndims) &
-                        call error("Invalid allocated array size for variable dimensions size storage!")
+                        call ncdr_error("Invalid allocated array size for variable dimensions size storage!")
                 end if
                 
                 do i = 1, v_ndims
@@ -288,9 +290,9 @@ module ncdr_vars
         end subroutine nc_diag_read_noid_get_var_dims
         
         subroutine nc_diag_read_id_get_var_names(file_ncdr_id, num_vars, var_name_mlen, var_names)
-            integer, intent(in)                      :: file_ncdr_id
-            integer, intent(out), optional           :: num_vars
-            integer, intent(out), optional           :: var_name_mlen
+            integer(i_long), intent(in)              :: file_ncdr_id
+            integer(i_long), intent(out), optional   :: num_vars
+            integer(i_long), intent(out), optional   :: var_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
             
             integer(i_long)                :: var_index, nvars, max_var_name_len
@@ -318,9 +320,9 @@ module ncdr_vars
                     allocate(character(max_var_name_len) :: var_names(nvars))
                 else
                     if (size(var_names) /= nvars) &
-                        call error("Invalid allocated array size for variable names storage!")
+                        call ncdr_error("Invalid allocated array size for variable names storage!")
                     if (len(var_names) < max_var_name_len) &
-                        call error("Invalid allocated array size for variable names storage! (String length does not match!)")
+                        call ncdr_error("Invalid allocated array size for variable names storage! (String length does not match!)")
                 end if
                 
                 do var_index = 1, nvars
@@ -330,8 +332,8 @@ module ncdr_vars
         end subroutine nc_diag_read_id_get_var_names
         
         subroutine nc_diag_read_noid_get_var_names(num_vars, var_name_mlen, var_names)
-            integer, intent(out), optional           :: num_vars
-            integer, intent(out), optional           :: var_name_mlen
+            integer(i_long), intent(out), optional   :: num_vars
+            integer(i_long), intent(out), optional   :: var_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: var_names
             
             call ncdr_check_current_ncdr_id

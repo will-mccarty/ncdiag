@@ -1,19 +1,70 @@
 module nc_diag_read
-    use netcdf
-    use kinds
-    use ncdr_climsg
-    use ncdr_types
-    use ncdr_realloc_mod
-    use netcdf_unlimdims
-    use ncdr_state
-    use ncdr_check
+    use kinds, only: i_long
+    use ncdr_state, only: ncdr_files, ncdr_file_count, &
+        ncdr_file_total, ncdr_file_highest, ncdr_id_stack, &
+        current_ncdr_id, ncdr_id_stack_count, ncdr_id_stack_size, &
+        NCDR_DEFAULT_ENT
+    use ncdr_check, only: nc_diag_read_get_index_from_filename, &
+        ncdr_check_ncdr_id, ncdr_check_ncid, ncdr_nc_check
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_realloc_mod, only: ncdr_realloc
+    use netcdf, only: nf90_open, nf90_close, nf90_inquire, &
+        nf90_inq_libvers, NF90_NOWRITE
     
-    use ncdr_dims
-    use ncdr_vars
-    use ncdr_attrs
-    use ncdr_global_attrs
+    !------------------------------------------------------------------
+    ! API imports to expose API from this module
+    !------------------------------------------------------------------
+    use ncdr_alloc_assert, only: &
+        nc_diag_read_assert_var, &
+        nc_diag_read_assert_attr, &
+        nc_diag_read_assert_global_attr, &
+        nc_diag_read_get_type_str
     
-    !use utils
+    use ncdr_attrs, only: &
+        nc_diag_read_check_attr, &
+        nc_diag_read_get_attr_type, &
+        nc_diag_read_ret_attr_len, &
+        nc_diag_read_get_attr_len, &
+        nc_diag_read_get_attr_names
+    
+    use ncdr_attrs_fetch, only: &
+        nc_diag_read_get_attr, &
+        nc_diag_read_id_get_attr_1d_string, &
+        nc_diag_read_noid_get_attr_1d_string
+    
+    use ncdr_dims, only: &
+        nc_diag_read_lookup_dim, &
+        nc_diag_read_assert_dim, &
+        nc_diag_read_check_dim, &
+        nc_diag_read_get_dim, &
+        nc_diag_read_check_dim_unlim, &
+        nc_diag_read_get_dim_names, &
+        nc_diag_read_parse_file_dims
+    
+    use ncdr_global_attrs, only: &
+        nc_diag_read_check_global_attr, &
+        nc_diag_read_get_global_attr_type, &
+        nc_diag_read_ret_global_attr_len, &
+        nc_diag_read_get_global_attr_len, &
+        nc_diag_read_get_global_attr_names
+    
+    use ncdr_global_attrs_fetch, only: &
+        nc_diag_read_get_global_attr, &
+        nc_diag_read_id_get_global_attr_1d_string, &
+        nc_diag_read_noid_get_global_attr_1d_string
+    
+    use ncdr_vars, only: &
+        nc_diag_read_lookup_var, &
+        nc_diag_read_check_var, &
+        nc_diag_read_get_var_ndims, &
+        nc_diag_read_get_var_type, &
+        nc_diag_read_ret_var_dims, &
+        nc_diag_read_get_var_dims, &
+        nc_diag_read_get_var_names, &
+        nc_diag_read_parse_file_vars
+    
+    use ncdr_vars_fetch, only: nc_diag_read_get_var
+    
     implicit none
     
 #define INITIAL_SIZE 1024
@@ -23,6 +74,36 @@ module nc_diag_read
         ! NCID = NetCDF ID
         ! NCDR_ID = NetCDF Diag Reader ID (relative indexing)
         
+        ! NCID = NetCDF ID
+        ! NCDR_ID = NetCDF Diag Reader ID (relative indexing)
+        
+        ! Parses a given file for metadata, dimensions, and variables.
+        ! 
+        ! Given the NetCDF file name and its NCID, create an entry in
+        ! the internal nc_diag_read file table and populate it with
+        ! file information and variable/dimension structure.
+        ! 
+        ! This subroutine is meant to be called internally by
+        ! nc_diag_read_id_init, and is NOT meant for calling from
+        ! anywhere else.
+        ! 
+        ! Args:
+        !     filename (character(len=*): NetCDF file name to store in
+        !         internal file table.
+        !     file_ncid (integer(i_long)): the corresponding NetCDF ID
+        !         (NCID) of the opened NetCDF file to store in the
+        !         internal file table and use for file reading.
+        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
+        !         for use in other subroutines and functions. This is
+        !         essentially the index of the internal file table that
+        !         nc_diag_read uses for referencing the specified file.
+        ! 
+        ! Returns:
+        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
+        !         for use in other subroutines and functions. This is
+        !         essentially the index of the internal file table that
+        !         nc_diag_read uses for referencing the specified file.
+        ! 
         subroutine nc_diag_read_parse_file(filename, file_ncid, file_ncdr_id)
             character(len=*),intent(in)                :: filename
             integer(i_long), intent(in)                :: file_ncid
@@ -46,7 +127,7 @@ module nc_diag_read
             ncdr_files(ncdr_file_count)%ncid     = file_ncid
             
             ! Get top level info about the file!
-            call check(nf90_inquire(file_ncid, nDimensions = input_ndims, &
+            call ncdr_nc_check(nf90_inquire(file_ncid, nDimensions = input_ndims, &
                 nVariables = input_nvars, nAttributes = input_nattrs))
             
             call nc_diag_read_parse_file_dims(file_ncid, ncdr_file_count, input_ndims)
@@ -65,10 +146,23 @@ module nc_diag_read
             file_ncdr_id = ncdr_file_count
         end subroutine nc_diag_read_parse_file
         
+        ! Opens a given file for reading.
+        ! 
+        ! Given the NetCDF file name, open the file and set everything
+        ! up for reading the file. 
+        ! 
+        ! Args:
+        !     filename (character(len=*): NetCDF file name to store in
+        !         internal file table.
+        ! 
+        ! Returns:
+        !     file_ncdr_id (integer(i_long)): internal nc_diag_read ID
+        !         for use in other subroutines and functions. 
+        ! 
         function nc_diag_read_id_init(filename) result(file_ncdr_id)
             character(len=*),intent(in)    :: filename
             integer(i_long)                :: file_ncid
-            integer                        :: file_ncdr_id
+            integer(i_long)                :: file_ncdr_id
             
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)            :: action_str
@@ -81,11 +175,11 @@ module nc_diag_read
 #endif
             
             if (nc_diag_read_get_index_from_filename(filename) /= -1) &
-                call error("Can't open the same file more than once! (Opening, closing, and then opening again is allowed.)")
+                call ncdr_error("Can't open the same file more than once! (Opening, closing, and then opening again is allowed.)")
             
             write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
             
-            call check( nf90_open(filename, NF90_NOWRITE, file_ncid) )
+            call ncdr_nc_check( nf90_open(filename, NF90_NOWRITE, file_ncid) )
             
             call nc_diag_read_parse_file(filename, file_ncid, file_ncdr_id)
         end function nc_diag_read_id_init
@@ -107,7 +201,7 @@ module nc_diag_read
             
             if (ncdr_id_stack_count > 0) then
                 if (.NOT. (present(from_push) .AND. (from_push))) &
-                    call error("Can not initialize due to push/pop queue use! If you want to init without the stack, you must use nc_diag_read_id_init or clear the queue first!")
+                    call ncdr_error("Can not initialize due to push/pop queue use! If you want to init without the stack, you must use nc_diag_read_id_init or clear the queue first!")
             end if
             
             f_ncdr_id = nc_diag_read_id_init(filename)
@@ -133,7 +227,7 @@ module nc_diag_read
 #endif
             
             if ((ncdr_id_stack_count == 0) .AND. (current_ncdr_id /= -1)) &
-                call error("Can not initialize due to normal caching use! If you want to init with the stack, you must close the cached file first, then use nc_diag_read_push()!")
+                call ncdr_error("Can not initialize due to normal caching use! If you want to init with the stack, you must close the cached file first, then use nc_diag_read_push()!")
             
             ncdr_id_stack_count = ncdr_id_stack_count + 1
             
@@ -168,25 +262,25 @@ module nc_diag_read
             f_ncid = -1
             
             if (ncdr_file_count == 0) &
-                call error("No files are currently open!")
+                call ncdr_error("No files are currently open!")
             
             if (ncdr_id_stack_count > 0) then
                 if ((any(ncdr_id_stack == file_ncdr_id)) .AND. (.NOT. (present(from_pop) .AND. (from_pop)))) &
-                    call error("Can not close due to push/pop queue use! If you want to use this without the stack, you must use nc_diag_read_id_init or clear the queue first!")
+                    call ncdr_error("Can not close due to push/pop queue use! If you want to use this without the stack, you must use nc_diag_read_id_init or clear the queue first!")
             end if
             
             if (present(filename)) then
                 f_ncdr_id = nc_diag_read_get_index_from_filename(filename)
                 
                 if (f_ncdr_id == -1) &
-                    call error("The NetCDF file specified, " // filename // ", is not open and can't be closed.")
+                    call ncdr_error("The NetCDF file specified, " // filename // ", is not open and can't be closed.")
             else if (present(file_ncdr_id)) then
                 ! Do... nothing. Just store the ncid.
                 f_ncdr_id = file_ncdr_id
             else
                 ! Try to see if current_ncid is defined
                 if (current_ncdr_id == -1) &
-                    call error("No arguments specified for closing a file! (Also, no current NCIDs were found!)")
+                    call ncdr_error("No arguments specified for closing a file! (Also, no current NCIDs were found!)")
                 f_ncdr_id = current_ncdr_id
             end if
             
@@ -200,7 +294,7 @@ module nc_diag_read
             call ncdr_check_ncid(f_ncid)
             
             ! Close it!
-            call check(nf90_close(f_ncid))
+            call ncdr_nc_check(nf90_close(f_ncid))
             
             ! Deactivate entry...
             ncdr_files(f_ncdr_id)%file_open = .FALSE.
@@ -259,10 +353,10 @@ module nc_diag_read
             integer(i_long), intent(out), optional :: file_ncdr_id
             
             if (ncdr_id_stack_count == 0) &
-                call error("No NetCDF files to pop!")
+                call ncdr_error("No NetCDF files to pop!")
             
             if (current_ncdr_id /= ncdr_id_stack(ncdr_id_stack_count)) &
-                call error("BUG - current NCID differs from the current queued NCID!")
+                call ncdr_error("BUG - current NCID differs from the current queued NCID!")
             
             if (present(filename)) then
                 filename = ncdr_files(ncdr_id_stack(ncdr_id_stack_count))%filename

@@ -1,10 +1,12 @@
 module ncdr_attrs
-    use kinds
-    use netcdf
-    use ncdr_types
-    use ncdr_state
-    use ncdr_alloc_assert
-    use ncdr_attrs_fetch
+    use kinds, only: i_long
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_climsg, only: ncdr_error
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id
+    use ncdr_alloc_assert, only: nc_diag_read_assert_var
+    use netcdf, only: nf90_inquire_attribute, nf90_inquire_variable, &
+        nf90_inq_attname, NF90_ENOTATT, NF90_NOERR, NF90_MAX_NAME
     
     implicit none
     
@@ -59,7 +61,7 @@ module ncdr_attrs
             
             ! Sanity check - could be another error!
             if (nc_err /= NF90_NOERR) then
-                call check(nc_err)
+                call ncdr_nc_check(nc_err)
             end if
             
             attr_exists = .TRUE.
@@ -88,7 +90,7 @@ module ncdr_attrs
             var_id = ncdr_files(file_ncdr_id)%vars( &
                 nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
             
-            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
                 var_id, attr_name, attr_type))
         end function nc_diag_read_id_get_attr_type
         
@@ -116,7 +118,7 @@ module ncdr_attrs
             var_id = ncdr_files(file_ncdr_id)%vars( &
                 nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
             
-            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
                 var_id, attr_name, len = attr_len))
         end function nc_diag_read_id_ret_attr_len
         
@@ -131,7 +133,7 @@ module ncdr_attrs
         end function nc_diag_read_noid_ret_attr_len
         
         subroutine nc_diag_read_id_get_attr_len(file_ncdr_id, var_name, attr_name, attr_len)
-            integer, intent(in)                      :: file_ncdr_id
+            integer(i_long), intent(in)              :: file_ncdr_id
             character(len=*), intent(in)             :: var_name
             character(len=*), intent(in)             :: attr_name
             integer(i_long), intent(out)             :: attr_len
@@ -143,7 +145,7 @@ module ncdr_attrs
             var_id = ncdr_files(file_ncdr_id)%vars( &
                 nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
             
-            call check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_attribute(ncdr_files(file_ncdr_id)%ncid, &
                 var_id, attr_name, len = attr_len))
         end subroutine nc_diag_read_id_get_attr_len
         
@@ -158,10 +160,10 @@ module ncdr_attrs
         end subroutine nc_diag_read_noid_get_attr_len
         
         subroutine nc_diag_read_id_get_attr_names(file_ncdr_id, var_name, num_attrs, attr_name_mlen, attr_names)
-            integer, intent(in)                      :: file_ncdr_id
+            integer(i_long), intent(in)              :: file_ncdr_id
             character(len=*), intent(in)             :: var_name
-            integer, intent(out), optional           :: num_attrs
-            integer, intent(out), optional           :: attr_name_mlen
+            integer(i_long), intent(out), optional   :: num_attrs
+            integer(i_long), intent(out), optional   :: attr_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: attr_names
             
             integer(i_long)                :: var_id, nattrs, attr_index, max_attr_name_len
@@ -174,7 +176,7 @@ module ncdr_attrs
             
             var_id = ncdr_files(file_ncdr_id)%vars( &
                 nc_diag_read_assert_var(file_ncdr_id, var_name) )%var_id
-            call check(nf90_inquire_variable(ncdr_files(file_ncdr_id)%ncid, &
+            call ncdr_nc_check(nf90_inquire_variable(ncdr_files(file_ncdr_id)%ncid, &
                 var_id, nAtts = nattrs))
             
             if (present(num_attrs)) &
@@ -182,7 +184,7 @@ module ncdr_attrs
             
             ! Figure out character max length
             do attr_index = 1, nattrs
-                call check(nf90_inq_attname(ncdr_files(file_ncdr_id)%ncid, &
+                call ncdr_nc_check(nf90_inq_attname(ncdr_files(file_ncdr_id)%ncid, &
                     var_id, &
                     attr_index, &
                     attr_name))
@@ -199,13 +201,13 @@ module ncdr_attrs
                     allocate(character(max_attr_name_len) :: attr_names(nattrs))
                 else
                     if (size(attr_names) /= nattrs) &
-                        call error("Invalid allocated array size for attribute names storage!")
+                        call ncdr_error("Invalid allocated array size for attribute names storage!")
                     if (len(attr_names) < max_attr_name_len) &
-                        call error("Invalid allocated array size for attribute names storage! (String length does not match!)")
+                        call ncdr_error("Invalid allocated array size for attribute names storage! (String length does not match!)")
                 end if
                 
                 do attr_index = 1, nattrs
-                    call check(nf90_inq_attname(ncdr_files(file_ncdr_id)%ncid, &
+                    call ncdr_nc_check(nf90_inq_attname(ncdr_files(file_ncdr_id)%ncid, &
                         var_id, &
                         attr_index, &
                         attr_names(attr_index)))
@@ -215,8 +217,8 @@ module ncdr_attrs
         
         subroutine nc_diag_read_noid_get_attr_names(var_name, num_attrs, attr_name_mlen, attr_names)
             character(len=*), intent(in)             :: var_name
-            integer, intent(out), optional           :: num_attrs
-            integer, intent(out), optional           :: attr_name_mlen
+            integer(i_long), intent(out), optional   :: num_attrs
+            integer(i_long), intent(out), optional   :: attr_name_mlen
             character(len=:), intent(inout), dimension(:), allocatable, optional:: attr_names
             
             call ncdr_check_current_ncdr_id

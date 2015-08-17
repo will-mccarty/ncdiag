@@ -1,6 +1,7 @@
 module ncdr_state
-    use kinds
-    use ncdr_types
+    use kinds, only: i_long, i_short
+    use ncdr_types, only: ncdr_file
+    
     implicit none
     
     integer(i_long) :: current_ncdr_id = -1

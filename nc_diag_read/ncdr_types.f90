@@ -1,5 +1,7 @@
 module ncdr_types
-    use kinds
+    use kinds, only: i_long
+    
+    implicit none
     
     ! Dimensions type - type for storing all of the dimensions in the
     !                   file

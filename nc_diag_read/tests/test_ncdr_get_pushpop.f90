@@ -1,6 +1,14 @@
 program test_ncdr_get
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use nc_diag_read, only: nc_diag_read_init, nc_diag_read_id_init, &
+        nc_diag_read_close, nc_diag_read_get_dim_names, &
+        nc_diag_read_get_var_names, nc_diag_read_push, &
+        nc_diag_read_pop, nc_diag_read_get_current, &
+        nc_diag_read_get_current_queue, nc_diag_read_get_var
+    use netcdf, only: NF90_FILL_BYTE, NF90_FILL_SHORT, NF90_FILL_INT, &
+        NF90_FILL_FLOAT, NF90_FILL_DOUBLE, NF90_FILL_CHAR
+    
+    implicit none
     
     integer(i_long) :: ndims, ndims_len
     character(len=:), dimension(:), allocatable :: dim_names
@@ -99,8 +107,6 @@ program test_ncdr_get
     
     ! Just for more fun...
     tmp_ncdr_id_2 = nc_diag_read_id_init("test_fixed.nc")
-    
-    print *, ncdr_file_count
     
     call display_1d_var_long("chaninfosimple1")
     call display_1d_var_long("chaninfosimple2")

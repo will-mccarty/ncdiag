@@ -1,6 +1,8 @@
 program err_ncdr_invalid_ncdr_id_dim
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_long
+    use nc_diag_read, only: nc_diag_read_get_dim
+    
+    implicit none
     
     integer(i_long) :: i
     

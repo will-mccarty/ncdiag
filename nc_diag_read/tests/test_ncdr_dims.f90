@@ -1,6 +1,12 @@
 program test_ncdr_get
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_long
+    use nc_diag_read, only: nc_diag_read_init, nc_diag_read_close, &
+        nc_diag_read_lookup_dim, nc_diag_read_assert_dim, &
+        nc_diag_read_check_dim, nc_diag_read_get_dim, &
+        nc_diag_read_check_dim_unlim, nc_diag_read_id_init, &
+        nc_diag_read_get_dim_names, ncdr_error
+    
+    implicit none
     
     integer(i_long) :: ndims, ndims_len
     character(len=:), dimension(:), allocatable :: dim_names
@@ -42,17 +48,17 @@ program test_ncdr_get
         ind = nc_diag_read_lookup_dim(dim_name)
         ind = nc_diag_read_assert_dim(dim_name)
         if (nc_diag_read_check_dim(dim_name) == .FALSE.) &
-            call error("Can't find dim with check(), even when it's listed!")
+            call ncdr_error("Can't find dim with check(), even when it's listed!")
         write (*, "(A, I0, A, L)") "    -> Dimension: " // dim_name // " | Size : ", &
             nc_diag_read_get_dim(dim_name), " | Unlimited? ", &
             nc_diag_read_check_dim_unlim(dim_name)
     end do
     
     if (nc_diag_read_lookup_dim("INVALID_DIM_INVALID") /= -1) &
-        call error("Invalid dimension lookup result check failed.")
+        call ncdr_error("Invalid dimension lookup result check failed.")
     
     if (nc_diag_read_check_dim("INVALID_DIM_INVALID")) &
-        call error("Invalid dimension check result check = TRUE failed.")
+        call ncdr_error("Invalid dimension check result check = TRUE failed.")
     
     ! These will result in an error:
     !i = nc_diag_read_assert_dim("INVALID_DIM_INVALID")
@@ -79,7 +85,7 @@ program test_ncdr_get
         ind = nc_diag_read_lookup_dim(tmp_ncdr_id_2, dim_name)
         ind = nc_diag_read_assert_dim(tmp_ncdr_id_2, dim_name)
         if (nc_diag_read_check_dim(tmp_ncdr_id_2, dim_name) == .FALSE.) &
-            call error("Can't find dim with check(), even when it's listed!")
+            call ncdr_error("Can't find dim with check(), even when it's listed!")
         write (*, "(A, I0, A, L)") "    -> Dimension: " // dim_name // " | Size : ", &
             nc_diag_read_get_dim(tmp_ncdr_id_2, dim_name), " | Unlimited? ", &
             nc_diag_read_check_dim_unlim(tmp_ncdr_id_2, dim_name)

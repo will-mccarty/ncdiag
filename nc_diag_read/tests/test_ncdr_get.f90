@@ -1,6 +1,17 @@
 program test_ncdr_get
-    use nc_diag_read
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use nc_diag_read, only: nc_diag_read_init, nc_diag_read_close, &
+        nc_diag_read_get_dim_names, &
+        nc_diag_read_get_var, &
+        nc_diag_read_get_var_type, &
+        nc_diag_read_get_var_ndims, &
+        nc_diag_read_get_var_names, &
+        ncdr_error
+    use netcdf, only: NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, &
+        NF90_DOUBLE, NF90_CHAR, NF90_FILL_BYTE, NF90_FILL_SHORT, &
+        NF90_FILL_INT, NF90_FILL_FLOAT, NF90_FILL_DOUBLE, NF90_FILL_CHAR
+    
+    implicit none
     
     integer(i_long) :: nvars, nvars_len
     character(len=:), dimension(:), allocatable :: var_names
@@ -119,7 +130,7 @@ program test_ncdr_get
             else if (var_type == NF90_CHAR) then
                 call display_1d_var_string(var_names(i))
             else
-                call error("Invalid type!")
+                call ncdr_error("Invalid type!")
             end if
         else if (((var_ndims == 2) .AND. (var_type /= NF90_CHAR)) &
             .OR. ((var_ndims == 3) .AND. (var_type == NF90_CHAR))) then
@@ -136,10 +147,10 @@ program test_ncdr_get
             else if (var_type == NF90_CHAR) then
                 call display_2d_var_string(var_names(i))
             else
-                call error("Invalid type!")
+                call ncdr_error("Invalid type!")
             end if
         else
-            call error("Invalid ndims!")
+            call ncdr_error("Invalid ndims!")
         end if
     end do
     

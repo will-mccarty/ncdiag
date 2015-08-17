@@ -1,9 +1,15 @@
 module ncdr_attrs_fetch
-    use kinds
-    use netcdf
-    use ncdr_types
-    use ncdr_state
-    use ncdr_alloc_assert
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id, ncdr_check_ncid
+    use ncdr_alloc_assert, only: nc_diag_read_id_assert_var, &
+        nc_diag_read_id_assert_attr, nc_diag_read_assert_attr_type, &
+        nc_diag_read_assert_dims, nc_diag_read_assert_dims_alloc_string
+    use netcdf, only: nf90_get_att, NF90_BYTE, NF90_SHORT, NF90_INT, &
+        NF90_FLOAT, NF90_DOUBLE, NF90_CHAR
+    
+    implicit none
     
     interface nc_diag_read_get_attr
         ! Note that nc_diag_read_(no)id_get_attr_1d_string is not
@@ -54,7 +60,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -89,7 +95,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -124,7 +130,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -159,7 +165,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -194,7 +200,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -229,7 +235,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -264,7 +270,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -299,7 +305,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -334,7 +340,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -369,7 +375,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -404,7 +410,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))
@@ -439,7 +445,7 @@ module ncdr_attrs_fetch
             
             call nc_diag_read_assert_dims_alloc_string(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     ncdr_files(file_ncdr_id)%vars(var_index)%var_id, &
                     attr_name, &
                     attr_stor))

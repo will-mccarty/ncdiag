@@ -1,9 +1,15 @@
 module ncdr_global_attrs_fetch
-    use kinds
-    use netcdf
-    use ncdr_types
-    use ncdr_state
-    use ncdr_alloc_assert
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use ncdr_state, only: ncdr_files, current_ncdr_id
+    use ncdr_check, only: ncdr_nc_check, ncdr_check_ncdr_id, &
+        ncdr_check_current_ncdr_id, ncdr_check_ncid
+    use ncdr_alloc_assert, only: nc_diag_read_id_assert_global_attr, &
+        nc_diag_read_assert_global_attr_type, &
+        nc_diag_read_assert_dims, nc_diag_read_assert_dims_alloc_string
+    use netcdf, only: nf90_get_att, NF90_BYTE, NF90_SHORT, NF90_INT, &
+        NF90_FLOAT, NF90_DOUBLE, NF90_CHAR, NF90_GLOBAL
+    
+    implicit none
     
     interface nc_diag_read_get_global_attr
         ! Note that nc_diag_read_(no)id_get_global_attr_1d_string is not
@@ -35,7 +41,7 @@ module ncdr_global_attrs_fetch
     
     contains
         subroutine nc_diag_read_id_get_global_attr_1d_byte(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_byte), dimension(:), allocatable, intent(inout) :: attr_stor
             
@@ -52,7 +58,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -67,7 +73,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_byte
         
         subroutine nc_diag_read_id_get_global_attr_1d_short(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_short), dimension(:), allocatable, intent(inout) :: attr_stor
             
@@ -84,7 +90,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -99,7 +105,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_short
         
         subroutine nc_diag_read_id_get_global_attr_1d_long(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_long), dimension(:), allocatable, intent(inout) :: attr_stor
             
@@ -116,7 +122,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -131,7 +137,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_long
         
         subroutine nc_diag_read_id_get_global_attr_1d_float(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             real(r_single), dimension(:), allocatable, intent(inout) :: attr_stor
             
@@ -148,7 +154,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -163,7 +169,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_float
         
         subroutine nc_diag_read_id_get_global_attr_1d_double(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             real(r_double), dimension(:), allocatable, intent(inout) :: attr_stor
             
@@ -180,7 +186,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -195,7 +201,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_double
         
         subroutine nc_diag_read_id_get_global_attr_1d_string(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             character(len=:),allocatable,intent(inout) :: attr_stor
             
@@ -212,7 +218,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims_alloc_string(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -227,7 +233,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_1d_string
         
         subroutine nc_diag_read_id_get_global_attr_single_byte(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_byte)                            :: attr_stor
             
@@ -244,7 +250,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -259,7 +265,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_single_byte
         
         subroutine nc_diag_read_id_get_global_attr_single_short(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_short)                           :: attr_stor
             
@@ -276,7 +282,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -291,7 +297,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_single_short
         
         subroutine nc_diag_read_id_get_global_attr_single_long(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             integer(i_long)                            :: attr_stor
             
@@ -308,7 +314,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -323,7 +329,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_single_long
         
         subroutine nc_diag_read_id_get_global_attr_single_float(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             real(r_single)                             :: attr_stor
             
@@ -340,7 +346,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -355,7 +361,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_single_float
         
         subroutine nc_diag_read_id_get_global_attr_single_double(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             real(r_double)                             :: attr_stor
             
@@ -372,7 +378,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
@@ -387,7 +393,7 @@ module ncdr_global_attrs_fetch
         end subroutine nc_diag_read_noid_get_global_attr_single_double
         
         subroutine nc_diag_read_id_get_global_attr_single_string(file_ncdr_id, attr_name, attr_stor)
-            integer, intent(in)                        :: file_ncdr_id
+            integer(i_long), intent(in)                :: file_ncdr_id
             character(len=*), intent(in)               :: attr_name
             character(len=*)                           :: attr_stor
             
@@ -404,7 +410,7 @@ module ncdr_global_attrs_fetch
             
             call nc_diag_read_assert_dims(attr_stor, (/ attr_len /))
             
-            call check(nf90_get_att(file_ncid, &
+            call ncdr_nc_check(nf90_get_att(file_ncid, &
                     NF90_GLOBAL, &
                     attr_name, &
                     attr_stor))
