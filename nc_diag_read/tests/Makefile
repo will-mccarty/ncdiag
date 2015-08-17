@@ -203,5 +203,5 @@ coverage: precoverage clean check
 	rm -f *.mod *.o
 
 clean:
-	rm -f *.mod *.x *.o
+	rm -f *.mod *.x *.o err/*.x err/*.mod err/*.o
 	rm -rf pgopti.* CodeCoverage CODE_COVERAGE.HTML *.dyn
