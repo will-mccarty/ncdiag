@@ -1,3 +1,5 @@
+include ../Makefile.config
+
 SRC=src
 DIST=lib
 BUILD=build
@@ -23,7 +25,7 @@ ifeq ($(BUILD_STATIC), 1)
 endif
 
 FC = ifort
-FCFLAGS = -O2
+FCFLAGS = $(NCDRES_F90FLAGS)
 LDFLAGS=
 
 # "make" builds all
