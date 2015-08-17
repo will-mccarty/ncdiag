@@ -8,8 +8,7 @@ FSON_DEPS+=fson/Makefile \
     fson/src/fson_value_m.f90
 
 NC_DIAG_READ_DEPS+=Makefile \
-    ncdres_climsg.o \
-    kinds.o
+    ncdres_climsg.o
 
 NC_DIAG_READ_OBJS+= \
     nc_diag_res.o \
@@ -37,12 +36,7 @@ nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_READ_DEPS)
 		-Ifson/lib -Lfson/lib -lfson
 	$(NCDRES_MAKE_FANCY_END)
 
-kinds.o: kinds.F90 Makefile Makefile.config Makefile.libconfig
-	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) -c kinds.F90 $(NCDRES_CONFIG_FLAGS)
-	$(NCDRES_MAKE_FANCY_END)
-
-ncdres_climsg.o: ncdres_climsg.F90 kinds.o
+ncdres_climsg.o: ncdres_climsg.F90
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c ncdres_climsg.F90

@@ -1,6 +1,5 @@
 program test_ncdres_fopen_crash
-    use kinds
-    use nc_diag_res
+    use nc_diag_res, only: nc_diag_load_resource_file
     
     call nc_diag_load_resource_file("test_invalid.json")
     

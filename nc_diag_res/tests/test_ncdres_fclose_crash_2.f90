@@ -1,6 +1,6 @@
 program test_ncdres_fclose_crash_2
-    use kinds
-    use nc_diag_res
+    use nc_diag_res, only: nc_diag_load_resource_file, &
+        nc_diag_close_resource_file
     
     call nc_diag_load_resource_file("test_invalid.json")
     
