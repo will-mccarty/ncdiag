@@ -1,14 +1,14 @@
 module ncdres_climsg
     ! NetCDF Diag Reader - CLI Message portion
     ! (Declarations)
-    logical :: enable_info = .FALSE.
-    logical :: enable_action = .FALSE.
+    logical :: ncdres_enable_info = .FALSE.
+    logical :: ncdres_enable_action = .FALSE.
     
     contains
         ! NetCDF Diag Reader - CLI Message portion
         ! (Subroutine/Function implementation)
         
-        subroutine error(err)
+        subroutine ncdres_error(err)
             character(len=*), intent(in) :: err
 #ifdef ERROR_TRACEBACK
             integer                      :: div0
@@ -33,9 +33,9 @@ module ncdres_climsg
             write (*, "(A)") " ** Failed to read NetCDF4."
             stop 1
 #endif
-        end subroutine error
+        end subroutine ncdres_error
         
-        subroutine warning(warn)
+        subroutine ncdres_warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[33m" // &
@@ -44,23 +44,23 @@ module ncdres_climsg
 #else
             write(*, "(A)") " ** WARNING: " // warn
 #endif
-        end subroutine warning
+        end subroutine ncdres_warning
         
-        subroutine set_action_display(action_on_off)
+        subroutine ncdres_set_action_display(action_on_off)
             logical :: action_on_off
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (ncdres_enable_action) then
                 write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
                 call actionm(trim(action_str))
             end if
 #endif
-            enable_action = action_on_off
-        end subroutine set_action_display
+            ncdres_enable_action = action_on_off
+        end subroutine ncdres_set_action_display
         
 #ifdef ENABLE_ACTION_MSGS
-        subroutine actionm(act)
+        subroutine ncdres_actionm(act)
             character(len=*), intent(in) :: act
             if (enable_action) &
 #ifdef ANSI_TERM_COLORS
@@ -70,10 +70,10 @@ module ncdres_climsg
 #else
                 write(*, "(A)") " **  ACTION: " // act
 #endif
-        end subroutine actionm
+        end subroutine ncdres_actionm
 #endif
         
-        subroutine set_info_display(info_on_off)
+        subroutine ncdres_set_info_display(info_on_off)
             logical :: info_on_off
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
@@ -83,12 +83,12 @@ module ncdres_climsg
                 call actionm(trim(action_str))
             end if
 #endif
-            enable_info = info_on_off
-        end subroutine set_info_display
+            ncdres_enable_info = info_on_off
+        end subroutine ncdres_set_info_display
         
-        subroutine info(ifo)
+        subroutine ncdres_info(ifo)
             character(len=*), intent(in) :: ifo
-            if (enable_info) &
+            if (ncdres_enable_info) &
 #ifdef ANSI_TERM_COLORS
                 write(*, "(A)") CHAR(27) // "[34m" // &
                                 " **    INFO: " // ifo // &
@@ -96,13 +96,13 @@ module ncdres_climsg
 #else
                 write(*, "(A)") " **    INFO: " // ifo
 #endif
-        end subroutine info
+        end subroutine ncdres_info
         
 #ifdef _DEBUG_MEM_
-        subroutine debug(dbg)
+        subroutine ncdres_debug(dbg)
             character(len=*), intent(in) :: dbg
             write(*, "(A, A)") "D: ", dbg
-        end subroutine debug
+        end subroutine ncdres_debug
 #endif
 
 end module ncdres_climsg

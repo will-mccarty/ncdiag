@@ -22,7 +22,7 @@ module nc_diag_res
             character(len=*), intent(in) :: filename
             
             if (associated(nc_diag_json)) &
-                call error("Resource file already open!")
+                call ncdres_error("Resource file already open!")
             
             nc_diag_json => fson_parse(filename)
         end subroutine nc_diag_load_resource_file
@@ -72,7 +72,7 @@ module nc_diag_res
                 call fson_destroy(nc_diag_json)
                 nullify(nc_diag_json)
             else
-                call error("No resource file open!")
+                call ncdres_error("No resource file open!")
             end if
         end subroutine nc_diag_close_resource_file
 end module nc_diag_res
