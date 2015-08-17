@@ -64,17 +64,6 @@
 # --------------------------------------------------------------------
 # 
 
-# The following doesn't work - it only considers the base Makefile, not
-# the included one...
-# 
-# NCDR_MAKEFILE := $(abspath $(lastword $(MAKEFILE_LIST)))
-# 
-# This also doesn't work if we use an absolute path:
-# NCDR_MAKEFILE := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
-# 
-# This doesn't work, either:
-# NCDR_PATH := $(notdir $(patsubst %/,%,$(dir $(NCDR_MAKEFILE))))
-
 # First, use a trick to get the included (Makefile.libconfig) path:
 # Check if we are using an absolute path - aka we have a slash.
 # If we don't, process with relative path...
