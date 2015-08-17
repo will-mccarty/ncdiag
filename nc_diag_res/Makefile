@@ -1,6 +1,12 @@
 # Include build configuration:
 include Makefile.config
 
+FSON_DEPS+=fson/Makefile \
+    fson/src/fson.f90 \
+    fson/src/fson_path_m.f90 \
+    fson/src/fson_string_m.f90 \
+    fson/src/fson_value_m.f90
+
 NC_DIAG_READ_DEPS+=Makefile \
     ncdres_climsg.o \
     kinds.o
@@ -42,10 +48,8 @@ ncdres_climsg.o: ncdres_climsg.F90 kinds.o
 		-c ncdres_climsg.F90
 	$(NCDRES_MAKE_FANCY_END)
 
-fson/lib/libfson.a: fson/Makefile fson/src/*
-	$(NCDRES_MAKE_FANCY_BIGLIB_BEGIN)
-	$(NCDRES_MAKE_QUIET)make -C fson lib
-	$(NCDRES_MAKE_FANCY_BIGLIB_END)
+fson/lib/libfson.a: $(FSON_DEPS)
+	make -C fson lib
 
 clean:
 	rm -f *.mod *.x *.o *.a
