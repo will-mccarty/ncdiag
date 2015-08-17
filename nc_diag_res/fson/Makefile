@@ -1,3 +1,5 @@
+# This file has been set up to build with nc_diag_res.
+# Do NOT change this file!
 include ../Makefile.config
 
 SRC=src
@@ -38,12 +40,16 @@ FSON = fson_string_m fson_value_m fson_path_m fson
 OBJECTS = $(patsubst %, $(BUILD)/%$(OBJ), $(FSON))
 
 $(LIBTARGET) : $(OBJECTS)
-	mkdir -p `dirname $@`
-	$(FC) -shared -o $(LIBTARGET) $^
+	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
+	$(NCDRES_MAKE_QUIET)mkdir -p `dirname $@`
+	$(NCDRES_MAKE_QUIET)$(FC) -shared -o $(LIBTARGET) $^
+	$(NCDRES_MAKE_FANCY_BIG_END)
 
 $(LIBTARGET_STATIC) : $(OBJECTS)
-	mkdir -p `dirname $@`
-	ar rcs $(LIBTARGET_STATIC) $^
+	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
+	$(NCDRES_MAKE_QUIET)mkdir -p `dirname $@`
+	$(NCDRES_MAKE_QUIET)ar rcs $(LIBTARGET_STATIC) $^
+	$(NCDRES_MAKE_FANCY_BIG_END)
 
 lib: $(BUILD_LIBS)
 
@@ -53,8 +59,10 @@ $(DIST)/%.json : $(SRC)/%.json
 
 # build fson objects
 $(BUILD)/%$(OBJ): $(SRC)/%$(F95)
-	mkdir -p `dirname $@`
-	$(FC) $(FCFLAGS) -fpic -module $(DIST) -c $< -o $@
+	$(NCDRES_MAKE_FANCY_BEGIN)
+	$(NCDRES_MAKE_QUIET)mkdir -p `dirname $@`
+	$(NCDRES_MAKE_QUIET)$(FC) $(FCFLAGS) -fpic -module $(DIST) -c $< -o $@
+	$(NCDRES_MAKE_FANCY_END)
 
 clean:
 	rm -rf $(BUILD)

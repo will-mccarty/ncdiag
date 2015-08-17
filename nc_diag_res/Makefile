@@ -26,9 +26,9 @@ check:
 	make -C tests check
 
 libnc_diag_res.a: $(NC_DIAG_READ_OBJS)
-	$(NCDRES_MAKE_FANCY_BIGLIB_BEGIN)
+	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
 	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_READ_OBJS)
-	$(NCDRES_MAKE_FANCY_BIGLIB_END)
+	$(NCDRES_MAKE_FANCY_BIG_END)
 
 nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_READ_DEPS)
 	$(NCDRES_MAKE_FANCY_BEGIN)
