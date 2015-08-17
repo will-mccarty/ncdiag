@@ -23,7 +23,7 @@ endif
 
 ifeq ($(STATIC_COMPILE), 1)
     NC_DIAG_RES_FLAGS=
-    NC_DIAG_COV_FLAGS=-I.. \
+    NCDRES_F90FLAGS+=-I.. \
         ../fson/src/fson_string_m.f90 ../fson/src/fson_value_m.f90 \
         ../fson/src/fson_path_m.f90 ../fson/src/fson.f90 ../nc_diag_res.f90 ../ncdres_*.F90 
 endif
@@ -40,42 +40,37 @@ check: $(NC_DIAG_RES_TESTS) $(NC_DIAG_RES_TESTS_FAIL)
 
 test_ncdres_simple.x: test_ncdres_simple.f90 $(NCDRES_LIB_PATH)
 	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) \
 		test_ncdres_simple.f90 -o test_ncdres_simple.x \
-		$(NC_DIAG_RES_FLAGS) \
-		$(NCDRES_NETCDF_FLAGS)
+		$(NC_DIAG_RES_FLAGS)
 	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_invalid.x: test_ncdres_invalid.f90 $(NCDRES_LIB_PATH)
 	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) \
 		test_ncdres_invalid.f90 -o test_ncdres_invalid.x \
-		$(NC_DIAG_RES_FLAGS) \
-		$(NCDRES_NETCDF_FLAGS)
+		$(NC_DIAG_RES_FLAGS)
 	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fopen_crash.x: test_ncdres_fopen_crash.f90 $(NCDRES_LIB_PATH)
 	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) \
 		test_ncdres_fopen_crash.f90 -o test_ncdres_fopen_crash.x \
-		$(NC_DIAG_RES_FLAGS) \
-		$(NCDRES_NETCDF_FLAGS)
+		$(NC_DIAG_RES_FLAGS)
 	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fclose_crash_1.x: test_ncdres_fclose_crash_1.f90 $(NCDRES_LIB_PATH)
 	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) \
 		test_ncdres_fclose_crash_1.f90 -o test_ncdres_fclose_crash_1.x \
-		$(NC_DIAG_RES_FLAGS) \
-		$(NCDRES_NETCDF_FLAGS)
+		$(NC_DIAG_RES_FLAGS)
 	$(NCDRES_MAKE_FANCY_END)
 
 test_ncdres_fclose_crash_2.x: test_ncdres_fclose_crash_2.f90 $(NCDRES_LIB_PATH)
 	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NC_DIAG_COV_FLAGS) \
+	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) \
 		test_ncdres_fclose_crash_2.f90 -o test_ncdres_fclose_crash_2.x \
-		$(NC_DIAG_RES_FLAGS) \
-		$(NCDRES_NETCDF_FLAGS)
+		$(NC_DIAG_RES_FLAGS)
 	$(NCDRES_MAKE_FANCY_END)
 
 $(NCDRES_LIB_PATH): $(NCDRES_LIB_DEPS)
