@@ -41,11 +41,16 @@ module ncdc_climsg
                             CHAR(27) // "[0m"
 #endif
 #ifdef ERROR_TRACEBACK
-            write(*, "(A)") " ** Failed to process data/write NetCDF4."
+            write(*, "(A)") " ** Failed to concatenate NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
             div0 = 1 / 0
+            write(*, "(A)") "    Couldn't trigger traceback, ending gracefully."
+            write(*, "(A)") "    (Ensure floating point exceptions are enabled,"
+            write(*, "(A)") "    and that you have debugging (-g) and tracebacks"
+            write(*, "(A)") "    compiler flags enabled!)"
+            stop 1
 #else
-            stop " ** Failed to process data/write NetCDF4."
+            stop " ** Failed to concatenate NetCDF4."
 #endif
         end subroutine error
         
