@@ -312,9 +312,6 @@ module nc_diag_read
             ! help us clear memory when we can!
             range_closed = .TRUE.
             
-            !print *, "UPDATE:      f_ind, ncdr_file_count, ncdr_file_highest"
-            !print *, "PREUPDATE:", f_ind, ncdr_file_count, ncdr_file_highest
-            
             if (f_ncdr_id < ncdr_file_highest) then
                 do i = f_ncdr_id, ncdr_file_highest
                     if (ncdr_files(i)%file_open) then
@@ -343,8 +340,6 @@ module nc_diag_read
                     ncdr_file_count = 0
                 end if
             end if
-            
-            !print *, "POSTUPDATE:", f_ind, ncdr_file_count, ncdr_file_highest
         end subroutine nc_diag_read_close
         
         ! Pop - we return the thing we just deleted, and push things up!

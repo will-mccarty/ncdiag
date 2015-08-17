@@ -14,19 +14,6 @@ program test_ncdr_get
     integer(i_long) :: i, tmp_ncdr_id, tmp_ncdr_id_2, ind
     character(len=:), allocatable :: dim_name
     
-    ! nc_diag_read_lookup_dim
-    ! nc_diag_read_assert_dim
-    ! nc_diag_read_check_dim
-    ! nc_diag_read_get_dim
-    ! nc_diag_read_check_dim_unlim
-    ! nc_diag_read_get_dim_names
-    ! 
-    ! All functions except last one!
-    
-    !------------------------------------------------------------------
-    ! Subroutine allocation method testing
-    !------------------------------------------------------------------
-    
     !------------------------------------------------------------------
     ! Make sure if we close with ncdr_id via caching, we actually clear
     ! the cache!

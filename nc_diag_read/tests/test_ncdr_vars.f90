@@ -18,23 +18,6 @@ program test_ncdr_vars
     
     integer(i_long), dimension(:), allocatable  :: var_dims
     
-    ! nc_diag_read_lookup_var
-    ! nc_diag_read_check_var
-    ! nc_diag_read_get_var_ndims
-    ! nc_diag_read_get_var_type
-    ! nc_diag_read_ret_var_dims
-    ! nc_diag_read_get_var_dims
-    ! nc_diag_read_get_var_names
-    ! All functions except last TWO!
-    
-    !------------------------------------------------------------------
-    ! Subroutine allocation method testing
-    !------------------------------------------------------------------
-    
-    !------------------------------------------------------------------
-    ! Make sure if we close with ncdr_id via caching, we actually clear
-    ! the cache!
-    !------------------------------------------------------------------
     call nc_diag_read_init("test.nc", tmp_ncdr_id)
     
     write (*, "(A)") " ** File: test.nc (using cached ncdr_id)"

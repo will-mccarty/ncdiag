@@ -11,10 +11,6 @@ program test_ncdr_get_ardg
     
     implicit none
     
-    !------------------------------------------------------------------
-    ! Subroutine allocation method testing
-    !------------------------------------------------------------------
-    
     call nc_diag_read_init("test.nc")
     !call nc_diag_read_init("test_fixed.nc")
     call display_1d_var_long("chaninfosimple1")
@@ -82,16 +78,6 @@ program test_ncdr_get_ardg
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
-            !print *, var_stor
-            
-            !do i = 1, size(var_stor)
-            !    if (var_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A5)", advance = "no") "(em) "
-            !    else
-            !        write (*, "(I4, A)", advance = "no") var_stor(i), " "
-            !    end if
-            !end do
-            
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_INT) then
                     write (*, "(A4)") "(em)"
@@ -117,16 +103,6 @@ program test_ncdr_get_ardg
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
             
-            !print *, var_stor
-            
-            !do i = 1, size(var_stor)
-            !    if (var_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A7)", advance = "no") "(emp) "
-            !    else
-            !        write (*, "(I6, A)", advance = "no") var_stor(i), " "
-            !    end if
-            !end do
-            
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_INT) then
                     write (*, "(A6)") "(emp)"
@@ -151,15 +127,6 @@ program test_ncdr_get_ardg
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            !print *, var_stor
-            
-            !do i = 1, size(var_stor)
-            !    if (var_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A13)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(I12, A)", advance = "no") var_stor(i), " "
-            !    end if
-            !end do
             
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_INT) then
@@ -186,15 +153,6 @@ program test_ncdr_get_ardg
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            !print *, var_stor
-            
-            !do i = 1, size(var_stor)
-            !    if (var_stor(i) == NF90_FILL_FLOAT) then
-            !        write (*, "(A19)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(F18.10, A)", advance = "no") var_stor(j, i), " "
-            !    end if
-            !end do
             
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_FLOAT) then
@@ -218,15 +176,6 @@ program test_ncdr_get_ardg
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            !print *, var_stor
-            
-            !do i = 1, size(var_stor)
-            !    if (var_stor(i) == NF90_FILL_FLOAT) then
-            !        write (*, "(A17)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(F16.13, A)", advance = "no") var_stor(j, i), " "
-            !    end if
-            !end do
             
             do i = 1, size(var_stor)
                 if (var_stor(i) == NF90_FILL_DOUBLE) then
@@ -252,15 +201,6 @@ program test_ncdr_get_ardg
             call nc_diag_read_get_var(var_name, var_stor)
             
             write (*, "(A, I0, A)") " ** Variable (1D): " // var_name // " (Elements: ", size(var_stor), ")"
-            
-            !do i = 1, size(var_stor)
-            !    if ((i > 1) .AND. (mod(i - 1, 5) == 0)) write (*, "(A)") ""
-            !    if ((var_stor(i)(1:1) == NF90_FILL_CHAR) .OR. (len(var_stor(i)) == 0)) then
-            !        write (*, "(A20)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(A20)", advance = "no") '"' // var_stor(i) // '" '
-            !    end if
-            !end do
             
             do i = 1, size(var_stor)
                 if ((var_stor(i)(1:1) == NF90_FILL_CHAR) .OR. (len(var_stor(i)) == 0)) then

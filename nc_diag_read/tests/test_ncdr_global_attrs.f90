@@ -25,23 +25,6 @@ program test_ncdr_attrs
     integer(i_long) :: i, tmp_ncdr_id, tmp_ncdr_id_2, ind, attr_len, attr_type
     character(len=:), allocatable :: attr_name
     
-    ! nc_diag_read_lookup_attr
-    ! nc_diag_read_assert_attr
-    ! nc_diag_read_check_attr
-    ! nc_diag_read_get_global_attr
-    ! nc_diag_read_check_attr_unlim
-    ! nc_diag_read_get_global_attr_names
-    ! 
-    ! All functions except last one!
-    
-    !------------------------------------------------------------------
-    ! Subroutine allocation method testing
-    !------------------------------------------------------------------
-    
-    !------------------------------------------------------------------
-    ! Make sure if we close with ncdr_id via caching, we actually clear
-    ! the cache!
-    !------------------------------------------------------------------
     call nc_diag_read_init("test.nc", tmp_ncdr_id)
     
     write (*, "(A)") " ** File: test.nc (using cached ncdr_id)"
@@ -174,16 +157,6 @@ program test_ncdr_attrs
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", size(attr_stor), ")"
             
-            !print *, attr_stor
-            
-            !do i = 1, size(attr_stor)
-            !    if (attr_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A5)", advance = "no") "(em) "
-            !    else
-            !        write (*, "(I4, A)", advance = "no") attr_stor(i), " "
-            !    end if
-            !end do
-            
             do i = 1, size(attr_stor)
                 if (attr_stor(i) == NF90_FILL_BYTE) then
                     write (*, "(A4)") "(em)"
@@ -220,16 +193,6 @@ program test_ncdr_attrs
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", size(attr_stor), ")"
             
-            !print *, attr_stor
-            
-            !do i = 1, size(attr_stor)
-            !    if (attr_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A7)", advance = "no") "(emp) "
-            !    else
-            !        write (*, "(I6, A)", advance = "no") attr_stor(i), " "
-            !    end if
-            !end do
-            
             do i = 1, size(attr_stor)
                 if (attr_stor(i) == NF90_FILL_SHORT) then
                     write (*, "(A6)") "(emp)"
@@ -265,15 +228,6 @@ program test_ncdr_attrs
             end if
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", size(attr_stor), ")"
-            !print *, attr_stor
-            
-            !do i = 1, size(attr_stor)
-            !    if (attr_stor(i) == NF90_FILL_INT) then
-            !        write (*, "(A13)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(I12, A)", advance = "no") attr_stor(i), " "
-            !    end if
-            !end do
             
             do i = 1, size(attr_stor)
                 if (attr_stor(i) == NF90_FILL_INT) then
@@ -310,15 +264,6 @@ program test_ncdr_attrs
             end if
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", size(attr_stor), ")"
-            !print *, attr_stor
-            
-            !do i = 1, size(attr_stor)
-            !    if (attr_stor(i) == NF90_FILL_FLOAT) then
-            !        write (*, "(A19)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(F18.10, A)", advance = "no") attr_stor(j, i), " "
-            !    end if
-            !end do
             
             do i = 1, size(attr_stor)
                 if (attr_stor(i) == NF90_FILL_FLOAT) then
@@ -353,15 +298,6 @@ program test_ncdr_attrs
             end if
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", size(attr_stor), ")"
-            !print *, attr_stor
-            
-            !do i = 1, size(attr_stor)
-            !    if (attr_stor(i) == NF90_FILL_FLOAT) then
-            !        write (*, "(A17)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(F16.13, A)", advance = "no") attr_stor(j, i), " "
-            !    end if
-            !end do
             
             do i = 1, size(attr_stor)
                 if (attr_stor(i) == NF90_FILL_DOUBLE) then
@@ -406,15 +342,6 @@ program test_ncdr_attrs
             end do
             
             write (*, "(A, I0, A)") " ** Attribute (1D): " // attr_name // " (Elements: ", len_trim(attr_stor), ")"
-            
-            !do i = 1, size(attr_stor)
-            !    if ((i > 1) .AND. (mod(i - 1, 5) == 0)) write (*, "(A)") ""
-            !    if ((attr_stor(i)(1:1) == NF90_FILL_CHAR) .OR. (len(attr_stor(i)) == 0)) then
-            !        write (*, "(A20)", advance = "no") "(empty) "
-            !    else
-            !        write (*, "(A20)", advance = "no") '"' // attr_stor(i) // '" '
-            !    end if
-            !end do
             
             if ((attr_stor(1:1) == NF90_FILL_CHAR) .OR. (len(attr_stor) == 0)) then
                 write (*, "(A)") "(empty)"

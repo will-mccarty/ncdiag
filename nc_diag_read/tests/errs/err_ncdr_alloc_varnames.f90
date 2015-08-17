@@ -13,10 +13,6 @@ program err_ncdr_alloc_varnames
     
     integer(i_long) :: i, var_type, var_ndims
     
-    !------------------------------------------------------------------
-    ! Subroutine allocation method testing
-    !------------------------------------------------------------------
-    
     call nc_diag_read_init("test.nc")
     
     ! Using an invalid NCDR ID should fail:
