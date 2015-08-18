@@ -7,16 +7,16 @@ FSON_DEPS+=fson/Makefile \
     fson/src/fson_string_m.f90 \
     fson/src/fson_value_m.f90
 
-NC_DIAG_READ_DEPS+=Makefile \
+NC_DIAG_RES_DEPS+=Makefile \
     ncdres_climsg.o
 
-NC_DIAG_READ_OBJS+= \
-    nc_diag_res.o \
-    ncdres_climsg.o
+NC_DIAG_RES_OBJS+= \
+    $(NC_DIAG_RES_DEPS) \
+    nc_diag_res.o
 
 .PHONY: all clean tests check
 
-all: libnc_diag_res.a nc_diag_res.mod tests
+all: libnc_diag_res.a nc_diag_res.o tests
 
 tests:
 	make -C tests
@@ -24,12 +24,12 @@ tests:
 check:
 	make -C tests check
 
-libnc_diag_res.a: $(NC_DIAG_READ_OBJS)
+libnc_diag_res.a: $(NC_DIAG_RES_OBJS)
 	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
-	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_READ_OBJS)
+	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_RES_OBJS)
 	$(NCDRES_MAKE_FANCY_BIG_END)
 
-nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_READ_DEPS)
+nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_RES_DEPS)
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c nc_diag_res.f90 \
