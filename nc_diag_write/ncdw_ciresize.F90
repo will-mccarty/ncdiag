@@ -11,26 +11,6 @@ module ncdw_ciresize
     implicit none
     
     contains
-        !===============================================================
-        ! nc_diag_chaninfo_resize - channel info resizing support (impl)
-        !===============================================================
-        ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-        ! INSIDE A LARGER F90 SOURCE!
-        ! If you compile this directly, you WILL face the WRATH of your
-        ! compiler!
-        !---------------------------------------------------------------
-        ! Depends on:
-        !   netcdf_realloc_decl.f90, netcdf_realloc_imp.f90
-        ! 
-        ! Technically, order shouldn't matter... but just in case,
-        ! include netcdf_realloc_imp.f90 FIRST!
-        !---------------------------------------------------------------
-        ! nc_diag_chaninfo_resize subroutines resize the arrays inside
-        ! the diag_chaninfo type.
-        !---------------------------------------------------------------
-        ! This file provides the actual subroutines, referred to by the
-        ! interface.
-        
         ! nc_diag_chaninfo_resize - input integer(i_byte)
         ! Corresponding NetCDF4 type: byte
         subroutine nc_diag_chaninfo_resize_byte(addl_num_entries, update_acount_in)
@@ -155,9 +135,6 @@ module ncdw_ciresize
             else
                 update_acount = update_acount_in
             end if
-            
-            ! Default is false - no realloc done. 
-            !chaninfo_realloc = .FALSE.
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 

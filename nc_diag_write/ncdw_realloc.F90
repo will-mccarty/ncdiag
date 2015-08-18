@@ -9,19 +9,6 @@ module ncdw_realloc
     
     implicit none
     
-    !===============================================================
-    ! nc_diag_realloc - reallocation support (declaration)
-    !===============================================================
-    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-    ! INSIDE A LARGER F90 SOURCE!
-    ! If you compile this directly, you WILL face the WRATH of your
-    ! compiler!
-    !---------------------------------------------------------------
-    ! Depends on: nothing
-    !---------------------------------------------------------------
-    ! nc_diag_realloc subroutines provide reallocation functionality
-    ! for various inputs.
-    !---------------------------------------------------------------
     ! This file provides the interface wrapper for the array
     ! reallocation subroutines. This is so that others can simply
     ! call nc_diag_realloc with the necessary arguments, instead of
@@ -36,21 +23,6 @@ module ncdw_realloc
     end interface nc_diag_realloc
     
     contains
-        !===============================================================
-        ! nc_diag_realloc - reallocation support (implementation)
-        !===============================================================
-        ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-        ! INSIDE A LARGER F90 SOURCE!
-        ! If you compile this directly, you WILL face the WRATH of your
-        ! compiler!
-        !---------------------------------------------------------------
-        ! nc_diag_realloc subroutines provide reallocation functionality
-        ! for various inputs.
-        !---------------------------------------------------------------
-        ! This file provides the actual subroutines for array
-        ! reallocation, referred to by the array reallocation interface.
-        !---------------------------------------------------------------
-        
         ! nc_diag_realloc_byte(arr, addl_num_entries)
         !   input:
         !     integer(i_byte), dimension(:)  :: arr

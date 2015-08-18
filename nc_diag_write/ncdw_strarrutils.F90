@@ -26,7 +26,6 @@ module ncdw_strarrutils
             jump = 1
             i = 1
             
-            !do i = 1, len(s) - len(substr), jump
             do while (i <= len(s) - len(substr))
                 if (s(i:i+len(substr)-1) == substr) then
                     sub_count = sub_count + 1
@@ -34,7 +33,7 @@ module ncdw_strarrutils
                 else
                     jump = 1
                 end if
-                !write (*, "(A, I, A, I, A, I)") "i = ", i, "; jump = ", jump, "; sub_count = ", sub_count
+                
                 i = i + jump
             end do
         end function string_count_substr
@@ -55,7 +54,6 @@ module ncdw_strarrutils
             tmp_len = 0
             max_len = 0
             
-            !do i = 1, len(s) - len(substr), jump
             do while (i <= len_trim(s) - len(substr) + 1)
                 if (s(i:i+len(substr)-1) == substr) then
                     sub_count = sub_count + 1
@@ -66,7 +64,7 @@ module ncdw_strarrutils
                     jump = 1
                     tmp_len = tmp_len + 1
                 end if
-                !write (*, "(A, I0, A, I0, A, I0, A, I0, A, I0, A, A, A, A)") "i = ", i, "; jump = ", jump, "; sub_count = ", sub_count, "; tmp_len = ", tmp_len, "; max_len = ", max_len, "; str = ", s(i:i+len(substr)-1), "; whole str = ", s(i:)
+                
                 i = i + jump
             end do
             
@@ -86,11 +84,8 @@ module ncdw_strarrutils
             character(len=:), allocatable     :: tmp_str
             
             ! Get lengths
-            
             split_length = string_count_substr(s, delimiter) + 1
             item_length = string_get_max_split(s, delimiter)
-            
-            !write (*, "(A, I0, A, I0)") "split_length = ", split_length, "; item_length = ", item_length
             
             allocate(character(item_length) :: split_strings(split_length))
             allocate(character(item_length) :: tmp_str)
@@ -103,7 +98,6 @@ module ncdw_strarrutils
             start_idx = 1
             total = 1
             
-            !do i = 1, len(s) - len(delimiter), jump
             do while (i <= len_trim(s) - len(delimiter) + 1)
                 if (s(i:i+len(delimiter)-1) == delimiter) then
                     if (start_idx /= tmp_idx) then
@@ -111,7 +105,6 @@ module ncdw_strarrutils
                     else
                         split_strings(total) = ""
                     end if
-                    !write (*, "(A, I0, A, A)") "Adding string ", total, ": ", split_strings(total)
                     
                     tmp_idx = tmp_idx + len(delimiter)
                     start_idx = tmp_idx
@@ -123,18 +116,9 @@ module ncdw_strarrutils
                     jump = 1
                     tmp_idx = tmp_idx + 1
                 end if
-                !write (*, "(A, I0, A, I0, A, I0, A, I0, A, A, A, A)") "i = ", i, "; jump = ", jump, "; start_idx = ", start_idx, "; tmp_idx = ", tmp_idx, "; str = ", s(i:i+len(delimiter)-1), "; whole str = ", s(i:)
+                
                 i = i + jump
             end do
-            
-            !print *, "total is"
-            !print *, total
-            !print *, "start_idx is"
-            !print *, start_idx
-            !print *, "tmp_idx is"
-            !print *, tmp_idx
-            !print *, "len of s is"
-            !print *, len(s)
             
             ! Do one more check to ensure we get the end!
             split_strings(total) = s(start_idx:tmp_idx - 1)
@@ -199,26 +183,6 @@ module ncdw_strarrutils
             end do
         end function max_len_notrim_string_array
         
-        ! Note to self - ifort does NOT like:
-        !   character(len=:), allocatable :: string_part
-        ! ... as a function return. It will freak out and throw a fit!
-        ! This occurs when you try to do ANY kind of print statement
-        ! (like print *, "Hello"):
-        ! 
-        ! forrtl: severe (40): recursive I/O operation, unit -1, file unknown
-        ! Image              PC                Routine            Line        Source
-        ! test_utils.x       000000000046F8DE  Unknown               Unknown  Unknown
-        ! test_utils.x       000000000046E376  Unknown               Unknown  Unknown
-        ! test_utils.x       00000000004270F2  Unknown               Unknown  Unknown
-        ! test_utils.x       0000000000408A1B  Unknown               Unknown  Unknown
-        ! test_utils.x       000000000041E6DC  Unknown               Unknown  Unknown
-        ! test_utils.x       00000000004059AB  utils_mp_string_b         229  utils.f90
-        ! test_utils.x       00000000004064EB  MAIN__                     17  test_utils.f90
-        ! test_utils.x       0000000000402E8C  Unknown               Unknown  Unknown
-        ! libc.so.6          00007FFEFF427BC6  Unknown               Unknown  Unknown
-        ! test_utils.x       0000000000402D49  Unknown               Unknown  Unknown
-        !
-        ! Probably an ifort bug...
         subroutine string_before_delimiter(s, delimiter, string_part)
             character(len=*), intent(in)      :: s
             character(len=*), intent(in)      :: delimiter
@@ -239,7 +203,6 @@ module ncdw_strarrutils
             start_idx = 1
             total = 1
             
-            !do i = 1, len(s) - len(delimiter), jump
             do while (i <= len_trim(s) - len(delimiter) + 1)
                 if (s(i:i+len(delimiter)-1) == delimiter) then
                     found = .TRUE.
@@ -248,7 +211,7 @@ module ncdw_strarrutils
                     jump = 1
                     tmp_idx = tmp_idx + 1
                 end if
-                !write (*, "(A, I0, A, I0, A, I0, A, I0, A, A, A, A)") "i = ", i, "; jump = ", jump, "; start_idx = ", start_idx, "; tmp_idx = ", tmp_idx, "; str = ", s(i:i+len(delimiter)-1), "; whole str = ", s(i:)
+                
                 i = i + jump
             end do
             

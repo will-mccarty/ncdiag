@@ -42,28 +42,6 @@ module ncdw_data2d
     
     implicit none
     
-    !===============================================================
-    ! nc_diag_data2d - data2d handling (declaration)
-    !===============================================================
-    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-    ! INSIDE A LARGER F90 SOURCE!
-    ! If you compile this directly, you WILL face the WRATH of your
-    ! compiler!
-    !---------------------------------------------------------------
-    ! Depends on: nothing
-    ! 
-    ! (Note that the subroutines portion of this part of the program
-    ! has dependencies - but the declaration part doesn't require
-    ! anything!)
-    !---------------------------------------------------------------
-    ! nc_diag_data2d stores data2d data as NetCDF4 global
-    ! attributes. The nc_diag_data2d subroutines temporarily cache
-    ! any data2d data until write, where it will be set by
-    ! NF90_PUT_ATT().
-    !---------------------------------------------------------------
-    ! This file provides the interface wrapper for the specific
-    ! subroutines.
-    
     interface nc_diag_data2d
         module procedure nc_diag_data2d_byte, &
             nc_diag_data2d_short, nc_diag_data2d_long, &
@@ -72,29 +50,6 @@ module ncdw_data2d
     end interface nc_diag_data2d
     
     contains
-        !===============================================================
-        ! nc_diag_data2d - data2d handling (implementation)
-        !===============================================================
-        ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-        ! INSIDE A LARGER F90 SOURCE!
-        ! If you compile this directly, you WILL face the WRATH of your
-        ! compiler!
-        !---------------------------------------------------------------
-        ! Depends on:
-        !   netcdf_mresize.F90, netcdf_realloc_data2d.f90
-        ! 
-        ! Technically, order shouldn't matter... but just in case,
-        ! include netcdf_realloc_imp.f90 FIRST!
-        !---------------------------------------------------------------
-        ! nc_diag_data2d stores data2d data as NetCDF4 global
-        ! attributes. The nc_diag_data2d subroutines temporarily cache
-        ! any data2d data until write, where it will be set by
-        ! NF90_PUT_ATT().
-        !---------------------------------------------------------------
-        ! This file provides the actual data2d data adding subroutines,
-        ! referred to by the interface. It also provides support
-        ! subroutines for data2d writing and allocation setup.
-        
         subroutine nc_diag_data2d_allocmulti(multiplier)
             integer(i_long), intent(in)    :: multiplier
             if (init_done) then
@@ -216,28 +171,22 @@ module ncdw_data2d
                         
                         if (tmp_var_type == NF90_BYTE) then
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_BYTE
-                            !call nc_diag_data2d_resize_byte(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 1
                         else if (tmp_var_type == NF90_SHORT) then
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_SHORT
-                            !call nc_diag_data2d_resize_short(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 2
                         else if (tmp_var_type == NF90_INT) then
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_LONG
-                            !call nc_diag_data2d_resize_long(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 3
                         else if (tmp_var_type == NF90_FLOAT) then
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_FLOAT
-                            !call nc_diag_data2d_resize_rsingle(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 4
                         else if (tmp_var_type == NF90_DOUBLE) then
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_DOUBLE
-                            !call nc_diag_data2d_resize_rdouble(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 5
                         else if (tmp_var_type == NF90_CHAR) then
                             diag_data2d_store%max_str_lens(diag_data2d_store%total) = tmp_var_dim_sizes(1)
                             diag_data2d_store%types(diag_data2d_store%total) = NLAYER_STRING
-                            !call nc_diag_data2d_resize_string(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 6
                         else
                             call nclayer_error("NetCDF4 type invalid!")
@@ -253,17 +202,12 @@ module ncdw_data2d
                         
                         ! Now add a relative position... based on the next position!
                         
-                        ! First, increment the number of variables stored for this type:
-                        !diag_data2d_store%acount(type_index) = diag_data2d_store%acount(type_index) + 1
-                        
                         ! Set relative index!
                         diag_data2d_store%rel_indexes(diag_data2d_store%total) = rel_index
                         
                         ! Set variable ID! Note that var_index here is the actual variable ID.
                         diag_data2d_store%var_ids(diag_data2d_store%total) = var_index
                     end if
-                    
-                    !call nc_diag_cat_data2d_add_var(trim(tmp_var_name), tmp_var_type, tmp_var_ndims, tmp_var_dim_names)
                 end if
                 
                 ! Deallocate
@@ -938,141 +882,6 @@ module ncdw_data2d
             end if
         end subroutine nc_diag_data2d_set_strict
         
-        !subroutine nc_diag_data2d_write
-        !    integer(i_byte)                       :: data_type
-        !    logical                               :: data_vect
-        !    integer(i_long), dimension(6)         :: data_type_index
-        !    integer(i_long), dimension(5)         :: data_type_index_vi
-        !    character(len=100)                    :: data2d_name
-        !    
-        !    integer(i_long)               :: curdatindex
-        !    integer(i_long)               :: curdatvecsize
-        !    
-        !    if (init_done) then
-        !        data_type_index    = (/ 1, 1, 1, 1, 1, 1 /)
-        !        data_type_index_vi = (/ 1, 1, 1, 1, 1 /)
-        !        do curdatindex = 1, diag_data2d_store%total
-        !            data2d_name = diag_data2d_store%names(curdatindex)
-        !            data_type = diag_data2d_store%types(curdatindex)
-        !            data_vect = diag_data2d_store%vectored(curdatindex)
-        !            
-        !            if (data_type == NLAYER_BYTE) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(1) <= diag_data2d_store%acount(7)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_data2d_store%m_byte_vi(data_type_index_vi(1))
-        !                        data_type_index_vi(1) = data_type_index_vi(1) + 1
-        !                    else
-        !                        call nclayer_error("Critical error - byte index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
-        !                    data_type_index(1) = data_type_index(1) + curdatvecsize
-        !                else
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1))))
-        !                    data_type_index(1) = data_type_index(1) + 1
-        !                end if
-        !            else if (data_type == NLAYER_SHORT) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(2) <= diag_data2d_store%acount(8)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_data2d_store%m_short_vi(data_type_index_vi(2))
-        !                        data_type_index_vi(2) = data_type_index_vi(2) + 1
-        !                    else
-        !                        call nclayer_error("Critical error - short index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
-        !                    data_type_index(2) = data_type_index(2) + curdatvecsize
-        !                else
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2))))
-        !                    data_type_index(2) = data_type_index(2) + 1
-        !                end if
-        !            else if (data_type == NLAYER_LONG) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(3) <= diag_data2d_store%acount(9)) then
-        !                        ! Grab the vector size...
-        !                        curdatvecsize = diag_data2d_store%m_long_vi(data_type_index_vi(3))
-        !                        data_type_index_vi(3) = data_type_index_vi(3) + 1
-        !                    else
-        !                        call nclayer_error("Critical error - long index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
-        !                    data_type_index(3) = data_type_index(3) + curdatvecsize
-        !                else
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3))))
-        !                    data_type_index(3) = data_type_index(3) + 1
-        !                end if
-        !            else if (data_type == NLAYER_FLOAT) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(4) <= diag_data2d_store%acount(10)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_data2d_store%m_rsingle_vi(data_type_index_vi(4))
-        !                        data_type_index_vi(4) = data_type_index_vi(4) + 1
-        !                    else
-        !                        call nclayer_error("Critical error - rsingle index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
-        !                    data_type_index(4) = data_type_index(4) + curdatvecsize
-        !                else
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4))))
-        !                    data_type_index(4) = data_type_index(4) + 1
-        !                end if
-        !            else if (data_type == NLAYER_DOUBLE) then
-        !                if (data_vect) then
-        !                    if (data_type_index_vi(5) <= diag_data2d_store%acount(11)) then
-        !                        ! Grab the vector size, and allocate as needed.
-        !                        curdatvecsize = diag_data2d_store%m_rdouble_vi(data_type_index_vi(5))
-        !                        data_type_index_vi(5) = data_type_index_vi(5) + 1
-        !                    else
-        !                        call nclayer_error("Critical error - rdouble index exceeds internal count!")
-        !                    end if
-        !                    
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
-        !                    data_type_index(5) = data_type_index(5) + curdatvecsize
-        !                else
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5))))
-        !                    data_type_index(5) = data_type_index(5) + 1
-        !                end if
-        !            else if (data_type == NLAYER_STRING) then
-        !                ! String array not available with NF90 attributes
-        !                !if (data_vect) then
-        !                !    if (data_type_index_vi(6) <= diag_data2d_store%acount(12)) then
-        !                !        ! Grab the vector size, and allocate as needed.
-        !                !        curdatvecsize = diag_data2d_store%m_string_vi(data_type_index_vi(6))
-        !                !        data_type_index_vi(6) = data_type_index_vi(6) + 1
-        !                !    else
-        !                !        call nclayer_error("Critical error - string index exceeds internal count!")
-        !                !    end if
-        !                !    
-        !                !    data_type_index(6) = data_type_index(6) + curdatvecsize
-        !                !    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
-        !                !else
-#ifdef _!DEBUG_MEM_
-        !                    ! NOTE: trim() is F95
-        !                    print *, "On curdatindex:"
-        !                    print *, curdatindex
-        !                    print *, "For variable:"
-        !                    print *, trim(data2d_name)
-        !                    print *, "Writing data2d string:"
-        !                    print *, trim(diag_data2d_store%m_string(data_type_index(6)))
-#endif  !
-        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, trim(diag_data2d_store%m_string(data_type_index(6)))))
-        !                    data_type_index(6) = data_type_index(6) + 1
-        !                !end if
-        !            else
-        !                call nclayer_error("Critical error - unknown variable type!")
-        !            end if
-        !            
-        !        end do
-        !    else
-        !        call nclayer_error("No nc_diag initialized yet!")
-        !    end if
-        !    
-        !end subroutine nc_diag_data2d_write
-        
         ! Preallocate variable name/type/etc. storage.
         subroutine nc_diag_data2d_prealloc_vars(num_of_addl_vars)
             integer(i_llong), intent(in)          :: num_of_addl_vars
@@ -1198,9 +1007,6 @@ module ncdw_data2d
             else
                 call nclayer_error("Invalid type specified for variable storage preallocation!")
             end if
-            
-            ! resize nc_diag_data2d_resize_iarr ?
-            
         end subroutine nc_diag_data2d_prealloc_vars_storage
         
         ! Preallocate index storage
@@ -1216,9 +1022,6 @@ module ncdw_data2d
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
-            !print *, "PREALLOC IARR: "
-            !print *, num_of_addl_slots
             
             do i = 1, diag_data2d_store%prealloc_total
                 call nc_diag_data2d_resize_iarr(i, num_of_addl_slots, .FALSE.)
@@ -1292,7 +1095,6 @@ module ncdw_data2d
 #endif
                         call nc_diag_data2d_resize_iarr_type(addl_fields)
                         
-                        !call nc_diag_realloc(diag_data2d_store%stor_i_arr, 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi)))
                         meta_realloc = .TRUE.
                     end if
                 else
@@ -1360,14 +1162,11 @@ module ncdw_data2d
                 end if
                 
                 if (meta_realloc) then
-                    !diag_data2d_store%alloc_s_count = diag_data2d_store%alloc_s_count + 1
                     diag_data2d_store%alloc_s_multi = diag_data2d_store%alloc_s_multi + 1
 #ifdef _DEBUG_MEM_
                     print *, "Incrementing alloc_s_multi... new value:"
                     print *, diag_data2d_store%alloc_s_multi
 #endif
-                    !print *, "Size of new stuff:"
-                    !print *, size(diag_data2d_store%names)
                 endif
             else
                 call nclayer_error("NetCDF4 layer not initialized yet!")

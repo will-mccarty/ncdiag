@@ -17,27 +17,6 @@ module ncdw_dresize
     implicit none
     
     contains
-        !===============================================================
-        ! nc_diag_data2d_resize - data2d resizing support
-        !===============================================================
-        ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-        ! INSIDE A LARGER F90 SOURCE!
-        ! If you compile this directly, you WILL face the WRATH of your
-        ! compiler!
-        !---------------------------------------------------------------
-        ! Depends on:
-        !   netcdf_realloc_decl.f90, netcdf_realloc_imp.f90
-        !
-        ! Technically, order shouldn't matter... but just in case,
-        ! include netcdf_realloc_imp.f90 FIRST!
-        !---------------------------------------------------------------
-        ! nc_diag_data2d_resize subroutines resize the arrays inside the
-        ! diag_data2d type.
-        !---------------------------------------------------------------
-        ! This file provides the actual subroutines for data2d array
-        ! resizing, referred to by the data2d resizing interface.
-        !---------------------------------------------------------------
-        
         ! For all subroutines: update_acount_in specifies wheter to
         ! update acount or not. By default, this is true. This is useful
         ! for preallocation, when you aren't actually adding entries,
@@ -182,9 +161,6 @@ module ncdw_dresize
             else
                 update_acount = update_acount_in
             end if
-            
-            ! Default is false - no realloc done. 
-            !data2d_realloc = .FALSE.
             
             ! Here, we increment the count by the number of additional entries,
             ! and the size by that amount as well. 
@@ -437,17 +413,6 @@ module ncdw_dresize
                 update_icount = update_icount_in
             end if
             
-            !!!!!! NOTE/TODO:
-            !!!!!! This currently uses an array to reallocate on a
-            !!!!!! variable by variable basis. In the future, assuming
-            !!!!!! that all the variables will have around the same
-            !!!!!! amount of data, we can potentially optimize this to 
-            !!!!!! use a scalar! However, we must be careful in doing
-            !!!!!! so - if we use a scalar, we must call this ONLY ONCE.
-            !!!!!! Or rather, we can call this for each variable, but
-            !!!!!! the scalar can only be incremented once. Otherwise,
-            !!!!!! like before, we WILL run out of memory!
-            
             if (allocated(diag_data2d_store%stor_i_arr(iarr_index)%index_arr)) then
                 if (update_icount) diag_data2d_store%stor_i_arr(iarr_index)%icount = &
                     diag_data2d_store%stor_i_arr(iarr_index)%icount + addl_num_entries
@@ -463,10 +428,9 @@ module ncdw_dresize
                         call nclayer_actionm("nc_diag_data2d_resize_iarr: doing reallocation!")
                     end if
 #endif
-                    !print *, int8(diag_data2d_store%stor_i_arr(iarr_index)%isize) ! *0.5 for 1.5x
+                    
                     if (update_icount) then
                         addl_num_entries_r = addl_num_entries + (int8(NLAYER_DEFAULT_ENT) * (NLAYER_MULTI_BASE ** int8(diag_data2d_store%alloc_sia_multi(iarr_index))))
-                        !addl_num_entries_r = addl_num_entries + int8(diag_data2d_store%stor_i_arr(iarr_index)%isize)
                     else
                         addl_num_entries_r = addl_num_entries + NLAYER_DEFAULT_ENT
                     end if
@@ -489,6 +453,5 @@ module ncdw_dresize
                 allocate(diag_data2d_store%stor_i_arr(iarr_index)%length_arr(addl_num_entries + NLAYER_DEFAULT_ENT))
                 diag_data2d_store%stor_i_arr(iarr_index)%isize = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
-            !write (*, "(A, I0, A, I0, A, I0)") "iarr resize result on index ", iarr_index, ": count / size => ", diag_data2d_store%stor_i_arr(iarr_index)%icount, " / ", diag_data2d_store%stor_i_arr(iarr_index)%isize
         end subroutine nc_diag_data2d_resize_iarr
 end module ncdw_dresize

@@ -34,25 +34,6 @@ module ncdw_chaninfo
     
     implicit none
     
-    !===============================================================
-    ! nc_diag_chaninfo - channel info handling (declaration)
-    !===============================================================
-    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-    ! INSIDE A LARGER F90 SOURCE!
-    ! If you compile this directly, you WILL face the WRATH of your
-    ! compiler!
-    !---------------------------------------------------------------
-    ! Depends on: nothing
-    ! 
-    ! (Note that the subroutines portion of this part of the program
-    ! has dependencies - but the declaration part doesn't require
-    ! anything!)
-    !---------------------------------------------------------------
-    ! nc_diag_chaninfo stuff stuff
-    !---------------------------------------------------------------
-    ! This file provides the actual subroutines, referred to by the
-    ! interface.
-    
     interface nc_diag_chaninfo
         module procedure nc_diag_chaninfo_byte, &
             nc_diag_chaninfo_short, nc_diag_chaninfo_long, &
@@ -63,26 +44,6 @@ module ncdw_chaninfo
     end interface nc_diag_chaninfo
     
     contains
-        !===============================================================
-        ! nc_diag_chaninfo - channel info handling (implementation)
-        !===============================================================
-        ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-        ! INSIDE A LARGER F90 SOURCE!
-        ! If you compile this directly, you WILL face the WRATH of your
-        ! compiler!
-        !---------------------------------------------------------------
-        ! Depends on:
-        !   netcdf_realloc_decl.f90, netcdf_realloc_imp.f90
-        ! 
-        ! Technically, order shouldn't matter... but just in case,
-        ! include netcdf_realloc_imp.f90 FIRST!
-        !---------------------------------------------------------------
-        ! nc_diag_chaninfo subroutines correspond to the global atributes,
-        ! set by NF90_PUT_ATT()
-        !---------------------------------------------------------------
-        ! This file provides the actual subroutines, referred to by the
-        ! interface.
-        
         subroutine nc_diag_chaninfo_dim_set(nchans)
             integer(i_long), intent(in) :: nchans
 #ifdef ENABLE_ACTION_MSGS
@@ -104,10 +65,6 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_dim_set
         
-        !subroutine nc_diag_chaninfo(chaninfo_name, chaninfo_data)
-        !    
-        !end subroutine nc_diag_chaninfo
-        
         subroutine nc_diag_chaninfo_allocmulti(multiplier)
             integer(i_long), intent(in)    :: multiplier
 #ifdef ENABLE_ACTION_MSGS
@@ -124,15 +81,6 @@ module ncdw_chaninfo
                 diag_chaninfo_store%alloc_multi = multiplier
             end if
         end subroutine nc_diag_chaninfo_allocmulti
-        
-        !!!!!
-        !! TODO:
-        !! (1) add all of the long fixes to the other types tomorrow!!!
-        !!     DONE!
-        !! (2) Write the subroutine below tomorrow!
-        !! Make sure to warn when writing about low nchan, aka when
-        !! the amount of data < nchan (since we're expecting a full write)
-        !!!!!!
         
         subroutine nc_diag_chaninfo_load_def
             integer(i_long) :: ndims, nvars, var_index, type_index
@@ -553,8 +501,6 @@ module ncdw_chaninfo
                                     else
                                         call nclayer_warning(trim(nchan_empty_msg))
                                     end if
-                                    
-                                    !call nclayer_warning("Amount of data written in XXXX (N) is less than nchans (N)!")
                                 end if
                                 
 #ifdef _DEBUG_MEM_
@@ -631,9 +577,6 @@ module ncdw_chaninfo
                                                 string_arr(j - data_type_index + 1) = &
                                                     trim(diag_chaninfo_store%ci_string(j))
                                             end do
-                                            
-                                            !string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
-                                            !        diag_chaninfo_store%var_usage(curdatindex) - 1))
                                             
 #ifdef _DEBUG_MEM_
                                             do j = 1, diag_chaninfo_store%var_usage(curdatindex)
@@ -819,10 +762,6 @@ module ncdw_chaninfo
             else
                 call nclayer_error("Invalid type specified for variable storage preallocation!")
             end if
-            
-            ! resize nc_diag_chaninfo_resize_iarr ?
-            
-            
         end subroutine nc_diag_chaninfo_prealloc_vars_storage
         
         subroutine nc_diag_chaninfo_expand

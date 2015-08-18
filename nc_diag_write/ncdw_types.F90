@@ -26,21 +26,12 @@ module ncdw_types
     ! Base used when exponentiated.
     integer(i_long), parameter              :: NLAYER_MULTI_BASE = 2
     
-#ifdef NO_NETCDF
-    integer(i_byte), parameter :: NLAYER_FILL_BYTE   = -254
-    integer(i_short),parameter :: NLAYER_FILL_SHORT  = -254
-    integer(i_long), parameter :: NLAYER_FILL_LONG   = -254
-    real(r_single),  parameter :: NLAYER_FILL_FLOAT  = -254.567
-    real(r_double),  parameter :: NLAYER_FILL_DOUBLE = -254.56789
-    character,       parameter :: NLAYER_FILL_CHAR   = CHAR(0)
-#else
     integer(i_byte), parameter :: NLAYER_FILL_BYTE   = NF90_FILL_BYTE
     integer(i_short),parameter :: NLAYER_FILL_SHORT  = NF90_FILL_SHORT
     integer(i_long), parameter :: NLAYER_FILL_LONG   = NF90_FILL_INT
     real(r_single),  parameter :: NLAYER_FILL_FLOAT  = NF90_FILL_FLOAT
     real(r_double),  parameter :: NLAYER_FILL_DOUBLE = NF90_FILL_DOUBLE
     character,       parameter :: NLAYER_FILL_CHAR   = NF90_FILL_CHAR
-#endif
     
     type diag_chaninfo
         ! Number of channels to store
@@ -127,28 +118,6 @@ module ncdw_types
         real(r_double),      dimension(:),allocatable :: ci_rdouble
         character(len=1000), dimension(:),allocatable :: ci_string
     end type diag_chaninfo
-    
-    !===============================================================
-    ! nc_diag_metadata - metadata handling (declaration)
-    !===============================================================
-    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-    ! INSIDE A LARGER F90 SOURCE!
-    ! If you compile this directly, you WILL face the WRATH of your
-    ! compiler!
-    !---------------------------------------------------------------
-    ! Depends on: nothing
-    ! 
-    ! (Note that the subroutines portion of this part of the program
-    ! has dependencies - but the declaration part doesn't require
-    ! anything!)
-    !---------------------------------------------------------------
-    ! nc_diag_metadata stores metadata data as NetCDF4 global
-    ! attributes. The nc_diag_metadata subroutines temporarily cache
-    ! any metadata data until write, where it will be set by
-    ! NF90_PUT_ATT().
-    !---------------------------------------------------------------
-    ! This file provides the interface wrapper for the specific
-    ! subroutines.
     
     ! diag_metadata struct
     !   This is a super type to store information for the diag metadata,
@@ -431,23 +400,6 @@ module ncdw_types
         integer(i_long),    dimension(:), allocatable :: var_dim_ids
         integer(i_long),    dimension(:), allocatable :: var_ids
     end type diag_data2d
-    
-    !===============================================================
-    ! nc_diag_varattr - varattr handling (declaration)
-    !===============================================================
-    ! DO NOT COMPILE THIS DIRECTLY! THIS IS MEANT TO BE INCLUDED
-    ! INSIDE A LARGER F90 SOURCE!
-    ! If you compile this directly, you WILL face the WRATH of your
-    ! compiler!
-    !---------------------------------------------------------------
-    ! Depends on: nothing
-    ! 
-    ! (Note that the subroutines portion of this part of the program
-    ! has dependencies - but the declaration part doesn't require
-    ! anything!)
-    !---------------------------------------------------------------
-    ! This file provides the interface wrapper for the specific
-    ! subroutines.
     
     ! Variable type - this stores and handles all of the variables,
     ! and includes the variable storage type.
