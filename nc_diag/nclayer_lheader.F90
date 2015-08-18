@@ -1,8 +1,8 @@
 module nclayer_lheader
-    use kinds
-    use nclayer_state
-    use nclayer_climsg
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use nclayer_state, only: ncid, init_done
+    use nclayer_climsg, only: nclayer_error, nclayer_check
+    use netcdf, only: nf90_put_att, NF90_GLOBAL
     
     implicit none
     
@@ -62,7 +62,9 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             integer(i_byte), intent(in)     :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_byte
         
         ! nc_diag_header - input integer(i_short)
@@ -71,7 +73,9 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             integer(i_short), intent(in)    :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_short
         
         ! nc_diag_header - input integer(i_long)
@@ -80,7 +84,9 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             integer(i_long), intent(in)     :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_long
         
         ! nc_diag_header - input real(r_single)
@@ -89,7 +95,9 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             real(r_single), intent(in)      :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_rsingle
         
         ! nc_diag_header - input real(r_double)
@@ -98,7 +106,9 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             real(r_double), intent(in)      :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_rdouble
 
         ! nc_diag_header - input character(len=*)
@@ -107,8 +117,10 @@ module nclayer_lheader
             character(len=*), intent(in)    :: header_name
             character(len=*), intent(in)    :: header_value
             
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
             ! Note: using F95 trim here!
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, trim(header_value)))
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, trim(header_value)))
         end subroutine nc_diag_header_string
         
         !=============================================================
@@ -121,7 +133,9 @@ module nclayer_lheader
             character(len=*), intent(in)               :: header_name
             integer(i_byte), dimension(:), intent(in)  :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_byte_v
         
         ! nc_diag_header - input integer(i_short)
@@ -130,7 +144,9 @@ module nclayer_lheader
             character(len=*), intent(in)               :: header_name
             integer(i_short), dimension(:), intent(in) :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_short_v
         
         ! nc_diag_header - input integer(i_long)
@@ -139,7 +155,9 @@ module nclayer_lheader
             character(len=*), intent(in)               :: header_name
             integer(i_long), dimension(:), intent(in)  :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_long_v
         
         ! nc_diag_header - input real(r_single)
@@ -148,7 +166,9 @@ module nclayer_lheader
             character(len=*), intent(in)               :: header_name
             real(r_single), dimension(:), intent(in)   :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_rsingle_v
         
         ! nc_diag_header - input real(r_double)
@@ -157,7 +177,9 @@ module nclayer_lheader
             character(len=*), intent(in)               :: header_name
             real(r_double), dimension(:), intent(in)   :: header_value
             
-            call check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
+            if (.NOT. init_done) &
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
+            call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, header_name, header_value))
         end subroutine nc_diag_header_rdouble_v
         
         ! String array not available with NF90 attributes

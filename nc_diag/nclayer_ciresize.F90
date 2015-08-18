@@ -1,8 +1,13 @@
 module nclayer_ciresize
-    use kinds
-    use nclayer_state
-    use nclayer_climsg
-    use nclayer_realloc
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_state, only: diag_chaninfo_store
+    use nclayer_types, only: NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
+    use nclayer_realloc, only: nc_diag_realloc
+#ifdef ENABLE_ACTION_MSGS
+    use nclayer_climsg, only: nclayer_enable_action, nclayer_actionm
+#endif
+    
     implicit none
     
     contains
@@ -61,8 +66,8 @@ module nclayer_ciresize
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-            if (enable_action) then
-                call actionm("nc_diag_chaninfo_resize_byte: doing reallocation!")
+            if (nclayer_enable_action) then
+                call nclayer_actionm("nc_diag_chaninfo_resize_byte: doing reallocation!")
             end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_byte, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
@@ -112,8 +117,8 @@ module nclayer_ciresize
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_chaninfo_resize_short: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_chaninfo_resize_short: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_short, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
@@ -174,8 +179,8 @@ module nclayer_ciresize
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_chaninfo_store%acount(sc_index), " / ", diag_chaninfo_store%asize(sc_index), ")"
 #endif
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_chaninfo_resize_long: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_chaninfo_resize_long: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_long, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
@@ -225,8 +230,8 @@ module nclayer_ciresize
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_chaninfo_resize_rsingle: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_chaninfo_resize_rsingle: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_rsingle, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
@@ -276,8 +281,8 @@ module nclayer_ciresize
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_chaninfo_resize_rdouble: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_chaninfo_resize_rdouble: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_rdouble, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))
@@ -327,8 +332,8 @@ module nclayer_ciresize
                 if (update_acount) diag_chaninfo_store%acount(sc_index) = diag_chaninfo_store%acount(sc_index) + addl_num_entries
                 if (diag_chaninfo_store%acount(sc_index) >= diag_chaninfo_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_chaninfo_resize_string: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_chaninfo_resize_string: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_chaninfo_store%ci_string, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))))

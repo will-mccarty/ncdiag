@@ -1,13 +1,36 @@
 module nclayer_chaninfo
-    use kinds
-    use nclayer_climsg
-    use nclayer_state
-    use nclayer_types
-    use nclayer_strarrutils
-    use nclayer_varattr
-    use nclayer_ciresize
-    use nclayer_realloc
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_state, only: init_done, ncid, append_only, &
+        enable_trim, &
+        diag_chaninfo_store
+    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+        NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, &
+        NLAYER_FILL_BYTE, NLAYER_FILL_SHORT, NLAYER_FILL_LONG, &
+        NLAYER_FILL_FLOAT, NLAYER_FILL_DOUBLE, NLAYER_FILL_CHAR, &
+        NLAYER_COMPRESSION, NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
+    use nclayer_varattr, only: nc_diag_varattr_add_var
+    use nclayer_strarrutils, only: max_len_string_array
+    
+    use nclayer_climsg, only: &
+#ifdef ENABLE_ACTION_MSGS
+        nclayer_enable_action, nclayer_actionm, &
+#endif
+        nclayer_error, nclayer_warning, nclayer_info, nclayer_check
+    
+    use nclayer_realloc, only: nc_diag_realloc
+    use nclayer_ciresize, only: nc_diag_chaninfo_resize_byte, &
+        nc_diag_chaninfo_resize_short, nc_diag_chaninfo_resize_long, &
+        nc_diag_chaninfo_resize_rsingle, &
+        nc_diag_chaninfo_resize_rdouble, nc_diag_chaninfo_resize_string
+    
+    use netcdf, only: nf90_inquire, nf90_inq_dimid, &
+        nf90_inquire_dimension, nf90_inquire_variable, nf90_def_dim, &
+        nf90_def_var, nf90_get_var, nf90_put_var, &
+        nf90_def_var_deflate, nf90_def_var_chunking, &
+        NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, NF90_DOUBLE, &
+        NF90_CHAR, &
+        NF90_EBADDIM, NF90_NOERR, NF90_MAX_NAME, NF90_CHUNKED
     
     implicit none
     
@@ -65,19 +88,19 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_dim_set(nchans = ", nchans, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 if (nchans < 1) then
-                    call error("Critical error - specified a nchan < 1!")
+                    call nclayer_error("Critical error - specified a nchan < 1!")
                 end if
                 
                 diag_chaninfo_store%nchans = nchans
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_dim_set
         
@@ -90,9 +113,9 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_allocmulti(multiplier = ", multiplier, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             if (init_done) then
@@ -135,7 +158,7 @@ module nclayer_chaninfo
             integer(i_long)                                   :: dim_ierr
             
             ! Get top level info about the file!
-            call check(nf90_inquire(ncid, nDimensions = ndims, &
+            call nclayer_check(nf90_inquire(ncid, nDimensions = ndims, &
                 nVariables = nvars))
             
             ! Fetch nchans first!
@@ -148,18 +171,18 @@ module nclayer_chaninfo
             else if (dim_ierr /= NF90_NOERR) then
                 ! If an error besides not finding the dimension occurs,
                 ! raise an exception.
-                call check(dim_ierr)
+                call nclayer_check(dim_ierr)
             end if
             
             ! Then grab nchans value...
-            call check(nf90_inquire_dimension(ncid, diag_chaninfo_store%nchans_dimid, &
+            call nclayer_check(nf90_inquire_dimension(ncid, diag_chaninfo_store%nchans_dimid, &
                 len = diag_chaninfo_store%nchans))
             
             ! Now search for variables that use nchans!
             ! Loop through each variable!
             do var_index = 1, nvars
                 ! Grab number of dimensions and attributes first
-                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
                 
                 ! Allocate temporary variable dimids storage!
                 allocate(tmp_var_dimids(tmp_var_ndims))
@@ -168,7 +191,7 @@ module nclayer_chaninfo
                 
                 ! Grab the actual dimension IDs and attributes
                 
-                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
                     xtype = tmp_var_type))
                 
                 if ((tmp_var_ndims == 1) .OR. &
@@ -176,7 +199,7 @@ module nclayer_chaninfo
                     is_nchans_var = .FALSE.
                     
                     do i = 1, tmp_var_ndims
-                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                        call nclayer_check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
                             tmp_var_dim_sizes(i)))
                         
                         if (tmp_var_dim_names(i) == "nchans") is_nchans_var = .TRUE.
@@ -198,7 +221,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
                             call nc_diag_chaninfo_resize_byte(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(byte_buffer(diag_chaninfo_store%nchans))
-                            call check(nf90_get_var(ncid, var_index, byte_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, byte_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (byte_buffer(j) /= NLAYER_FILL_BYTE) then
@@ -215,7 +238,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
                             call nc_diag_chaninfo_resize_short(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(short_buffer(diag_chaninfo_store%nchans))
-                            call check(nf90_get_var(ncid, var_index, short_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, short_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (short_buffer(j) /= NLAYER_FILL_SHORT) then
@@ -232,7 +255,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
                             call nc_diag_chaninfo_resize_long(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(long_buffer(diag_chaninfo_store%nchans))
-                            call check(nf90_get_var(ncid, var_index, long_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, long_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (long_buffer(j) /= NLAYER_FILL_LONG) then
@@ -249,7 +272,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
                             call nc_diag_chaninfo_resize_rsingle(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(rsingle_buffer(diag_chaninfo_store%nchans))
-                            call check(nf90_get_var(ncid, var_index, rsingle_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, rsingle_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (rsingle_buffer(j) /= NLAYER_FILL_FLOAT) then
@@ -266,7 +289,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
                             call nc_diag_chaninfo_resize_rdouble(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(rdouble_buffer(diag_chaninfo_store%nchans))
-                            call check(nf90_get_var(ncid, var_index, rdouble_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, rdouble_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (rdouble_buffer(j) /= NLAYER_FILL_DOUBLE) then
@@ -283,7 +306,7 @@ module nclayer_chaninfo
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
                             call nc_diag_chaninfo_resize_string(int8(diag_chaninfo_store%nchans), .FALSE.)
                             allocate(string_buffer(diag_chaninfo_store%nchans, tmp_var_dim_sizes(1)))
-                            call check(nf90_get_var(ncid, var_index, string_buffer))
+                            call nclayer_check(nf90_get_var(ncid, var_index, string_buffer))
                             
                             do j = diag_chaninfo_store%nchans, 1, -1
                                 if (string_buffer(j, 1) /= NLAYER_FILL_CHAR) then
@@ -300,7 +323,7 @@ module nclayer_chaninfo
                             
                             type_index = 6
                         else
-                            call error("NetCDF4 type invalid!")
+                            call nclayer_error("NetCDF4 type invalid!")
                         end if
                         
                         print *, trim(tmp_var_name), "rel index", rel_index
@@ -344,7 +367,7 @@ module nclayer_chaninfo
             integer(i_byte)               :: data_type
             integer(i_long)               :: data_type_index
             character(len=100)            :: data_name
-            integer(i_kind)               :: nc_data_type
+            integer(i_long)               :: nc_data_type
             
             integer(i_long)               :: tmp_dim_id
             character(len=120)            :: data_dim_name
@@ -354,13 +377,13 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(internal)) then
                     write(action_str, "(A, L, A)") "nc_diag_chaninfo_write_def(internal = ", internal, ")"
                 else
                     write(action_str, "(A)") "nc_diag_chaninfo_write_def(internal = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -370,7 +393,7 @@ module nclayer_chaninfo
                         if (.NOT. diag_chaninfo_store%def_lock) then
                             ! First, set the dimensions... if necessary!
                             if (.NOT. append_only) &
-                                call check(nf90_def_dim(ncid, "nchans", diag_chaninfo_store%nchans, diag_chaninfo_store%nchans_dimid))
+                                call nclayer_check(nf90_def_dim(ncid, "nchans", diag_chaninfo_store%nchans, diag_chaninfo_store%nchans_dimid))
                             
                             ! Once we have the dimension, we can start writing
                             ! variable definitions!
@@ -380,7 +403,7 @@ module nclayer_chaninfo
                                 data_type_index = 1 + &
                                     ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                                 
-                                call info("chaninfo: defining " // trim(data_name))
+                                call nclayer_info("chaninfo: defining " // trim(data_name))
                                                             
                                 if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                                 if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
@@ -411,14 +434,14 @@ module nclayer_chaninfo
                                     end if
                                     
                                     if (.NOT. append_only) &
-                                        call check(nf90_def_dim(ncid, data_dim_name, &
+                                        call nclayer_check(nf90_def_dim(ncid, data_dim_name, &
                                             diag_chaninfo_store%max_str_lens(curdatindex), &
                                             tmp_dim_id))
 #ifdef _DEBUG_MEM_
                                     print *, "Defining char var type..."
 #endif
                                     if (.NOT. append_only) &
-                                        call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                        call nclayer_check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                             nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
                                             diag_chaninfo_store%var_ids(curdatindex)))
 #ifdef _DEBUG_MEM_
@@ -427,7 +450,7 @@ module nclayer_chaninfo
                                     deallocate(string_arr)
                                 else
                                     if (.NOT. append_only) &
-                                        call check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
+                                        call nclayer_check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                             nc_data_type, diag_chaninfo_store%nchans_dimid, &
                                             diag_chaninfo_store%var_ids(curdatindex)))
                                 end if
@@ -442,16 +465,16 @@ module nclayer_chaninfo
                                 
                                 if (.NOT. append_only) then
                                     if (data_type == NLAYER_STRING) then
-                                        call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             NF90_CHUNKED, (/ diag_chaninfo_store%max_str_lens(curdatindex), diag_chaninfo_store%nchans /)))
                                     else
-                                        call check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             NF90_CHUNKED, (/ diag_chaninfo_store%nchans /)))
                                     end if
                                     
                                     ! Enable compression
                                     ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
-                                    call check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                    call nclayer_check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                         1, 1, NLAYER_COMPRESSION))
                                 end if
                             end do
@@ -460,14 +483,14 @@ module nclayer_chaninfo
                             diag_chaninfo_store%def_lock = .TRUE.
                         else
                             if(.NOT. present(internal)) &
-                                call error("Can't write definitions - definitions have already been written and locked!")
+                                call nclayer_error("Can't write definitions - definitions have already been written and locked!")
                         end if
                     else
-                        call error("Can't write definitions - number of chans not set yet!")
+                        call nclayer_error("Can't write definitions - number of chans not set yet!")
                     end if
                 end if
             else
-                call error("Can't write definitions - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_write_def
         
@@ -491,13 +514,13 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(flush_data_only)) then
                     write(action_str, "(A, L, A)") "nc_diag_chaninfo_write_data(flush_data_only = ", flush_data_only, ")"
                 else
                     write(action_str, "(A)") "nc_diag_chaninfo_write_data(flush_data_only = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -511,7 +534,7 @@ module nclayer_chaninfo
                                 data_type_index = 1 + &
                                     ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                                 
-                                call info("chaninfo: writing " // trim(data_name))
+                                call nclayer_info("chaninfo: writing " // trim(data_name))
                                 
                                 ! Warn about low data filling
                                 if ((.NOT. (present(flush_data_only) .AND. flush_data_only)) .AND. &
@@ -526,12 +549,12 @@ module nclayer_chaninfo
                                         "             is less than nchans (", diag_chaninfo_store%nchans, ")!"
                                     
                                     if (diag_chaninfo_store%strict_check) then
-                                        call error(trim(nchan_empty_msg))
+                                        call nclayer_error(trim(nchan_empty_msg))
                                     else
-                                        call warning(trim(nchan_empty_msg))
+                                        call nclayer_warning(trim(nchan_empty_msg))
                                     end if
                                     
-                                    !call warning("Amount of data written in XXXX (N) is less than nchans (N)!")
+                                    !call nclayer_warning("Amount of data written in XXXX (N) is less than nchans (N)!")
                                 end if
                                 
 #ifdef _DEBUG_MEM_
@@ -559,13 +582,13 @@ module nclayer_chaninfo
                                         print *, diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
                                                     diag_chaninfo_store%var_usage(curdatindex) - 1))
 #endif
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             diag_chaninfo_store%ci_byte(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1)), &
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
                                             ))
                                     else if (data_type == NLAYER_SHORT) then
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             diag_chaninfo_store%ci_short(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1)), &
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
@@ -578,19 +601,19 @@ module nclayer_chaninfo
                                         print *, "start index:"
                                         print *, 1 + diag_chaninfo_store%rel_indexes(curdatindex)
 #endif
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             diag_chaninfo_store%ci_long(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1)), &
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
                                             ))
                                     else if (data_type == NLAYER_FLOAT) then
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             diag_chaninfo_store%ci_rsingle(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1)), &
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
                                             ))
                                     else if (data_type == NLAYER_DOUBLE) then
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             diag_chaninfo_store%ci_rdouble(data_type_index:(data_type_index + &
                                                 diag_chaninfo_store%var_usage(curdatindex) - 1)), &
                                             start = (/ 1 + diag_chaninfo_store%rel_indexes(curdatindex) /) &
@@ -628,7 +651,7 @@ module nclayer_chaninfo
                                             end do
                                         end if
                                         
-                                        call check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
+                                        call nclayer_check(nf90_put_var(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             string_arr, &
                                             start = (/ 1, 1 + diag_chaninfo_store%rel_indexes(curdatindex) /), &
                                             count = (/ string_arr_maxlen, &
@@ -636,7 +659,7 @@ module nclayer_chaninfo
                                         
                                         deallocate(string_arr)
                                     else
-                                        call error("Critical error - unknown variable type!")
+                                        call nclayer_error("Critical error - unknown variable type!")
                                     end if
                                     
                                     ! Check for data flushing, and if so, update the relative indexes
@@ -667,14 +690,14 @@ module nclayer_chaninfo
 #endif
                             end if
                         else
-                            call error("Can't write data - data have already been written and locked!")
+                            call nclayer_error("Can't write data - data have already been written and locked!")
                         end if
                     else
-                        call error("Can't write data - number of chans not set yet!")
+                        call nclayer_error("Can't write data - number of chans not set yet!")
                     end if
                 end if
             else
-                call error("Can't write data - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
             
         end subroutine nc_diag_chaninfo_write_data
@@ -686,7 +709,7 @@ module nclayer_chaninfo
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 diag_chaninfo_store%strict_check = enable_strict
             else
-                call error("Can't set strictness level for chaninfo - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't set strictness level for chaninfo - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_set_strict
         
@@ -696,9 +719,9 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_prealloc_vars(num_of_addl_vars = ", num_of_addl_vars, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             if (init_done .AND. allocated(diag_chaninfo_store)) then
@@ -763,7 +786,7 @@ module nclayer_chaninfo
                     diag_chaninfo_store%rel_indexes = 0
                 end if
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             endif
         end subroutine nc_diag_chaninfo_prealloc_vars
         
@@ -775,9 +798,9 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A, I0, A)") "nc_diag_chaninfo_prealloc_vars_storage(nclayer_type = ", nclayer_type, ", num_of_addl_slots = ", num_of_addl_slots, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -794,7 +817,7 @@ module nclayer_chaninfo
             else if (nclayer_type == NLAYER_STRING) then
                 call nc_diag_chaninfo_resize_string(num_of_addl_slots, .FALSE.)
             else
-                call error("Invalid type specified for variable storage preallocation!")
+                call nclayer_error("Invalid type specified for variable storage preallocation!")
             end if
             
             ! resize nc_diag_chaninfo_resize_iarr ?
@@ -883,10 +906,10 @@ module nclayer_chaninfo
                         diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                     end if
                 else
-                    call error("Number of chans not set yet!")
+                    call nclayer_error("Number of chans not set yet!")
                 end if
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_expand
         
@@ -901,14 +924,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_byte(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For byte, type index is 1
@@ -935,7 +958,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -969,7 +992,7 @@ module nclayer_chaninfo
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -994,14 +1017,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_short(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For short, type index is 2
@@ -1028,7 +1051,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -1062,7 +1085,7 @@ module nclayer_chaninfo
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -1087,14 +1110,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_chaninfo_long(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For long, type index is 3
@@ -1128,7 +1151,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -1166,7 +1189,7 @@ module nclayer_chaninfo
                     print *, "!!!! diag_chaninfo_store%var_usage(var_index)"
                     print *, diag_chaninfo_store%var_usage(var_index)
 #endif
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -1206,14 +1229,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, F0.5, A)") "nc_diag_chaninfo_rsingle(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For rsingle, type index is 4
@@ -1247,7 +1270,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -1281,7 +1304,7 @@ module nclayer_chaninfo
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -1321,14 +1344,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, F0.5, A)") "nc_diag_chaninfo_rdouble(chaninfo_name = " // chaninfo_name // ", chaninfo_value = ", chaninfo_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For rdouble, type index is 5
@@ -1355,7 +1378,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -1389,7 +1412,7 @@ module nclayer_chaninfo
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 diag_chaninfo_store%var_usage(var_index) = &
@@ -1414,14 +1437,14 @@ module nclayer_chaninfo
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A)") "nc_diag_chaninfo_string(chaninfo_name = " // chaninfo_name // ", chaninfo_value = " // trim(chaninfo_value) // ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_chaninfo_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             ! For string, type index is 6
@@ -1448,7 +1471,7 @@ module nclayer_chaninfo
                 
                 ! First, check to make sure we can still define new variables.
                 if (diag_chaninfo_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 ! Expand things first!
@@ -1482,13 +1505,13 @@ module nclayer_chaninfo
                 ! entry already exists!
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
-                    call error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
+                    call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
                 ! Check max string length
                 if ((diag_chaninfo_store%def_lock) .AND. &
                     (len_trim(chaninfo_value) > diag_chaninfo_store%max_str_lens(var_index))) &
-                    call error("Cannot expand variable string length after locking variable definitions!")
+                    call nclayer_error("Cannot expand variable string length after locking variable definitions!")
                 
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
@@ -1502,7 +1525,7 @@ module nclayer_chaninfo
                     ! Validate that our non-first value isn't different from
                     ! the initial string length
                     if (diag_chaninfo_store%max_str_lens(var_index) /= len(chaninfo_value)) &
-                        call error("Cannot change string size when trimming is disabled!")
+                        call nclayer_error("Cannot change string size when trimming is disabled!")
                 end if
             end if
             

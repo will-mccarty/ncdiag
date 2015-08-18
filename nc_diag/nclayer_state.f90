@@ -1,14 +1,15 @@
 module nclayer_state
-    use kinds
-    use nclayer_types
+    use kinds, only: i_long
+    use nclayer_types, only: diag_chaninfo, diag_metadata, &
+        diag_data2d, diag_varattr
     
     implicit none
     
-    integer :: ncid
-    logical :: init_done = .FALSE.
-    logical :: append_only = .FALSE.
+    integer(i_long) :: ncid
+    logical         :: init_done = .FALSE.
+    logical         :: append_only = .FALSE.
     
-    logical :: enable_trim = .FALSE.
+    logical         :: enable_trim = .FALSE.
     
     character(len=200) :: cur_nc_file
     

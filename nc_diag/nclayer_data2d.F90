@@ -1,12 +1,44 @@
 module nclayer_data2d
-    use kinds
-    use nclayer_state
-    use nclayer_climsg
-    use nclayer_varattr
-    use nclayer_strarrutils
-    use nclayer_dresize
-    use nclayer_realloc
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_state, only: init_done, append_only, ncid, &
+        enable_trim, &
+        diag_data2d_store, diag_varattr_store
+    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+        NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, NLAYER_CHUNKING, &
+        NLAYER_COMPRESSION, NLAYER_FILL_BYTE, NLAYER_FILL_SHORT, &
+        NLAYER_FILL_LONG, NLAYER_FILL_FLOAT, NLAYER_FILL_DOUBLE, &
+        NLAYER_FILL_CHAR, &
+        NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
+    use nclayer_strarrutils, only: &
+#ifdef _DEBUG_MEM_
+        string_array_dump, &
+#endif
+        max_len_string_array, max_len_notrim_string_array
+    use nclayer_varattr, only: nc_diag_varattr_make_nobs_dim, &
+        nc_diag_varattr_add_var
+    
+    use nclayer_dresize, only: nc_diag_data2d_resize_byte, &
+        nc_diag_data2d_resize_short, nc_diag_data2d_resize_long, &
+        nc_diag_data2d_resize_rsingle, nc_diag_data2d_resize_rdouble, &
+        nc_diag_data2d_resize_string, nc_diag_data2d_resize_iarr_type, &
+        nc_diag_data2d_resize_iarr
+    use nclayer_realloc, only: nc_diag_realloc
+    
+    use netcdf, only: nf90_inquire, nf90_inquire_variable, &
+        nf90_inquire_dimension, nf90_def_dim, nf90_def_var, &
+        nf90_def_var_deflate, nf90_def_var_chunking, nf90_put_var, &
+        NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, NF90_DOUBLE, &
+        NF90_CHAR, NF90_MAX_NAME, NF90_CHUNKED
+    
+    use nclayer_climsg, only: &
+#ifdef ENABLE_ACTION_MSGS
+        nclayer_enable_action, nclayer_actionm, &
+#endif
+#ifdef _DEBUG_MEM_
+        nclayer_debug, &
+#endif
+        nclayer_error, nclayer_warning, nclayer_info, nclayer_check
     
     implicit none
     
@@ -107,9 +139,9 @@ module nclayer_data2d
                     ! Probably not needed, since this only triggers on a
                     ! strict check... but just in case...
                     if (diag_data2d_store%strict_check) then
-                        call error(trim(data_uneven_msg))
+                        call nclayer_error(trim(data_uneven_msg))
                     else
-                        call warning(trim(data_uneven_msg))
+                        call nclayer_warning(trim(data_uneven_msg))
                     end if
                 end if
                 
@@ -131,14 +163,14 @@ module nclayer_data2d
             logical                                    :: is_data2d_var
             
             ! Get top level info about the file!
-            call check(nf90_inquire(ncid, nDimensions = ndims, &
+            call nclayer_check(nf90_inquire(ncid, nDimensions = ndims, &
                 nVariables = nvars))
             
             ! Now search for variables that use data2d storage!
             ! Loop through each variable!
             do var_index = 1, nvars
                 ! Grab number of dimensions and attributes first
-                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
                 
                 ! Allocate temporary variable dimids storage!
                 allocate(tmp_var_dimids(tmp_var_ndims))
@@ -147,7 +179,7 @@ module nclayer_data2d
                 
                 ! Grab the actual dimension IDs and attributes
                 
-                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
                     xtype = tmp_var_type))
                 
                 if ((tmp_var_ndims == 2) .OR. &
@@ -155,7 +187,7 @@ module nclayer_data2d
                     is_data2d_var = .FALSE.
                     
                     do i = 1, tmp_var_ndims
-                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                        call nclayer_check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
                             tmp_var_dim_sizes(i)))
                         
                         if (tmp_var_dim_names(i) == "nobs") then
@@ -208,7 +240,7 @@ module nclayer_data2d
                             !call nc_diag_data2d_resize_string(int8(diag_data2d_store%nchans), .FALSE.)
                             type_index = 6
                         else
-                            call error("NetCDF4 type invalid!")
+                            call nclayer_error("NetCDF4 type invalid!")
                         end if
                         
                         if (tmp_var_type == NF90_CHAR) then
@@ -250,7 +282,7 @@ module nclayer_data2d
             character(len=100)                    :: data2d_name
             
             integer(i_llong)                      :: curdatindex, j
-            integer(i_kind)                       :: nc_data_type
+            integer(i_long)                       :: nc_data_type
             integer(i_long)                       :: tmp_dim_id
             character(len=120)                    :: data_dim_name
             character(len=120)                    :: data_dim_str_name
@@ -262,13 +294,13 @@ module nclayer_data2d
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(internal)) then
                     write(action_str, "(A, L, A)") "nc_diag_data2d_write_def(internal = ", internal, ")"
                 else
                     write(action_str, "(A)") "nc_diag_data2d_write_def(internal = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -282,7 +314,7 @@ module nclayer_data2d
                         data2d_name = diag_data2d_store%names(curdatindex)
                         data_type = diag_data2d_store%types(curdatindex)
                         
-                        call info("data2d: defining " // trim(data2d_name))
+                        call nclayer_info("data2d: defining " // trim(data2d_name))
                         
                         if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                         if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
@@ -303,7 +335,7 @@ module nclayer_data2d
                         
                         ! Create this maximum array length dimension for this variable
                         if (.NOT. append_only) &
-                            call check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
+                            call nclayer_check(nf90_def_dim(ncid, data_dim_name, max_len, diag_data2d_store%var_dim_ids(curdatindex)))
                         
                         ! Store maximum length
                         diag_data2d_store%max_lens(curdatindex) = max_len;
@@ -353,14 +385,14 @@ module nclayer_data2d
                             ! Create dimension needed!
                             write (data_dim_str_name, "(A, A)") trim(data2d_name), "_str_dim"
                             if (.NOT. append_only) &
-                                call check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
+                                call nclayer_check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
 #endif
                             
                             if (.NOT. append_only) &
-                                call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
+                                call nclayer_check(nf90_def_var(ncid, data2d_name, nc_data_type, &
                                     (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
                                     diag_data2d_store%var_ids(curdatindex)))
                             
@@ -379,7 +411,7 @@ module nclayer_data2d
                             print *, diag_data2d_store%max_lens(curdatindex), "x unlimited (NetCDF order)"
 #endif
                             if (.NOT. append_only) &
-                                call check(nf90_def_var(ncid, data2d_name, nc_data_type, &
+                                call nclayer_check(nf90_def_var(ncid, data2d_name, nc_data_type, &
                                     (/ diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
                                     diag_data2d_store%var_ids(curdatindex)))
                         end if
@@ -396,11 +428,11 @@ module nclayer_data2d
                         
                         if (.NOT. append_only) then
                             if (data_type == NLAYER_STRING) then
-                                call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                call nclayer_check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
                                     NF90_CHUNKED, (/ diag_data2d_store%max_str_lens(curdatindex), &
                                         diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
                             else
-                                call check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
+                                call nclayer_check(nf90_def_var_chunking(ncid, diag_data2d_store%var_ids(curdatindex), &
                                     NF90_CHUNKED, (/ diag_data2d_store%max_lens(curdatindex), NLAYER_CHUNKING /)))
                             end if
                         end if
@@ -408,7 +440,7 @@ module nclayer_data2d
                         print *, "Defining compression 2 (gzip)..."
 #endif
                         if (.NOT. append_only) &
-                            call check(nf90_def_var_deflate(ncid, diag_data2d_store%var_ids(curdatindex), &
+                            call nclayer_check(nf90_def_var_deflate(ncid, diag_data2d_store%var_ids(curdatindex), &
                                 1, 1, NLAYER_COMPRESSION))
                         
 #ifdef _DEBUG_MEM_
@@ -420,7 +452,7 @@ module nclayer_data2d
                     end do
                 else
                     if(.NOT. present(internal)) &
-                        call error("Can't write definitions - definitions have already been written and locked!")
+                        call nclayer_error("Can't write definitions - definitions have already been written and locked!")
                 end if
             end if
         end subroutine nc_diag_data2d_write_def
@@ -461,13 +493,13 @@ module nclayer_data2d
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(flush_data_only)) then
                     write(action_str, "(A, L, A)") "nc_diag_data2d_write_data(flush_data_only = ", flush_data_only, ")"
                 else
                     write(action_str, "(A)") "nc_diag_data2d_write_data(flush_data_only = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -490,7 +522,7 @@ module nclayer_data2d
                         data2d_name = diag_data2d_store%names(curdatindex)
                         data_type = diag_data2d_store%types(curdatindex)
                         
-                        call info("data2d: writing " // trim(data2d_name))
+                        call nclayer_info("data2d: writing " // trim(data2d_name))
                         
                         ! Warn about data inconsistencies
                         if (.NOT. (present(flush_data_only) .AND. flush_data_only)) then
@@ -512,9 +544,9 @@ module nclayer_data2d
                                         " (", data_length_counter, ")!"
                                     
                                     if (diag_data2d_store%strict_check) then
-                                        call error(trim(data_uneven_msg))
+                                        call nclayer_error(trim(data_uneven_msg))
                                     else
-                                        call warning(trim(data_uneven_msg))
+                                        call nclayer_warning(trim(data_uneven_msg))
                                     end if
                                 end if
                             end if
@@ -553,9 +585,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -566,7 +598,7 @@ module nclayer_data2d
                                                 diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
                                     byte_arr, &
                                     (/ 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
@@ -595,9 +627,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -608,7 +640,7 @@ module nclayer_data2d
                                                 diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
                                     short_arr, &
                                     (/ 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
@@ -651,9 +683,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -697,7 +729,7 @@ module nclayer_data2d
                                 end do
 #endif
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
                                     long_arr, &
                                     (/ 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
@@ -726,9 +758,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -740,14 +772,14 @@ module nclayer_data2d
                                 end do
                                 
                                 !print *, "end queue / start put"
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
                                     rsingle_arr, &
                                     (/ 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
                                     (/ diag_data2d_store%max_lens(curdatindex), &
                                         diag_data2d_store%stor_i_arr(curdatindex)%icount /) &
                                     ))
-                                !call check(nf90_sync(ncid))
+                                !call nclayer_check(nf90_sync(ncid))
                                 deallocate(rsingle_arr)
                                 !print *, "end put"
                                 
@@ -771,9 +803,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -784,7 +816,7 @@ module nclayer_data2d
                                                 diag_data2d_store%stor_i_arr(curdatindex)%length_arr(j) - 1)
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_data2d_store%var_ids(curdatindex), &
                                     rdouble_arr, &
                                     (/ 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
@@ -799,7 +831,7 @@ module nclayer_data2d
                                 if (allocated(diag_data2d_store%max_str_lens)) then
                                     max_str_len = diag_data2d_store%max_str_lens(curdatindex)
                                 else
-                                    call error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
+                                    call nclayer_error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
                                 end if
                                 
                                 allocate(character(max_str_len) :: &
@@ -823,9 +855,9 @@ module nclayer_data2d
                                             " (", diag_data2d_store%max_lens(curdatindex), ")!"
                                         
                                         if (diag_data2d_store%strict_check) then
-                                            call error(trim(data_uneven_msg))
+                                            call nclayer_error(trim(data_uneven_msg))
                                         else
-                                            call warning(trim(data_uneven_msg))
+                                            call nclayer_warning(trim(data_uneven_msg))
                                         end if
                                     end if
                                     
@@ -837,7 +869,7 @@ module nclayer_data2d
                                 end do
                                 
                                 if (allocated(diag_data2d_store%max_str_lens)) then
-                                    call check(nf90_put_var(&
+                                    call nclayer_check(nf90_put_var(&
                                         ncid, diag_data2d_store%var_ids(curdatindex), &
                                         string_arr, &
                                         (/ 1, 1, 1 + diag_data2d_store%rel_indexes(curdatindex) /), &
@@ -846,7 +878,7 @@ module nclayer_data2d
                                             diag_data2d_store%stor_i_arr(curdatindex)%icount /) &
                                         ))
                                 else
-                                    call error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
+                                    call nclayer_error("BUG: diag_data2d_store%max_str_lens not allocated yet!")
                                 end if
                                 
                                 deallocate(string_arr)
@@ -884,10 +916,10 @@ module nclayer_data2d
 #endif
                     end if
                 else
-                    call error("Can't write data - data have already been written and locked!")
+                    call nclayer_error("Can't write data - data have already been written and locked!")
                 end if
             else
-                call error("Can't write data - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
             
 #ifdef _DEBUG_MEM_
@@ -902,7 +934,7 @@ module nclayer_data2d
             if (init_done .AND. allocated(diag_data2d_store)) then
                 diag_data2d_store%strict_check = enable_strict
             else
-                call error("Can't set strictness level for data2d - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't set strictness level for data2d - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_data2d_set_strict
         
@@ -931,13 +963,13 @@ module nclayer_data2d
         !                        curdatvecsize = diag_data2d_store%m_byte_vi(data_type_index_vi(1))
         !                        data_type_index_vi(1) = data_type_index_vi(1) + 1
         !                    else
-        !                        call error("Critical error - byte index exceeds internal count!")
+        !                        call nclayer_error("Critical error - byte index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
         !                    data_type_index(1) = data_type_index(1) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_byte(data_type_index(1))))
         !                    data_type_index(1) = data_type_index(1) + 1
         !                end if
         !            else if (data_type == NLAYER_SHORT) then
@@ -947,13 +979,13 @@ module nclayer_data2d
         !                        curdatvecsize = diag_data2d_store%m_short_vi(data_type_index_vi(2))
         !                        data_type_index_vi(2) = data_type_index_vi(2) + 1
         !                    else
-        !                        call error("Critical error - short index exceeds internal count!")
+        !                        call nclayer_error("Critical error - short index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
         !                    data_type_index(2) = data_type_index(2) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_short(data_type_index(2))))
         !                    data_type_index(2) = data_type_index(2) + 1
         !                end if
         !            else if (data_type == NLAYER_LONG) then
@@ -963,13 +995,13 @@ module nclayer_data2d
         !                        curdatvecsize = diag_data2d_store%m_long_vi(data_type_index_vi(3))
         !                        data_type_index_vi(3) = data_type_index_vi(3) + 1
         !                    else
-        !                        call error("Critical error - long index exceeds internal count!")
+        !                        call nclayer_error("Critical error - long index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
         !                    data_type_index(3) = data_type_index(3) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_long(data_type_index(3))))
         !                    data_type_index(3) = data_type_index(3) + 1
         !                end if
         !            else if (data_type == NLAYER_FLOAT) then
@@ -979,13 +1011,13 @@ module nclayer_data2d
         !                        curdatvecsize = diag_data2d_store%m_rsingle_vi(data_type_index_vi(4))
         !                        data_type_index_vi(4) = data_type_index_vi(4) + 1
         !                    else
-        !                        call error("Critical error - rsingle index exceeds internal count!")
+        !                        call nclayer_error("Critical error - rsingle index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
         !                    data_type_index(4) = data_type_index(4) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rsingle(data_type_index(4))))
         !                    data_type_index(4) = data_type_index(4) + 1
         !                end if
         !            else if (data_type == NLAYER_DOUBLE) then
@@ -995,13 +1027,13 @@ module nclayer_data2d
         !                        curdatvecsize = diag_data2d_store%m_rdouble_vi(data_type_index_vi(5))
         !                        data_type_index_vi(5) = data_type_index_vi(5) + 1
         !                    else
-        !                        call error("Critical error - rdouble index exceeds internal count!")
+        !                        call nclayer_error("Critical error - rdouble index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
         !                    data_type_index(5) = data_type_index(5) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_rdouble(data_type_index(5))))
         !                    data_type_index(5) = data_type_index(5) + 1
         !                end if
         !            else if (data_type == NLAYER_STRING) then
@@ -1012,11 +1044,11 @@ module nclayer_data2d
         !                !        curdatvecsize = diag_data2d_store%m_string_vi(data_type_index_vi(6))
         !                !        data_type_index_vi(6) = data_type_index_vi(6) + 1
         !                !    else
-        !                !        call error("Critical error - string index exceeds internal count!")
+        !                !        call nclayer_error("Critical error - string index exceeds internal count!")
         !                !    end if
         !                !    
         !                !    data_type_index(6) = data_type_index(6) + curdatvecsize
-        !                !    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
+        !                !    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, diag_data2d_store%m_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
         !                !else
 #ifdef _!DEBUG_MEM_
         !                    ! NOTE: trim() is F95
@@ -1027,16 +1059,16 @@ module nclayer_data2d
         !                    print *, "Writing data2d string:"
         !                    print *, trim(diag_data2d_store%m_string(data_type_index(6)))
 #endif  !
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, trim(diag_data2d_store%m_string(data_type_index(6)))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data2d_name, trim(diag_data2d_store%m_string(data_type_index(6)))))
         !                    data_type_index(6) = data_type_index(6) + 1
         !                !end if
         !            else
-        !                call error("Critical error - unknown variable type!")
+        !                call nclayer_error("Critical error - unknown variable type!")
         !            end if
         !            
         !        end do
         !    else
-        !        call error("No nc_diag initialized yet!")
+        !        call nclayer_error("No nc_diag initialized yet!")
         !    end if
         !    
         !end subroutine nc_diag_data2d_write
@@ -1047,9 +1079,9 @@ module nclayer_data2d
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_data2d_prealloc_vars(num_of_addl_vars = ", num_of_addl_vars, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             if (init_done .AND. allocated(diag_data2d_store)) then
@@ -1133,7 +1165,7 @@ module nclayer_data2d
                 
                 diag_data2d_store%prealloc_total = diag_data2d_store%prealloc_total + num_of_addl_vars
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             endif
         end subroutine nc_diag_data2d_prealloc_vars
         
@@ -1145,9 +1177,9 @@ module nclayer_data2d
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A, I0, A)") "nc_diag_data2d_prealloc_vars_storage(nclayer_type = ", nclayer_type, ", num_of_addl_slots = ", num_of_addl_slots, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif            
             
@@ -1164,7 +1196,7 @@ module nclayer_data2d
             else if (nclayer_type == NLAYER_STRING) then
                 call nc_diag_data2d_resize_string(num_of_addl_slots, .FALSE.)
             else
-                call error("Invalid type specified for variable storage preallocation!")
+                call nclayer_error("Invalid type specified for variable storage preallocation!")
             end if
             
             ! resize nc_diag_data2d_resize_iarr ?
@@ -1179,9 +1211,9 @@ module nclayer_data2d
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_data2d_prealloc_vars_storage_all(num_of_addl_slots = ", num_of_addl_slots, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -1205,34 +1237,34 @@ module nclayer_data2d
                 addl_fields = 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi))
                 
 #ifdef _DEBUG_MEM_
-                call debug("INITIAL value of diag_data2d_store%alloc_s_multi:")
+                call nclayer_debug("INITIAL value of diag_data2d_store%alloc_s_multi:")
                 print *, diag_data2d_store%alloc_s_multi
 #endif
                 
                 if (allocated(diag_data2d_store%names)) then
                     if (diag_data2d_store%total >= size(diag_data2d_store%names)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_data2d_store%names...")
+                        call nclayer_debug("Reallocating diag_data2d_store%names...")
                         print *, (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi)
                         print *, addl_fields
 #endif
                         call nc_diag_realloc(diag_data2d_store%names, addl_fields)
 #ifdef _DEBUG_MEM_
-                    call debug("Reallocated diag_data2d_store%names. Size:")
+                    call nclayer_debug("Reallocated diag_data2d_store%names. Size:")
                     print *, size(diag_data2d_store%names)
 #endif
                         meta_realloc = .TRUE.
                     end if
                 else
 #ifdef _DEBUG_MEM_
-                    call debug("Allocating diag_data2d_store%names for first time...")
+                    call nclayer_debug("Allocating diag_data2d_store%names for first time...")
                     print *, NLAYER_DEFAULT_ENT
 #endif
                     
                     allocate(diag_data2d_store%names(NLAYER_DEFAULT_ENT))
                     
 #ifdef _DEBUG_MEM_
-                    call debug("Allocated diag_data2d_store%names. Size:")
+                    call nclayer_debug("Allocated diag_data2d_store%names. Size:")
                     print *, size(diag_data2d_store%names)
 #endif
                 end if
@@ -1240,7 +1272,7 @@ module nclayer_data2d
                 if (allocated(diag_data2d_store%types)) then
                     if (diag_data2d_store%total >= size(diag_data2d_store%types)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_data2d_store%types...")
+                        call nclayer_debug("Reallocating diag_data2d_store%types...")
                         print *, (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi)
                         print *, addl_fields
 #endif
@@ -1254,7 +1286,7 @@ module nclayer_data2d
                 if (allocated(diag_data2d_store%stor_i_arr)) then
                     if (diag_data2d_store%total >= size(diag_data2d_store%stor_i_arr)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_data2d_store%stor_i_arr...")
+                        call nclayer_debug("Reallocating diag_data2d_store%stor_i_arr...")
                         print *, (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi)
                         print *, (1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_data2d_store%alloc_s_multi)))
 #endif
@@ -1338,7 +1370,7 @@ module nclayer_data2d
                     !print *, size(diag_data2d_store%names)
                 endif
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             endif
             
         end subroutine nc_diag_data2d_expand
@@ -1372,7 +1404,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
                     "nc_diag_data2d_byte(data2d_name = " // data2d_name // &
@@ -1383,12 +1415,12 @@ module nclayer_data2d
                     " ... ", &
                     data2d_value(data_value_size), &
                     "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1396,7 +1428,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_data2d_expand
@@ -1414,7 +1446,7 @@ module nclayer_data2d
             
             if ((diag_data2d_store%def_lock) .AND. &
                 (size(data2d_value) > diag_data2d_store%max_lens(var_index))) then
-                call error("Cannot expand variable size after locking variable definitions!")
+                call nclayer_error("Cannot expand variable size after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1443,7 +1475,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
                     "nc_diag_data2d_short(data2d_name = " // data2d_name // &
@@ -1454,12 +1486,12 @@ module nclayer_data2d
                     " ... ", &
                     data2d_value(data_value_size), &
                     "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1467,7 +1499,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_data2d_expand
@@ -1485,7 +1517,7 @@ module nclayer_data2d
             
             if ((diag_data2d_store%def_lock) .AND. &
                 (size(data2d_value) > diag_data2d_store%max_lens(var_index))) then
-                call error("Cannot expand variable size after locking variable definitions!")
+                call nclayer_error("Cannot expand variable size after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1514,7 +1546,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, I0, A, I0, A, I0, A)") &
                     "nc_diag_data2d_long(data2d_name = " // data2d_name // &
@@ -1525,12 +1557,12 @@ module nclayer_data2d
                     " ... ", &
                     data2d_value(data_value_size), &
                     "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1538,7 +1570,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_data2d_expand
@@ -1552,7 +1584,7 @@ module nclayer_data2d
             end if
             
 #ifdef _DEBUG_MEM_
-            call debug("Current total:")
+            call nclayer_debug("Current total:")
             print *, diag_data2d_store%total
 #endif
             
@@ -1561,7 +1593,7 @@ module nclayer_data2d
             
             if ((diag_data2d_store%def_lock) .AND. &
                 (size(data2d_value) > diag_data2d_store%max_lens(var_index))) then
-                call error("Cannot expand variable size after locking variable definitions!")
+                call nclayer_error("Cannot expand variable size after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1590,7 +1622,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, F0.5, A, F0.5, A)") &
                     "nc_diag_data2d_rsingle(data2d_name = " // data2d_name // &
@@ -1601,12 +1633,12 @@ module nclayer_data2d
                     " ... ", &
                     data2d_value(data_value_size), &
                     "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1614,7 +1646,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
 #ifdef _DEBUG_MEM_
                 write (*, "(A, A, A, F)") "NEW data2d: ", data2d_name, " | First value: ", data2d_value
@@ -1634,7 +1666,7 @@ module nclayer_data2d
             
             if ((diag_data2d_store%def_lock) .AND. &
                 (size(data2d_value) > diag_data2d_store%max_lens(var_index))) then
-                call error("Cannot expand variable size after locking variable definitions!")
+                call nclayer_error("Cannot expand variable size after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1663,7 +1695,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, F0.5, A, F0.5, A)") &
                     "nc_diag_data2d_rdouble(data2d_name = " // data2d_name // &
@@ -1674,12 +1706,12 @@ module nclayer_data2d
                     " ... ", &
                     data2d_value(data_value_size), &
                     "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1687,7 +1719,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_data2d_expand
@@ -1705,7 +1737,7 @@ module nclayer_data2d
             
             if ((diag_data2d_store%def_lock) .AND. &
                 (size(data2d_value) > diag_data2d_store%max_lens(var_index))) then
-                call error("Cannot expand variable size after locking variable definitions!")
+                call nclayer_error("Cannot expand variable size after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1735,7 +1767,7 @@ module nclayer_data2d
             character(len=1000)                   :: action_str
             integer(i_llong)                      :: data_value_size
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 data_value_size = size(data2d_value)
                 write(action_str, "(A, I0, A, A)") &
                     "nc_diag_data2d_string(data2d_name = " // data2d_name // &
@@ -1746,12 +1778,12 @@ module nclayer_data2d
                         " ... " // &
                         trim(data2d_value(data_value_size)) // &
                         "]"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_data2d_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_data2d_lookup_var(data2d_name)
@@ -1759,7 +1791,7 @@ module nclayer_data2d
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_data2d_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_data2d_expand
@@ -1783,7 +1815,7 @@ module nclayer_data2d
             
             if (diag_data2d_store%def_lock) then
                 if (input_size > diag_data2d_store%max_lens(var_index)) &
-                    call error("Cannot expand variable size after locking variable definitions!")
+                    call nclayer_error("Cannot expand variable size after locking variable definitions!")
                 
                 ! Check max string length
                 max_str_len = max_len_string_array(data2d_value, &
@@ -1795,7 +1827,7 @@ module nclayer_data2d
 #endif
                 
                 if (max_str_len > diag_data2d_store%max_str_lens(var_index)) &
-                    call error("Cannot expand variable string length after locking variable definitions!")
+                    call nclayer_error("Cannot expand variable string length after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1811,7 +1843,7 @@ module nclayer_data2d
                     ! the initial string length
                     if (max_len_notrim_string_array(data2d_value, int(input_size)) /= &
                         diag_data2d_store%max_str_lens(var_index)) &
-                        call error("Cannot change string size when trimming is disabled!")
+                        call nclayer_error("Cannot change string size when trimming is disabled!")
                 end if
             end if
             

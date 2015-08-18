@@ -1,6 +1,8 @@
 module nclayer_types
-    use kinds
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, i_llong, &
+        r_single, r_double
+    use netcdf, only: NF90_FILL_BYTE, NF90_FILL_SHORT, NF90_FILL_INT, &
+        NF90_FILL_FLOAT, NF90_FILL_DOUBLE, NF90_FILL_CHAR
     
     implicit none
     
@@ -43,7 +45,7 @@ module nclayer_types
     type diag_chaninfo
         ! Number of channels to store
         integer(i_long)                               :: nchans = -1
-        integer(i_kind)                               :: nchans_dimid
+        integer(i_long)                               :: nchans_dimid
         
         ! # of times we needed to realloc chaninfo
         ! also the multiplier factor for allocation (2^x)
@@ -79,7 +81,7 @@ module nclayer_types
         integer(i_long),     dimension(:),allocatable :: var_usage
         
         ! Variable IDs (for use with NetCDF API)
-        integer(i_kind),     dimension(:),allocatable :: var_ids
+        integer(i_long),     dimension(:),allocatable :: var_ids
         
         ! Maximum string length - only used when the variable
         ! definitions are locked.

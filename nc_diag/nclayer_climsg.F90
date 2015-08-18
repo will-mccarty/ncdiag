@@ -1,17 +1,17 @@
 module nclayer_climsg
-    use kinds
-    use netcdf
+    use kinds, only: i_long
+    use netcdf, only: nf90_noerr, nf90_strerror
     
     implicit none
     
-    logical :: enable_info = .FALSE.
-    logical :: enable_action = .FALSE.
+    logical :: nclayer_enable_info = .FALSE.
+    logical :: nclayer_enable_action = .FALSE.
     
     contains
-        subroutine error(err)
+        subroutine nclayer_error(err)
             character(len=*), intent(in) :: err
 #ifdef ERROR_TRACEBACK
-            integer                      :: div0
+            integer(i_long)              :: div0
 #endif
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[31m" // &
@@ -27,9 +27,9 @@ module nclayer_climsg
 #else
             stop " ** Failed to process data/write NetCDF4."
 #endif
-        end subroutine error
+        end subroutine nclayer_error
         
-        subroutine warning(warn)
+        subroutine nclayer_warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[33m" // &
@@ -38,25 +38,25 @@ module nclayer_climsg
 #else
             write(*, "(A)") " ** WARNING: " // warn
 #endif
-        end subroutine warning
+        end subroutine nclayer_warning
         
         subroutine nc_set_action_display(action_on_off)
             logical :: action_on_off
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
-            enable_action = action_on_off
+            nclayer_enable_action = action_on_off
         end subroutine nc_set_action_display
         
 #ifdef ENABLE_ACTION_MSGS
-        subroutine actionm(act)
+        subroutine nclayer_actionm(act)
             character(len=*), intent(in) :: act
-            if (enable_action) &
+            if (nclayer_enable_action) &
 #ifdef ANSI_TERM_COLORS
                 write(*, "(A)") CHAR(27) // "[36m" // &
                                 " **  ACTION: " // act // &
@@ -64,7 +64,7 @@ module nclayer_climsg
 #else
                 write(*, "(A)") " **  ACTION: " // act
 #endif
-        end subroutine actionm
+        end subroutine nclayer_actionm
 #endif
         
         subroutine nc_set_info_display(info_on_off)
@@ -72,17 +72,17 @@ module nclayer_climsg
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, L, A)") "nc_set_info_display(info_on_off = ", info_on_off, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
-            enable_info = info_on_off
+            nclayer_enable_info = info_on_off
         end subroutine nc_set_info_display
         
-        subroutine info(ifo)
+        subroutine nclayer_info(ifo)
             character(len=*), intent(in) :: ifo
-            if (enable_info) &
+            if (nclayer_enable_info) &
 #ifdef ANSI_TERM_COLORS
                 write(*, "(A)") CHAR(27) // "[34m" // &
                                 " **    INFO: " // ifo // &
@@ -90,20 +90,20 @@ module nclayer_climsg
 #else
                 write(*, "(A)") " **    INFO: " // ifo
 #endif
-        end subroutine info
+        end subroutine nclayer_info
         
 #ifdef _DEBUG_MEM_
-        subroutine debug(dbg)
+        subroutine nclayer_debug(dbg)
             character(len=*), intent(in) :: dbg
             write(*, "(A, A)") "D: ", dbg
-        end subroutine debug
+        end subroutine nclayer_debug
 #endif
         
-        subroutine check(status)
-          integer, intent ( in) :: status
+        subroutine nclayer_check(status)
+          integer(i_long), intent(in) :: status
           
           if(status /= nf90_noerr) then 
-            call error(trim(nf90_strerror(status)))
+            call nclayer_error(trim(nf90_strerror(status)))
           end if
-        end subroutine check
+        end subroutine nclayer_check
 end module nclayer_climsg

@@ -1,12 +1,40 @@
 module nclayer_metadata
-    use kinds
-    use nclayer_state
-    use nclayer_climsg
-    use nclayer_strarrutils
-    use nclayer_varattr
-    use nclayer_mresize
-    use nclayer_realloc
-    use netcdf
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_state, only: init_done, ncid, append_only, &
+        enable_trim, &
+        diag_metadata_store, diag_varattr_store
+    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+        NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, &
+        NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE, NLAYER_CHUNKING, &
+        NLAYER_COMPRESSION
+    use nclayer_strarrutils, only: max_len_string_array
+    
+    use nclayer_realloc, only: nc_diag_realloc
+    use nclayer_mresize, only: &
+        nc_diag_metadata_resize_byte, nc_diag_metadata_resize_short, &
+        nc_diag_metadata_resize_long, nc_diag_metadata_resize_rsingle, &
+        nc_diag_metadata_resize_rdouble, &
+        nc_diag_metadata_resize_string, &
+        nc_diag_metadata_resize_iarr, nc_diag_metadata_resize_iarr_type
+    
+    use nclayer_varattr, only: nc_diag_varattr_make_nobs_dim, &
+        nc_diag_varattr_add_var
+    
+    use nclayer_climsg, only: &
+#ifdef ENABLE_ACTION_MSGS
+        nclayer_enable_action, nclayer_actionm, &
+#endif
+#ifdef _DEBUG_MEM_
+        nclayer_debug, &
+#endif
+        nclayer_error, nclayer_warning, nclayer_info, nclayer_check
+    
+    use netcdf, only: nf90_inquire, nf90_inquire_variable, &
+        nf90_inquire_dimension, nf90_def_dim, nf90_def_var, &
+        nf90_put_var, nf90_def_var_chunking, nf90_def_var_deflate, &
+        NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, NF90_DOUBLE, &
+        NF90_CHAR, NF90_MAX_NAME, NF90_CHUNKED
     
     implicit none
     
@@ -71,14 +99,14 @@ module nclayer_metadata
             logical                                    :: is_metadata_var
             
             ! Get top level info about the file!
-            call check(nf90_inquire(ncid, nDimensions = ndims, &
+            call nclayer_check(nf90_inquire(ncid, nDimensions = ndims, &
                 nVariables = nvars))
             
             ! Now search for variables that use metadata storage!
             ! Loop through each variable!
             do var_index = 1, nvars
                 ! Grab number of dimensions and attributes first
-                call check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
                 
                 ! Allocate temporary variable dimids storage!
                 allocate(tmp_var_dimids(tmp_var_ndims))
@@ -87,7 +115,7 @@ module nclayer_metadata
                 
                 ! Grab the actual dimension IDs and attributes
                 
-                call check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
+                call nclayer_check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
                     xtype = tmp_var_type))
                 
                 if ((tmp_var_ndims == 1) .OR. &
@@ -95,7 +123,7 @@ module nclayer_metadata
                     is_metadata_var = .FALSE.
                     
                     do i = 1, tmp_var_ndims
-                        call check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
+                        call nclayer_check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
                             tmp_var_dim_sizes(i)))
                         
                         if (tmp_var_dim_names(i) == "nobs") then
@@ -148,7 +176,7 @@ module nclayer_metadata
                             !call nc_diag_metadata_resize_string(int8(diag_metadata_store%nchans), .FALSE.)
                             type_index = 6
                         else
-                            call error("NetCDF4 type invalid!")
+                            call nclayer_error("NetCDF4 type invalid!")
                         end if
                         
                         print *, trim(tmp_var_name), "rel index", rel_index
@@ -187,7 +215,7 @@ module nclayer_metadata
             character(len=100)                    :: data_name
             
             integer(i_llong)                      :: curdatindex, j
-            integer(i_kind)                       :: nc_data_type
+            integer(i_long)                       :: nc_data_type
             integer(i_long)                       :: tmp_dim_id
             character(len=120)                    :: data_dim_name
             
@@ -196,13 +224,13 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(internal)) then
                     write(action_str, "(A, L, A)") "nc_diag_metadata_write_def(internal = ", internal, ")"
                 else
                     write(action_str, "(A)") "nc_diag_metadata_write_def(internal = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -216,7 +244,7 @@ module nclayer_metadata
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
-                        call info("metadata: defining " // trim(data_name))
+                        call nclayer_info("metadata: defining " // trim(data_name))
                         
                         if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                         if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
@@ -249,7 +277,7 @@ module nclayer_metadata
                             end if
                             
                             if (.NOT. append_only) &
-                                call check(nf90_def_dim(ncid, data_dim_name, &
+                                call nclayer_check(nf90_def_dim(ncid, data_dim_name, &
                                     diag_metadata_store%max_str_lens(curdatindex), tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
@@ -257,7 +285,7 @@ module nclayer_metadata
 #endif
                             
                             if (.NOT. append_only) &
-                                call check(nf90_def_var(ncid, data_name, nc_data_type, &
+                                call nclayer_check(nf90_def_var(ncid, data_name, nc_data_type, &
                                     (/ tmp_dim_id, diag_varattr_store%nobs_dim_id /), &
                                     diag_metadata_store%var_ids(curdatindex)))
                             
@@ -266,7 +294,7 @@ module nclayer_metadata
 #endif
                         else
                             if (.NOT. append_only) &
-                                call check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
+                                call nclayer_check(nf90_def_var(ncid, data_name, nc_data_type, diag_varattr_store%nobs_dim_id, &
                                     diag_metadata_store%var_ids(curdatindex)))
                         end if
                         
@@ -286,17 +314,17 @@ module nclayer_metadata
                         
                         if (.NOT. append_only) then
                             if (data_type == NLAYER_STRING) then
-                                call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                call nclayer_check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
                                     NF90_CHUNKED, (/ diag_metadata_store%max_str_lens(curdatindex), NLAYER_CHUNKING /)))
                             else
-                                call check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
+                                call nclayer_check(nf90_def_var_chunking(ncid, diag_metadata_store%var_ids(curdatindex), &
                                     NF90_CHUNKED, (/ NLAYER_CHUNKING /)))
                             end if
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining compression 2 (gzip)..."
 #endif
-                            call check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
+                            call nclayer_check(nf90_def_var_deflate(ncid, diag_metadata_store%var_ids(curdatindex), &
                                 1, 1, NLAYER_COMPRESSION))
                             
 #ifdef _DEBUG_MEM_
@@ -309,7 +337,7 @@ module nclayer_metadata
                     end do
                 else
                     if(.NOT. present(internal)) &
-                        call error("Can't write definitions - definitions have already been written and locked!")
+                        call nclayer_error("Can't write definitions - definitions have already been written and locked!")
                 end if
             end if
         end subroutine nc_diag_metadata_write_def
@@ -342,13 +370,13 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 if (present(flush_data_only)) then
                     write(action_str, "(A, L, A)") "nc_diag_metadata_write_data(flush_data_only = ", flush_data_only, ")"
                 else
                     write(action_str, "(A)") "nc_diag_metadata_write_data(flush_data_only = (not specified))"
                 end if
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             ! Initialization MUST occur here, not in decl...
@@ -369,7 +397,7 @@ module nclayer_metadata
                         data_name = diag_metadata_store%names(curdatindex)
                         data_type = diag_metadata_store%types(curdatindex)
                         
-                        call info("metadata: writing " // trim(data_name))
+                        call nclayer_info("metadata: writing " // trim(data_name))
                         
                         ! Warn about data inconsistencies
                         if (.NOT. (present(flush_data_only) .AND. flush_data_only)) then
@@ -391,9 +419,9 @@ module nclayer_metadata
                                         " (", data_length_counter, ")!"
                                     
                                     if (diag_metadata_store%strict_check) then
-                                        call error(trim(data_uneven_msg))
+                                        call nclayer_error(trim(data_uneven_msg))
                                     else
-                                        call warning(trim(data_uneven_msg))
+                                        call nclayer_warning(trim(data_uneven_msg))
                                     end if
                                 end if
                             end if
@@ -406,7 +434,7 @@ module nclayer_metadata
                                 do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
                                     byte_arr(j) = diag_metadata_store%m_byte(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     byte_arr, &
                                     (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
@@ -418,7 +446,7 @@ module nclayer_metadata
                                 do j = 1, diag_metadata_store%stor_i_arr(curdatindex)%icount
                                     short_arr(j) = diag_metadata_store%m_short(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     short_arr, &
                                     (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
@@ -431,7 +459,7 @@ module nclayer_metadata
                                     long_arr(j) = diag_metadata_store%m_long(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     long_arr, &
                                     (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
@@ -451,12 +479,12 @@ module nclayer_metadata
                                     !print *, asdf(j)
                                 end do
                                 !print *, "end queue / start put"
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                         ncid, diag_metadata_store%var_ids(curdatindex), &
                                         rsingle_arr, &
                                         (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
                                         ))
-                                !call check(nf90_sync(ncid))
+                                !call nclayer_check(nf90_sync(ncid))
                                 deallocate(rsingle_arr)
                                 !print *, "end put"
                                 
@@ -466,7 +494,7 @@ module nclayer_metadata
                                     rdouble_arr(j) = diag_metadata_store%m_rdouble(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     rdouble_arr, &
                                     (/ 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
@@ -493,7 +521,7 @@ module nclayer_metadata
                                     string_arr(j) = diag_metadata_store%m_string(diag_metadata_store%stor_i_arr(curdatindex)%index_arr(j))
                                 end do
                                 
-                                call check(nf90_put_var(&
+                                call nclayer_check(nf90_put_var(&
                                     ncid, diag_metadata_store%var_ids(curdatindex), &
                                     string_arr, &
                                     (/ 1, 1 + diag_metadata_store%rel_indexes(curdatindex) /) &
@@ -533,10 +561,10 @@ module nclayer_metadata
 #endif
                     end if
                 else
-                    call error("Can't write data - data have already been written and locked!")
+                    call nclayer_error("Can't write data - data have already been written and locked!")
                 end if
             else
-                call error("Can't write data - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't write data - NetCDF4 layer not initialized yet!")
             end if
             
 #ifdef _DEBUG_MEM_
@@ -550,7 +578,7 @@ module nclayer_metadata
             if (init_done .AND. allocated(diag_metadata_store)) then
                 diag_metadata_store%strict_check = enable_strict
             else
-                call error("Can't set strictness level for metadata - NetCDF4 layer not initialized yet!")
+                call nclayer_error("Can't set strictness level for metadata - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_metadata_set_strict
         
@@ -579,13 +607,13 @@ module nclayer_metadata
         !                        curdatvecsize = diag_metadata_store%m_byte_vi(data_type_index_vi(1))
         !                        data_type_index_vi(1) = data_type_index_vi(1) + 1
         !                    else
-        !                        call error("Critical error - byte index exceeds internal count!")
+        !                        call nclayer_error("Critical error - byte index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_byte(data_type_index(1):(data_type_index(1) + curdatvecsize - 1))))
         !                    data_type_index(1) = data_type_index(1) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_byte(data_type_index(1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_byte(data_type_index(1))))
         !                    data_type_index(1) = data_type_index(1) + 1
         !                end if
         !            else if (data_type == NLAYER_SHORT) then
@@ -595,13 +623,13 @@ module nclayer_metadata
         !                        curdatvecsize = diag_metadata_store%m_short_vi(data_type_index_vi(2))
         !                        data_type_index_vi(2) = data_type_index_vi(2) + 1
         !                    else
-        !                        call error("Critical error - short index exceeds internal count!")
+        !                        call nclayer_error("Critical error - short index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_short(data_type_index(2):(data_type_index(2) + curdatvecsize - 1))))
         !                    data_type_index(2) = data_type_index(2) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_short(data_type_index(2))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_short(data_type_index(2))))
         !                    data_type_index(2) = data_type_index(2) + 1
         !                end if
         !            else if (data_type == NLAYER_LONG) then
@@ -611,13 +639,13 @@ module nclayer_metadata
         !                        curdatvecsize = diag_metadata_store%m_long_vi(data_type_index_vi(3))
         !                        data_type_index_vi(3) = data_type_index_vi(3) + 1
         !                    else
-        !                        call error("Critical error - long index exceeds internal count!")
+        !                        call nclayer_error("Critical error - long index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_long(data_type_index(3):(data_type_index(3) + curdatvecsize - 1))))
         !                    data_type_index(3) = data_type_index(3) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_long(data_type_index(3))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_long(data_type_index(3))))
         !                    data_type_index(3) = data_type_index(3) + 1
         !                end if
         !            else if (data_type == NLAYER_FLOAT) then
@@ -627,13 +655,13 @@ module nclayer_metadata
         !                        curdatvecsize = diag_metadata_store%m_rsingle_vi(data_type_index_vi(4))
         !                        data_type_index_vi(4) = data_type_index_vi(4) + 1
         !                    else
-        !                        call error("Critical error - rsingle index exceeds internal count!")
+        !                        call nclayer_error("Critical error - rsingle index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rsingle(data_type_index(4):(data_type_index(4) + curdatvecsize - 1))))
         !                    data_type_index(4) = data_type_index(4) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rsingle(data_type_index(4))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rsingle(data_type_index(4))))
         !                    data_type_index(4) = data_type_index(4) + 1
         !                end if
         !            else if (data_type == NLAYER_DOUBLE) then
@@ -643,13 +671,13 @@ module nclayer_metadata
         !                        curdatvecsize = diag_metadata_store%m_rdouble_vi(data_type_index_vi(5))
         !                        data_type_index_vi(5) = data_type_index_vi(5) + 1
         !                    else
-        !                        call error("Critical error - rdouble index exceeds internal count!")
+        !                        call nclayer_error("Critical error - rdouble index exceeds internal count!")
         !                    end if
         !                    
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rdouble(data_type_index(5):(data_type_index(5) + curdatvecsize - 1))))
         !                    data_type_index(5) = data_type_index(5) + curdatvecsize
         !                else
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rdouble(data_type_index(5))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_rdouble(data_type_index(5))))
         !                    data_type_index(5) = data_type_index(5) + 1
         !                end if
         !            else if (data_type == NLAYER_STRING) then
@@ -660,11 +688,11 @@ module nclayer_metadata
         !                !        curdatvecsize = diag_metadata_store%m_string_vi(data_type_index_vi(6))
         !                !        data_type_index_vi(6) = data_type_index_vi(6) + 1
         !                !    else
-        !                !        call error("Critical error - string index exceeds internal count!")
+        !                !        call nclayer_error("Critical error - string index exceeds internal count!")
         !                !    end if
         !                !    
         !                !    data_type_index(6) = data_type_index(6) + curdatvecsize
-        !                !    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
+        !                !    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, diag_metadata_store%m_string(data_type_index(6):(data_type_index(6) + curdatvecsize - 1))))
         !                !else
 #ifdef _!DEBUG_MEM_
         !                    ! NOTE: trim() is F95
@@ -675,16 +703,16 @@ module nclayer_metadata
         !                    print *, "Writing metadata string:"
         !                    print *, trim(diag_metadata_store%m_string(data_type_index(6)))
 #endif  !
-        !                    call check(nf90_put_att(ncid, NF90_GLOBAL, data_name, trim(diag_metadata_store%m_string(data_type_index(6)))))
+        !                    call nclayer_check(nf90_put_att(ncid, NF90_GLOBAL, data_name, trim(diag_metadata_store%m_string(data_type_index(6)))))
         !                    data_type_index(6) = data_type_index(6) + 1
         !                !end if
         !            else
-        !                call error("Critical error - unknown variable type!")
+        !                call nclayer_error("Critical error - unknown variable type!")
         !            end if
         !            
         !        end do
         !    else
-        !        call error("No nc_diag initialized yet!")
+        !        call nclayer_error("No nc_diag initialized yet!")
         !    end if
         !    
         !end subroutine nc_diag_metadata_write
@@ -695,9 +723,9 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_metadata_prealloc_vars(num_of_addl_vars = ", num_of_addl_vars, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             if (init_done .AND. allocated(diag_metadata_store)) then
@@ -763,7 +791,7 @@ module nclayer_metadata
                 
                 diag_metadata_store%prealloc_total = diag_metadata_store%prealloc_total + num_of_addl_vars
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             endif
         end subroutine nc_diag_metadata_prealloc_vars
         
@@ -775,9 +803,9 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A, I0, A)") "nc_diag_metadata_prealloc_vars_storage(nclayer_type = ", nclayer_type, ", num_of_addl_slots = ", num_of_addl_slots, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif            
             
@@ -794,7 +822,7 @@ module nclayer_metadata
             else if (nclayer_type == NLAYER_STRING) then
                 call nc_diag_metadata_resize_string(num_of_addl_slots, .FALSE.)
             else
-                call error("Invalid type specified for variable storage preallocation!")
+                call nclayer_error("Invalid type specified for variable storage preallocation!")
             end if
             
             ! resize nc_diag_metadata_resize_iarr ?
@@ -809,9 +837,9 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_metadata_prealloc_vars_storage_all(num_of_addl_slots = ", num_of_addl_slots, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
@@ -835,34 +863,34 @@ module nclayer_metadata
                 addl_fields = 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi))
                 
 #ifdef _DEBUG_MEM_
-                call debug("INITIAL value of diag_metadata_store%alloc_s_multi:")
+                call nclayer_debug("INITIAL value of diag_metadata_store%alloc_s_multi:")
                 print *, diag_metadata_store%alloc_s_multi
 #endif
                 
                 if (allocated(diag_metadata_store%names)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%names)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_metadata_store%names...")
+                        call nclayer_debug("Reallocating diag_metadata_store%names...")
                         print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
                         print *, addl_fields
 #endif
                         call nc_diag_realloc(diag_metadata_store%names, addl_fields)
 #ifdef _DEBUG_MEM_
-                    call debug("Reallocated diag_metadata_store%names. Size:")
+                    call nclayer_debug("Reallocated diag_metadata_store%names. Size:")
                     print *, size(diag_metadata_store%names)
 #endif
                         meta_realloc = .TRUE.
                     end if
                 else
 #ifdef _DEBUG_MEM_
-                    call debug("Allocating diag_metadata_store%names for first time...")
+                    call nclayer_debug("Allocating diag_metadata_store%names for first time...")
                     print *, NLAYER_DEFAULT_ENT
 #endif
                     
                     allocate(diag_metadata_store%names(NLAYER_DEFAULT_ENT))
                     
 #ifdef _DEBUG_MEM_
-                    call debug("Allocated diag_metadata_store%names. Size:")
+                    call nclayer_debug("Allocated diag_metadata_store%names. Size:")
                     print *, size(diag_metadata_store%names)
 #endif
                 end if
@@ -870,7 +898,7 @@ module nclayer_metadata
                 if (allocated(diag_metadata_store%types)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%types)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_metadata_store%types...")
+                        call nclayer_debug("Reallocating diag_metadata_store%types...")
                         print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
                         print *, addl_fields
 #endif
@@ -884,7 +912,7 @@ module nclayer_metadata
                 if (allocated(diag_metadata_store%stor_i_arr)) then
                     if (diag_metadata_store%total >= size(diag_metadata_store%stor_i_arr)) then
 #ifdef _DEBUG_MEM_
-                        call debug("Reallocating diag_metadata_store%stor_i_arr...")
+                        call nclayer_debug("Reallocating diag_metadata_store%stor_i_arr...")
                         print *, (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)
                         print *, (1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_s_multi)))
 #endif
@@ -948,7 +976,7 @@ module nclayer_metadata
                     !print *, size(diag_metadata_store%names)
                 endif
             else
-                call error("NetCDF4 layer not initialized yet!")
+                call nclayer_error("NetCDF4 layer not initialized yet!")
             endif
             
         end subroutine nc_diag_metadata_expand
@@ -980,14 +1008,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_metadata_byte(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -995,7 +1023,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_metadata_expand
@@ -1029,14 +1057,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_metadata_short(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -1044,7 +1072,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_metadata_expand
@@ -1078,14 +1106,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, I0, A)") "nc_diag_metadata_long(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -1093,7 +1121,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_metadata_expand
@@ -1107,7 +1135,7 @@ module nclayer_metadata
             end if
             
 #ifdef _DEBUG_MEM_
-            call debug("Current total:")
+            call nclayer_debug("Current total:")
             print *, diag_metadata_store%total
 #endif
             
@@ -1132,14 +1160,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, F0.5, A)") "nc_diag_metadata_rsingle(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -1147,7 +1175,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
 #ifdef _DEBUG_MEM_
                 write (*, "(A, A, A, F)") "NEW METADATA: ", metadata_name, " | First value: ", metadata_value
@@ -1183,14 +1211,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A, F0.5, A)") "nc_diag_metadata_rdouble(metadata_name = " // metadata_name // ", metadata_value = ", metadata_value, ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -1198,7 +1226,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_metadata_expand
@@ -1232,14 +1260,14 @@ module nclayer_metadata
 #ifdef ENABLE_ACTION_MSGS
             character(len=1000)                   :: action_str
             
-            if (enable_action) then
+            if (nclayer_enable_action) then
                 write(action_str, "(A)") "nc_diag_metadata_string(metadata_name = " // metadata_name // ", metadata_value = " // trim(metadata_value) // ")"
-                call actionm(trim(action_str))
+                call nclayer_actionm(trim(action_str))
             end if
 #endif
             
             if (diag_metadata_store%data_lock) then
-                call error("Can't add new data - data have already been written and locked!")
+                call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
             
             var_index = nc_diag_metadata_lookup_var(metadata_name)
@@ -1247,7 +1275,7 @@ module nclayer_metadata
             if (var_index == -1) then
                 ! First, check to make sure we can still define new variables.
                 if (diag_metadata_store%def_lock) then
-                    call error("Can't add new variable - definitions have already been written and locked!")
+                    call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
                 call nc_diag_metadata_expand
@@ -1266,7 +1294,7 @@ module nclayer_metadata
 #endif
                 if ((diag_metadata_store%def_lock) .AND. &
                     (len_trim(metadata_value) > diag_metadata_store%max_str_lens(var_index))) &
-                    call error("Cannot expand variable string length after locking variable definitions!")
+                    call nclayer_error("Cannot expand variable string length after locking variable definitions!")
             end if
             
             ! We just need to add one entry...
@@ -1283,7 +1311,7 @@ module nclayer_metadata
                     ! Validate that our non-first value isn't different from
                     ! the initial string length
                     if (diag_metadata_store%max_str_lens(var_index) /= len(metadata_value)) &
-                        call error("Cannot change string size when trimming is disabled!")
+                        call nclayer_error("Cannot change string size when trimming is disabled!")
                 end if
             end if
             

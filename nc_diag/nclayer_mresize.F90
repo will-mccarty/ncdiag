@@ -1,8 +1,19 @@
 module nclayer_mresize
-    use kinds
-    use nclayer_state
-    use nclayer_climsg
-    use nclayer_realloc
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_state, only: diag_metadata_store
+    use nclayer_types, only: diag_md_iarr, NLAYER_DEFAULT_ENT, &
+        NLAYER_MULTI_BASE
+    use nclayer_realloc, only: nc_diag_realloc
+    use nclayer_climsg, only: &
+#ifdef ENABLE_ACTION_MSGS
+        nclayer_enable_action, nclayer_actionm, &
+#endif
+#ifdef _DEBUG_MEM_
+        nclayer_debug, &
+#endif
+        nclayer_error
+    
     implicit none
     
     contains
@@ -71,8 +82,8 @@ module nclayer_mresize
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_byte: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_byte: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_byte, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -125,8 +136,8 @@ module nclayer_mresize
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_short: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_short: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_short, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -190,17 +201,17 @@ module nclayer_mresize
                 
 #ifdef _DEBUG_MEM_
                 write (debugstr, "(A, I1, A, I7, A, I7)") "In sc_index ", sc_index, ", the acount/asize is: ", diag_metadata_store%acount(sc_index), "/", diag_metadata_store%asize(sc_index)
-                call debug(debugstr)
+                call nclayer_debug(debugstr)
 #endif
                 
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
 #ifdef _DEBUG_MEM_
-                    call debug("acount < asize, reallocating.")
+                    call nclayer_debug("acount < asize, reallocating.")
                     print *, "Start long realloc..."
 #endif
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_long: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_long: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_long, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -262,8 +273,8 @@ module nclayer_mresize
                     write (*, "(A, I0, A, I0, A)") "(size needed / size available: ", diag_metadata_store%acount(sc_index), " / ", diag_metadata_store%asize(sc_index), ")"
 #endif
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_rsingle: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_rsingle: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_rsingle, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -315,8 +326,8 @@ module nclayer_mresize
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_rdouble: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_rdouble: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_rdouble, int8(addl_num_entries + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -368,8 +379,8 @@ module nclayer_mresize
                 if (update_acount) diag_metadata_store%acount(sc_index) = diag_metadata_store%acount(sc_index) + addl_num_entries
                 if (diag_metadata_store%acount(sc_index) >= diag_metadata_store%asize(sc_index)) then
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_string: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_string: doing reallocation!")
                     end if
 #endif
                     call nc_diag_realloc(diag_metadata_store%m_string, int8(addl_num_entries  + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_metadata_store%alloc_m_multi(sc_index)))))
@@ -390,8 +401,8 @@ module nclayer_mresize
             type(diag_md_iarr), dimension(:), allocatable   :: tmp_stor_i_arr
             
 #ifdef ENABLE_ACTION_MSGS
-            if (enable_action) then
-                call actionm("nc_diag_metadata_resize_iarr_type: doing reallocation!")
+            if (nclayer_enable_action) then
+                call nclayer_actionm("nc_diag_metadata_resize_iarr_type: doing reallocation!")
             end if
 #endif
             
@@ -442,8 +453,8 @@ module nclayer_mresize
                     print *, int8(NLAYER_MULTI_BASE ** int8(diag_metadata_store%alloc_sia_multi(iarr_index)))
 #endif
 #ifdef ENABLE_ACTION_MSGS
-                    if (enable_action) then
-                        call actionm("nc_diag_metadata_resize_iarr: doing reallocation!")
+                    if (nclayer_enable_action) then
+                        call nclayer_actionm("nc_diag_metadata_resize_iarr: doing reallocation!")
                     end if
 #endif
                     !print *, int8(diag_metadata_store%stor_i_arr(iarr_index)%isize) ! *0.5 for 1.5x

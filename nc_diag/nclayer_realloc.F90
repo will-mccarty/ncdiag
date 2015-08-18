@@ -1,6 +1,11 @@
 module nclayer_realloc
-    use kinds
-    use nclayer_climsg
+    use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
+        r_double
+    use nclayer_climsg, only: &
+#ifdef _DEBUG_MEM_
+        nclayer_debug, &
+#endif
+        nclayer_error
     
     implicit none
     
@@ -68,7 +73,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
@@ -98,7 +103,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
@@ -124,7 +129,7 @@ module nclayer_realloc
             character(len=100)                           :: err_msg
             
 #ifdef _DEBUG_MEM_
-            call debug("Reallocating long array...")
+            call nclayer_debug("Reallocating long array...")
 #endif
             
             new_size = size(arr) + addl_num_entries
@@ -136,7 +141,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             
             tmp(1:size(arr)) = arr
@@ -146,7 +151,7 @@ module nclayer_realloc
             
 #ifdef _DEBUG_MEM_
             print *, "REALLOCATOR: final actual size is ", size(arr)
-            call debug("Realloc finished for long")
+            call nclayer_debug("Realloc finished for long")
 #endif
         end subroutine nc_diag_realloc_long
         
@@ -168,7 +173,7 @@ module nclayer_realloc
             character(len=100)                           :: err_msg
             
 #ifdef _DEBUG_MEM_
-            call debug("Reallocating long array...")
+            call nclayer_debug("Reallocating long array...")
 #endif
             
             new_size = size(arr) + addl_num_entries
@@ -176,7 +181,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             
             tmp(1:size(arr)) = arr
@@ -185,7 +190,7 @@ module nclayer_realloc
             arr = tmp
             
 #ifdef _DEBUG_MEM_
-            call debug("Realloc finished for long")
+            call nclayer_debug("Realloc finished for long")
 #endif
         end subroutine nc_diag_realloc_llong
         
@@ -211,7 +216,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
@@ -241,7 +246,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
@@ -272,13 +277,13 @@ module nclayer_realloc
             string_len = len(arr(1))
             string_arr_size = size(arr)
             
-            call debug("[string] Length of string to allocate to:")
+            call nclayer_debug("[string] Length of string to allocate to:")
             print *, string_len
             
-            call debug("[string] Allocating from...")
+            call nclayer_debug("[string] Allocating from...")
             print *, string_arr_size
             
-            call debug("[string] ...to size...")
+            call nclayer_debug("[string] ...to size...")
             print *, (string_arr_size + addl_num_entries)
 #endif
             
@@ -287,7 +292,7 @@ module nclayer_realloc
             allocate(tmp(new_size), STAT=alloc_err)
             if (alloc_err /= 0) then
                 write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call error(trim(err_msg))
+                call nclayer_error(trim(err_msg))
             end if
             tmp(1:size(arr)) = arr
             deallocate(arr)
@@ -315,10 +320,10 @@ module nclayer_realloc
             new_size = logical_arr_size + addl_num_entries
             
 #ifdef _DEBUG_MEM_
-            call debug("[logical] Allocating from...")
+            call nclayer_debug("[logical] Allocating from...")
             print *, logical_arr_size
             
-            call debug("[logical] ...to size...")
+            call nclayer_debug("[logical] ...to size...")
             print *, (logical_arr_size + addl_num_entries)
 #endif
             
@@ -328,7 +333,7 @@ module nclayer_realloc
             allocate(arr(new_size))
             arr = tmp
 #ifdef _DEBUG_MEM_
-            call debug("[logical] Final size:")
+            call nclayer_debug("[logical] Final size:")
             print *, size(arr)
 #endif
         end subroutine nc_diag_realloc_logical
