@@ -167,8 +167,6 @@ module nc_diag_read
             if (nc_diag_read_get_index_from_filename(filename) /= -1) &
                 call ncdr_error("Can't open the same file more than once! (Opening, closing, and then opening again is allowed.)")
             
-            write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
-            
             call ncdr_nc_check( nf90_open(filename, NF90_NOWRITE, file_ncid) )
             
             call nc_diag_read_parse_file(filename, file_ncid, file_ncdr_id)

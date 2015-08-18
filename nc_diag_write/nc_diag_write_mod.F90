@@ -74,8 +74,7 @@ module nc_diag_write_mod
             end if
 #endif
             
-            !print *,'Initializing netcdf layer library, version ...'
-            write (*,"(A, A, A)") 'Initializing netcdf layer library, version ', trim(nf90_inq_libvers()), '...'
+            call nclayer_info('Initializing netcdf layer library, version ' // trim(nf90_inq_libvers()) // '...')
             
             ! nf90_create creates the NetCDF file, and initializes
             ! everything needed to write a NetCDF file.
