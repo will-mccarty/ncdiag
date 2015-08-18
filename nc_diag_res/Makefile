@@ -36,7 +36,7 @@ nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_RES_DEPS)
 		-Ifson/lib -Lfson/lib -lfson
 	$(NCDRES_MAKE_FANCY_END)
 
-ncdres_climsg.o: ncdres_climsg.F90
+ncdres_climsg.o: ncdres_climsg.F90 Makefile.config Makefile.libconfig
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c ncdres_climsg.F90
