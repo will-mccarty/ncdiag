@@ -15,22 +15,6 @@ module ncdw_strarrutils
             end do
         end function lentrim
         
-        ! Validation:
-        ! ashuang1@dali15:~/NetCDFProject/nc_diag> python
-        ! Python 2.7.1 (r271:86832, Apr 11 2013, 14:33:49) 
-        ! [GCC 4.6.3] on linux2
-        ! Type "help", "copyright", "credits" or "license" for more information.
-        ! >>> a='aabbababababbbbaaaaa!'
-        ! >>> a.count('a')
-        ! 11
-        ! >>> a.count('aa')
-        ! 3
-        ! >>> a.count('bb')
-        ! 3
-        ! >>> a.count('ab')
-        ! 5
-        ! >>> a.count('a!')
-        ! 1
         function string_count_substr(s, substr) result(sub_count)
             character(len=*), intent(in)      :: s
             character(len=*), intent(in)      :: substr
@@ -55,32 +39,6 @@ module ncdw_strarrutils
             end do
         end function string_count_substr
         
-        ! Validation:
-        ! ashuang1@dali15:~/NetCDFProject/nc_diag> python
-        ! Python 2.7.1 (r271:86832, Apr 11 2013, 14:33:49) 
-        ! [GCC 4.6.3] on linux2
-        ! Type "help", "copyright", "credits" or "license" for more information.
-        ! >>> x='aabbababababbbbaaaaa!'
-        ! >>> x.split('a')
-        ! ['', '', 'bb', 'b', 'b', 'b', 'bbbb', '', '', '', '', '!']
-        ! >>> len('bbbb')
-        ! 4
-        ! >>> x.split('aa')
-        ! ['', 'bbababababbbb', '', 'a!']
-        ! >>> len('bbababababbbb')
-        ! 13
-        ! >>> x.split('bb')
-        ! ['aa', 'abababa', '', 'aaaaa!']
-        ! >>> len('abababa')
-        ! 7
-        ! >>> x.split('ab')
-        ! ['a', 'b', '', '', '', 'bbbaaaaa!']
-        ! >>> len('bbbaaaaa!')
-        ! 9
-        ! >>> x.split('a!')
-        ! ['aabbababababbbbaaaa', '']
-        ! >>> len('aabbababababbbbaaaa')
-        ! 19
         function string_get_max_split(s, substr) result(max_len)
             character(len=*), intent(in)      :: s
             character(len=*), intent(in)      :: substr
