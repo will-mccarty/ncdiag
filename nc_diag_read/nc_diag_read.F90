@@ -164,16 +164,6 @@ module nc_diag_read
             integer(i_long)                :: file_ncid
             integer(i_long)                :: file_ncdr_id
             
-#ifdef ENABLE_ACTION_MSGS
-            character(len=1000)            :: action_str
-            
-            if (enable_action) then
-                write(action_str, "(A)") "nc_diag_init(filename = " // trim(filename) // &
-                    ", append = (not specified))"
-                call actionm(trim(action_str))
-            end if
-#endif
-            
             if (nc_diag_read_get_index_from_filename(filename) /= -1) &
                 call ncdr_error("Can't open the same file more than once! (Opening, closing, and then opening again is allowed.)")
             
@@ -189,15 +179,6 @@ module nc_diag_read
             integer(i_long), intent(out), optional :: file_ncdr_id
             logical,         intent(in),  optional :: from_push
             integer(i_long)                        :: f_ncdr_id
-#ifdef ENABLE_ACTION_MSGS
-            character(len=1000)                    :: action_str
-            
-            if (enable_action) then
-                write(action_str, "(A)") "nc_diag_read_init(filename = " // trim(filename) // &
-                    ", append = (not specified))"
-                call actionm(trim(action_str))
-            end if
-#endif
             
             if (ncdr_id_stack_count > 0) then
                 if (.NOT. (present(from_push) .AND. (from_push))) &
@@ -216,15 +197,6 @@ module nc_diag_read
         subroutine nc_diag_read_push(filename, file_ncdr_id)
             character(len=*),intent(in)            :: filename
             integer(i_long), intent(out), optional :: file_ncdr_id
-#ifdef ENABLE_ACTION_MSGS
-            character(len=1000)                    :: action_str
-            
-            if (enable_action) then
-                write(action_str, "(A)") "nc_diag_read_push(filename = " // trim(filename) // &
-                    ", append = (not specified))"
-                call actionm(trim(action_str))
-            end if
-#endif
             
             if ((ncdr_id_stack_count == 0) .AND. (current_ncdr_id /= -1)) &
                 call ncdr_error("Can not initialize due to normal caching use! If you want to init with the stack, you must close the cached file first, then use nc_diag_read_push()!")

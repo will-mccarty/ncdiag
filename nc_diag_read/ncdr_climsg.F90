@@ -4,7 +4,6 @@ module ncdr_climsg
     ! NetCDF Diag Reader - CLI Message portion
     ! (Declarations)
     logical :: ncdr_enable_info = .FALSE.
-    logical :: ncdr_enable_action = .FALSE.
     
     contains
         ! NetCDF Diag Reader - CLI Message portion
@@ -48,43 +47,8 @@ module ncdr_climsg
 #endif
         end subroutine ncdr_warning
         
-        subroutine ncdr_set_action_display(action_on_off)
-            logical :: action_on_off
-#ifdef ncdr_enable_ACTION_MSGS
-            character(len=1000)                   :: action_str
-            
-            if (ncdr_enable_action) then
-                write(action_str, "(A, L, A)") "nc_set_action_display(action_on_off = ", action_on_off, ")"
-                call actionm(trim(action_str))
-            end if
-#endif
-            ncdr_enable_action = action_on_off
-        end subroutine ncdr_set_action_display
-        
-#ifdef ncdr_enable_ACTION_MSGS
-        subroutine ncdr_actionm(act)
-            character(len=*), intent(in) :: act
-            if (ncdr_enable_action) &
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[36m" // &
-                                " **  ACTION: " // act // &
-                                CHAR(27) // "[0m"
-#else
-                write(*, "(A)") " **  ACTION: " // act
-#endif
-        end subroutine ncdr_actionm
-#endif
-        
         subroutine ncdr_set_info_display(info_on_off)
             logical :: info_on_off
-#ifdef ncdr_enable_ACTION_MSGS
-            character(len=1000)                   :: action_str
-            
-            if (ncdr_enable_action) then
-                write(action_str, "(A, L, A)") "nc_set_info_display(info_on_off = ", info_on_off, ")"
-                call actionm(trim(action_str))
-            end if
-#endif
             ncdr_enable_info = info_on_off
         end subroutine ncdr_set_info_display
         
