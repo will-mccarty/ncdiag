@@ -1,36 +1,36 @@
 # Include build configuration
 include Makefile.config
 
-NETCDF_LAYER_OBJS+= \
-    nclayer_climsg.o \
-    nclayer_chaninfo.o nclayer_ciresize.o \
-    nclayer_data2d.o nclayer_dresize.o \
-    nclayer_lheader.o \
-    nclayer_metadata.o nclayer_mresize.o \
-    nclayer_realloc.o \
-    nclayer_types.o nclayer_state.o \
-    nclayer_strarrutils.o \
-    nclayer_varattr.o
+NC_DIAG_WRITE_OBJS+= \
+    ncdw_climsg.o \
+    ncdw_chaninfo.o ncdw_ciresize.o \
+    ncdw_data2d.o ncdw_dresize.o \
+    ncdw_lheader.o \
+    ncdw_metadata.o ncdw_mresize.o \
+    ncdw_realloc.o \
+    ncdw_types.o ncdw_state.o \
+    ncdw_strarrutils.o \
+    ncdw_varattr.o
 
-NETCDF_LAYER_DEPS+=Makefile \
-    $(NETCDF_LAYER_OBJS)
+NC_DIAG_WRITE_DEPS+=Makefile \
+    $(NC_DIAG_WRITE_OBJS)
 
-NETCDF_LAYER_VAR_DEPS+= kinds.o \
-    nclayer_climsg.o \
-    nclayer_types.o nclayer_state.o \
-    nclayer_realloc.o \
-    nclayer_strarrutils.o \
-    nclayer_varattr.o
+NCDW_VAR_DEPS+= kinds.o \
+    ncdw_climsg.o \
+    ncdw_types.o ncdw_state.o \
+    ncdw_realloc.o \
+    ncdw_strarrutils.o \
+    ncdw_varattr.o
 
-NETCDF_LAYER_VAR_RESIZE_DEPS+= kinds.o \
-    nclayer_state.o \
-    nclayer_types.o \
-    nclayer_climsg.o \
-    nclayer_realloc.o
+NCDW_VAR_RESIZE_DEPS+= kinds.o \
+    ncdw_state.o \
+    ncdw_types.o \
+    ncdw_climsg.o \
+    ncdw_realloc.o
 
 .PHONY: all tests check clean
 
-all: libnetcdf_layer.a tests
+all: libnc_diag_write.a tests
 
 tests:
 	make -C tests
@@ -38,53 +38,53 @@ tests:
 check:
 	make -C tests check
 
-libnetcdf_layer.a: netcdf_layer.o
-	ar rcs libnetcdf_layer.a netcdf_layer.o $(NETCDF_LAYER_OBJS)
+libnc_diag_write.a: nc_diag_write_mod.o $(NC_DIAG_WRITE_DEPS)
+	ar rcs libnc_diag_write.a nc_diag_write_mod.o $(NC_DIAG_WRITE_OBJS)
 
 kinds.o: kinds.F90 Makefile Makefile.config Makefile.libconfig
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) -c kinds.F90 $(NCLAYER_CONFIG_FLAGS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) -c kinds.F90 $(NCDW_CONFIG_FLAGS)
 
-netcdf_layer.o: kinds.o $(NETCDF_LAYER_DEPS) netcdf_layer.F90
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c netcdf_layer.F90 $(NCLAYER_NETCDF_FLAGS)
+nc_diag_write_mod.o: kinds.o $(NC_DIAG_WRITE_DEPS) nc_diag_write_mod.F90
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c nc_diag_write_mod.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_chaninfo.o: nclayer_chaninfo.F90 $(NETCDF_LAYER_VAR_DEPS) nclayer_ciresize.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_chaninfo.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_chaninfo.o: ncdw_chaninfo.F90 $(NCDW_VAR_DEPS) ncdw_ciresize.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_chaninfo.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_ciresize.o: nclayer_ciresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_ciresize.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_ciresize.o: ncdw_ciresize.F90 $(NCDW_VAR_RESIZE_DEPS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_ciresize.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_climsg.o: nclayer_climsg.F90 kinds.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_climsg.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_climsg.o: ncdw_climsg.F90 kinds.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_climsg.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_state.o: nclayer_state.f90 nclayer_types.o kinds.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_state.f90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_state.o: ncdw_state.f90 ncdw_types.o kinds.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_state.f90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_types.o: nclayer_types.F90 kinds.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_types.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_types.o: ncdw_types.F90 kinds.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_types.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_strarrutils.o: nclayer_strarrutils.F90
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) -c nclayer_strarrutils.F90
+ncdw_strarrutils.o: ncdw_strarrutils.F90
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) -c ncdw_strarrutils.F90
 
-nclayer_varattr.o: nclayer_varattr.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_varattr.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_varattr.o: ncdw_varattr.F90 $(NCDW_VAR_RESIZE_DEPS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_varattr.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_metadata.o: nclayer_metadata.F90 $(NETCDF_LAYER_VAR_DEPS) nclayer_mresize.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_metadata.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_metadata.o: ncdw_metadata.F90 $(NCDW_VAR_DEPS) ncdw_mresize.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_metadata.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_mresize.o: nclayer_mresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_mresize.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_mresize.o: ncdw_mresize.F90 $(NCDW_VAR_RESIZE_DEPS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_mresize.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_data2d.o: nclayer_data2d.F90 nclayer_dresize.o $(NETCDF_LAYER_VAR_DEPS)
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_data2d.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_data2d.o: ncdw_data2d.F90 ncdw_dresize.o $(NCDW_VAR_DEPS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_data2d.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_dresize.o: nclayer_dresize.F90 $(NETCDF_LAYER_VAR_RESIZE_DEPS)
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_dresize.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_dresize.o: ncdw_dresize.F90 $(NCDW_VAR_RESIZE_DEPS)
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_dresize.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_realloc.o: nclayer_realloc.F90 nclayer_climsg.o kinds.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_realloc.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_realloc.o: ncdw_realloc.F90 ncdw_climsg.o kinds.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_realloc.F90 $(NCDW_NETCDF_FLAGS)
 
-nclayer_lheader.o: nclayer_lheader.F90 nclayer_state.o nclayer_climsg.o kinds.o
-	$(NCLAYER_FORT90C) $(NCLAYER_F90FLAGS) $(NCLAYER_CONFIG_FLAGS) -c nclayer_lheader.F90 $(NCLAYER_NETCDF_FLAGS)
+ncdw_lheader.o: ncdw_lheader.F90 ncdw_state.o ncdw_climsg.o kinds.o
+	$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_lheader.F90 $(NCDW_NETCDF_FLAGS)
 
 clean:
 	rm -f *.mod *.x *.o *.a gmon.out
