@@ -2,19 +2,19 @@ include ../Makefile.config
 include ../Makefile.libconfig
 
 NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
-	test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
-	test_ncdr_get_id.x test_ncdr_get_id_arda.x \
-	test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
-	test_ncdr_get_pushpop.x \
-	test_ncdr_dims.x \
-	test_ncdr_vars.x \
-	test_ncdr_attrs.x \
-	test_ncdr_global_attrs.x
+    test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
+    test_ncdr_get_id.x test_ncdr_get_id_arda.x \
+    test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
+    test_ncdr_get_pushpop.x \
+    test_ncdr_dims.x \
+    test_ncdr_vars.x \
+    test_ncdr_attrs.x \
+    test_ncdr_global_attrs.x
 
 NC_DIAG_READ_TESTS_FAIL=errs/err_ncdr_invalid_file.x \
-	errs/err_ncdr_invalid_ncdr_id_dim.x \
-	errs/err_ncdr_alloc_dimnames.x \
-	errs/err_ncdr_alloc_varnames.x
+    errs/err_ncdr_invalid_ncdr_id_dim.x \
+    errs/err_ncdr_alloc_dimnames.x \
+    errs/err_ncdr_alloc_varnames.x
 
 # Coverage build flags
 ifndef COVERAGE
