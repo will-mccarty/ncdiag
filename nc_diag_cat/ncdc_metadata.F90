@@ -148,6 +148,7 @@ module ncdc_metadata
                     if (cur_proc == 0) &
 #endif
                         call ncdc_info(" -> Opening " // input_file_cut // " for reading...")
+                    
                     call ncdc_check(nf90_open(input_file, NF90_NOWRITE, ncid_input))
                     
                     ! Get top level info about the file!

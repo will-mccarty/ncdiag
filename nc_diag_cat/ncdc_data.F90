@@ -175,11 +175,6 @@ module ncdc_data
                         print *, " (starting var write)"
 #endif
                         
-                        !print *, "VARIABLE: " // trim(var_names(cur_out_var_ind))
-                        !print *, "ALLOC SIZES:", data_blobs(cur_out_var_ind)%alloc_size
-                        !print *, "CUR POS:", data_blobs(cur_out_var_ind)%cur_pos
-                        !print *, "DIM SIZES:", cur_out_dim_sizes
-                        !print *, "VAR COUNTER:", cur_out_var_counter
                         
                         ! Check for one-time only vars...
                         if (((.NOT. any(cur_out_dim_sizes == -1)) .AND. (cur_out_var_counter == 0)) &
@@ -187,14 +182,6 @@ module ncdc_data
                             
                             if ((cur_out_var_ndims == 1) .OR. &
                                 ((cur_out_var_ndims == 2) .AND. (tmp_var_type == NF90_CHAR))) then
-                                !! TODO: 
-                                !! implement max str len for string stuff
-                                !! fix string implementation below (need 2D spec + max str len!)
-                                !! check here to make sure things work, then do 2D stuff!
-                                
-                                !! NOTE THAT THIS IS ON LOCAL MACHINE, AFTER DONE TRANSFER TO DALI AND
-                                !! CONTINUE DEV/TESTING THERE!!!
-                                
                                 if (tmp_var_type == NF90_BYTE) then
                                     call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%byte_buffer &
@@ -231,38 +218,6 @@ module ncdc_data
                                         start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
                                 else if (tmp_var_type == NF90_CHAR) then
-                                    !write (*, "(A)") "VARIABLE: " // trim(var_names(cur_out_var_ind))
-                                    !print *, "ALLOC SIZES: ", data_blobs(cur_out_var_ind)%alloc_size
-                                    !write (*, "(A, I0, A, I0)") "start = ", data_blobs(cur_out_var_ind)%cur_pos, &
-                                    !    " | end = ", data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1
-                                    !write (*, "(A, I0, A, I0)") "var dim 1 = ", cur_dim_sizes(1), &
-                                    !    " | var dim 2 = ", cur_dim_sizes(2)
-                                    !data_blobs(cur_out_var_ind)%string_buffer &
-                                    !    (1 : cur_dim_sizes(1), &
-                                    !        data_blobs(cur_out_var_ind)%cur_pos : &
-                                    !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
-                                    !            = NF90_FILL_CHAR
-                                    !call ncdc_check(nf90_get_var(ncid_input, var_index, &
-                                    !    data_blobs(cur_out_var_ind)%string_buffer &
-                                    !        (1 : data_blobs(cur_out_var_ind)%alloc_size(1), &
-                                    !            data_blobs(cur_out_var_ind)%cur_pos : &
-                                    !            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1), &
-                                    !    start = (/ 1, 1 /), &
-                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
-                                    
-                                    ! ALTERNATIVE USING INDEXING
-                                    ! Note - this is VERY slow and inefficient!
-                                    
-                                    !do i = data_blobs(cur_out_var_ind)%cur_pos, &
-                                    !    data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1
-                                    !    call ncdc_check(nf90_get_var(ncid_input, var_index, &
-                                    !        data_blobs(cur_out_var_ind)%string_buffer &
-                                    !            (1 : cur_dim_sizes(1), &
-                                    !                i), &
-                                    !        start = (/ 1, 1 /), &
-                                    !        count = (/ cur_dim_sizes(1), 1 /) ))
-                                    !end do
-                                    
                                     ! Strangely enough, NetCDF doesn't support storing strings to
                                     ! an array splice. Even with defined bounds, the strings is not
                                     ! stored properly, especially when the variable's dimensions
@@ -287,18 +242,6 @@ module ncdc_data
                                         tmp_string_buffer
                                     
                                     deallocate(tmp_string_buffer)
-                                    
-                                    !do i = data_blobs(cur_out_var_ind)%cur_pos, &
-                                    !    data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1
-                                    !    
-                                    !    write (*, "(I0, A)", advance = "no") i, "    ["
-                                    !    
-                                    !    do j = 1, data_blobs(cur_out_var_ind)%alloc_size(1)
-                                    !        write (*, "(A)", advance = "no") &
-                                    !            data_blobs(cur_out_var_ind)%string_buffer(j, i)
-                                    !    end do
-                                    !    write (*, "(A)") "]"
-                                    !end do
                                 else
                                     write (err_string, "(A, I0, A)") &
                                         "Invalid type detected during write." // &
@@ -351,13 +294,6 @@ module ncdc_data
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                 else if (tmp_var_type == NF90_CHAR) then
                                     ! Use string buffer variable - same issue as before with 1D strings!
-                                    !call ncdc_check(nf90_get_var(ncid_input, var_index, &
-                                    !    data_blobs(cur_out_var_ind)%string_2d_buffer &
-                                    !        (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
-                                    !            data_blobs(cur_out_var_ind)%cur_pos : &
-                                    !            data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(3) - 1), &
-                                    !    start = (/ 1, 1, 1 /), &
-                                    !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                     allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
                                     string_2d_buffer = NF90_FILL_CHAR
                                     call ncdc_check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
@@ -380,10 +316,6 @@ module ncdc_data
                                     call ncdc_error(trim(err_string))
                                 end if
                             end if
-                            
-                            !print *, "cur_out_var_ndims", cur_out_var_ndims
-                            !print *, "cur_dim_sizes(cur_out_var_ndims)", cur_dim_sizes(cur_out_var_ndims)
-                            !print *, "any(cur_out_dim_sizes == -1)", any(cur_out_dim_sizes == -1)
                             
                             if (any(cur_out_dim_sizes == -1)) &
                                 data_blobs(cur_out_var_ind)%cur_pos = &

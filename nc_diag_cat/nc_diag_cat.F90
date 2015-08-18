@@ -54,14 +54,12 @@ program nc_diag_cat
 #endif
     
     call ncdc_info('Initializing netcdf layer library, version ' // trim(nf90_inq_libvers()) // '...')
-    !call string_before_delimiter(trim(nf90_inq_libvers()), " ", version_num)
     
     ! nc_diag_cat steps:
     !   1) Do a quick pass to read metadata, then allocate space as
     !      necessary.
     !   2) Define variables with metadata. Do NOT store attributes.
-    !   3) Read each file again, this time concatenating everything
-    !      as we go.
+    !   3) Read all the files, and add data to the output file.
     
     call nc_diag_cat_process_args
     
