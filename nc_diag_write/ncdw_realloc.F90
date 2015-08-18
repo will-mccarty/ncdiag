@@ -1,7 +1,7 @@
-module nclayer_realloc
+module ncdw_realloc
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_climsg, only: &
+    use ncdw_climsg, only: &
 #ifdef _DEBUG_MEM_
         nclayer_debug, &
 #endif
@@ -337,4 +337,4 @@ module nclayer_realloc
             print *, size(arr)
 #endif
         end subroutine nc_diag_realloc_logical
-end module nclayer_realloc
+end module ncdw_realloc

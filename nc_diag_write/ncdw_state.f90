@@ -1,6 +1,6 @@
-module nclayer_state
+module ncdw_state
     use kinds, only: i_long
-    use nclayer_types, only: diag_chaninfo, diag_metadata, &
+    use ncdw_types, only: diag_chaninfo, diag_metadata, &
         diag_data2d, diag_varattr
     
     implicit none
@@ -17,4 +17,4 @@ module nclayer_state
     type(diag_metadata), allocatable :: diag_metadata_store
     type(diag_data2d),   allocatable :: diag_data2d_store
     type(diag_varattr),  allocatable :: diag_varattr_store
-end module nclayer_state
+end module ncdw_state

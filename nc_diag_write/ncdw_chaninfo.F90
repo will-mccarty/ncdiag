@@ -1,25 +1,25 @@
-module nclayer_chaninfo
+module ncdw_chaninfo
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_state, only: init_done, ncid, append_only, &
+    use ncdw_state, only: init_done, ncid, append_only, &
         enable_trim, &
         diag_chaninfo_store
-    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+    use ncdw_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
         NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, &
         NLAYER_FILL_BYTE, NLAYER_FILL_SHORT, NLAYER_FILL_LONG, &
         NLAYER_FILL_FLOAT, NLAYER_FILL_DOUBLE, NLAYER_FILL_CHAR, &
         NLAYER_COMPRESSION, NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
-    use nclayer_varattr, only: nc_diag_varattr_add_var
-    use nclayer_strarrutils, only: max_len_string_array
+    use ncdw_varattr, only: nc_diag_varattr_add_var
+    use ncdw_strarrutils, only: max_len_string_array
     
-    use nclayer_climsg, only: &
+    use ncdw_climsg, only: &
 #ifdef ENABLE_ACTION_MSGS
         nclayer_enable_action, nclayer_actionm, &
 #endif
         nclayer_error, nclayer_warning, nclayer_info, nclayer_check
     
-    use nclayer_realloc, only: nc_diag_realloc
-    use nclayer_ciresize, only: nc_diag_chaninfo_resize_byte, &
+    use ncdw_realloc, only: nc_diag_realloc
+    use ncdw_ciresize, only: nc_diag_chaninfo_resize_byte, &
         nc_diag_chaninfo_resize_short, nc_diag_chaninfo_resize_long, &
         nc_diag_chaninfo_resize_rsingle, &
         nc_diag_chaninfo_resize_rdouble, nc_diag_chaninfo_resize_string
@@ -1535,4 +1535,4 @@ module nclayer_chaninfo
                         * diag_chaninfo_store%nchans) &
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_string
-end module nclayer_chaninfo
+end module ncdw_chaninfo

@@ -1,4 +1,4 @@
-module nclayer_climsg
+module ncdw_climsg
     use kinds, only: i_long
     use netcdf, only: nf90_noerr, nf90_strerror
     
@@ -106,4 +106,4 @@ module nclayer_climsg
             call nclayer_error(trim(nf90_strerror(status)))
           end if
         end subroutine nclayer_check
-end module nclayer_climsg
+end module ncdw_climsg

@@ -1,11 +1,11 @@
-module nclayer_ciresize
+module ncdw_ciresize
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_state, only: diag_chaninfo_store
-    use nclayer_types, only: NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
-    use nclayer_realloc, only: nc_diag_realloc
+    use ncdw_state, only: diag_chaninfo_store
+    use ncdw_types, only: NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
+    use ncdw_realloc, only: nc_diag_realloc
 #ifdef ENABLE_ACTION_MSGS
-    use nclayer_climsg, only: nclayer_enable_action, nclayer_actionm
+    use ncdw_climsg, only: nclayer_enable_action, nclayer_actionm
 #endif
     
     implicit none
@@ -347,4 +347,4 @@ module nclayer_ciresize
                 diag_chaninfo_store%asize(sc_index) = addl_num_entries + NLAYER_DEFAULT_ENT
             end if
         end subroutine nc_diag_chaninfo_resize_string
-end module nclayer_ciresize
+end module ncdw_ciresize

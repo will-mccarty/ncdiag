@@ -1,12 +1,12 @@
-module nclayer_varattr
+module ncdw_varattr
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_state, only: init_done, append_only, ncid, &
+    use ncdw_state, only: init_done, append_only, ncid, &
         diag_varattr_store
-    use nclayer_types, only: NLAYER_DEFAULT_ENT
-    use nclayer_climsg, only: nclayer_error, nclayer_warning, &
+    use ncdw_types, only: NLAYER_DEFAULT_ENT
+    use ncdw_climsg, only: nclayer_error, nclayer_warning, &
         nclayer_check
-    use nclayer_realloc, only: nc_diag_realloc
+    use ncdw_realloc, only: nc_diag_realloc
     use netcdf, only: nf90_inq_dimid, nf90_def_dim, nf90_put_att, &
         NF90_UNLIMITED
     
@@ -443,4 +443,4 @@ module nclayer_varattr
 #endif
             end if
         end subroutine nc_diag_varattr_rdouble_v
-end module nclayer_varattr
+end module ncdw_varattr

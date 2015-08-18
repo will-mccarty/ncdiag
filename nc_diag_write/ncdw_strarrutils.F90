@@ -2,7 +2,7 @@
 ! general utilities for Fortran programs
 ! Author: Albert Huang for SSAI/NASA GSFC GMAO
 
-module nclayer_strarrutils
+module ncdw_strarrutils
     implicit none
     
     contains
@@ -310,4 +310,4 @@ module nclayer_strarrutils
                 string_part = s
             end if
         end subroutine string_before_delimiter
-end module nclayer_strarrutils
+end module ncdw_strarrutils

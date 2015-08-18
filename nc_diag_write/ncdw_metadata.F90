@@ -1,27 +1,27 @@
-module nclayer_metadata
+module ncdw_metadata
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_state, only: init_done, ncid, append_only, &
+    use ncdw_state, only: init_done, ncid, append_only, &
         enable_trim, &
         diag_metadata_store, diag_varattr_store
-    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+    use ncdw_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
         NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, &
         NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE, NLAYER_CHUNKING, &
         NLAYER_COMPRESSION
-    use nclayer_strarrutils, only: max_len_string_array
+    use ncdw_strarrutils, only: max_len_string_array
     
-    use nclayer_realloc, only: nc_diag_realloc
-    use nclayer_mresize, only: &
+    use ncdw_realloc, only: nc_diag_realloc
+    use ncdw_mresize, only: &
         nc_diag_metadata_resize_byte, nc_diag_metadata_resize_short, &
         nc_diag_metadata_resize_long, nc_diag_metadata_resize_rsingle, &
         nc_diag_metadata_resize_rdouble, &
         nc_diag_metadata_resize_string, &
         nc_diag_metadata_resize_iarr, nc_diag_metadata_resize_iarr_type
     
-    use nclayer_varattr, only: nc_diag_varattr_make_nobs_dim, &
+    use ncdw_varattr, only: nc_diag_varattr_make_nobs_dim, &
         nc_diag_varattr_add_var
     
-    use nclayer_climsg, only: &
+    use ncdw_climsg, only: &
 #ifdef ENABLE_ACTION_MSGS
         nclayer_enable_action, nclayer_actionm, &
 #endif
@@ -1320,4 +1320,4 @@ module nclayer_metadata
             diag_metadata_store%stor_i_arr(var_index)%index_arr(diag_metadata_store%stor_i_arr(var_index)%icount) = &
                 diag_metadata_store%acount(6)
         end subroutine nc_diag_metadata_string
-end module nclayer_metadata
+end module ncdw_metadata

@@ -1,4 +1,4 @@
-module nclayer_types
+module ncdw_types
     use kinds, only: i_byte, i_short, i_long, i_llong, &
         r_single, r_double
     use netcdf, only: NF90_FILL_BYTE, NF90_FILL_SHORT, NF90_FILL_INT, &
@@ -461,4 +461,4 @@ module nclayer_types
         ! Global nobs dimension ID
         integer(i_long)                               :: nobs_dim_id = -1
     end type diag_varattr
-end module nclayer_types
+end module ncdw_types

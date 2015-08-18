@@ -1,29 +1,29 @@
-module nclayer_data2d
+module ncdw_data2d
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
-    use nclayer_state, only: init_done, append_only, ncid, &
+    use ncdw_state, only: init_done, append_only, ncid, &
         enable_trim, &
         diag_data2d_store, diag_varattr_store
-    use nclayer_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
+    use ncdw_types, only: NLAYER_BYTE, NLAYER_SHORT, NLAYER_LONG, &
         NLAYER_FLOAT, NLAYER_DOUBLE, NLAYER_STRING, NLAYER_CHUNKING, &
         NLAYER_COMPRESSION, NLAYER_FILL_BYTE, NLAYER_FILL_SHORT, &
         NLAYER_FILL_LONG, NLAYER_FILL_FLOAT, NLAYER_FILL_DOUBLE, &
         NLAYER_FILL_CHAR, &
         NLAYER_DEFAULT_ENT, NLAYER_MULTI_BASE
-    use nclayer_strarrutils, only: &
+    use ncdw_strarrutils, only: &
 #ifdef _DEBUG_MEM_
         string_array_dump, &
 #endif
         max_len_string_array, max_len_notrim_string_array
-    use nclayer_varattr, only: nc_diag_varattr_make_nobs_dim, &
+    use ncdw_varattr, only: nc_diag_varattr_make_nobs_dim, &
         nc_diag_varattr_add_var
     
-    use nclayer_dresize, only: nc_diag_data2d_resize_byte, &
+    use ncdw_dresize, only: nc_diag_data2d_resize_byte, &
         nc_diag_data2d_resize_short, nc_diag_data2d_resize_long, &
         nc_diag_data2d_resize_rsingle, nc_diag_data2d_resize_rdouble, &
         nc_diag_data2d_resize_string, nc_diag_data2d_resize_iarr_type, &
         nc_diag_data2d_resize_iarr
-    use nclayer_realloc, only: nc_diag_realloc
+    use ncdw_realloc, only: nc_diag_realloc
     
     use netcdf, only: nf90_inquire, nf90_inquire_variable, &
         nf90_inquire_dimension, nf90_def_dim, nf90_def_var, &
@@ -31,7 +31,7 @@ module nclayer_data2d
         NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, NF90_DOUBLE, &
         NF90_CHAR, NF90_MAX_NAME, NF90_CHUNKED
     
-    use nclayer_climsg, only: &
+    use ncdw_climsg, only: &
 #ifdef ENABLE_ACTION_MSGS
         nclayer_enable_action, nclayer_actionm, &
 #endif
@@ -1855,4 +1855,4 @@ module nclayer_data2d
             diag_data2d_store%stor_i_arr(var_index)%length_arr(diag_data2d_store%stor_i_arr(var_index)%icount) = &
                 input_size
         end subroutine nc_diag_data2d_string
-end module nclayer_data2d
+end module ncdw_data2d

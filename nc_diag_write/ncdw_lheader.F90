@@ -1,7 +1,7 @@
-module nclayer_lheader
+module ncdw_lheader
     use kinds, only: i_byte, i_short, i_long, r_single, r_double
-    use nclayer_state, only: ncid, init_done
-    use nclayer_climsg, only: nclayer_error, nclayer_check
+    use ncdw_state, only: ncid, init_done
+    use ncdw_climsg, only: nclayer_error, nclayer_check
     use netcdf, only: nf90_put_att, NF90_GLOBAL
     
     implicit none
@@ -214,4 +214,4 @@ module nclayer_lheader
         !    ! Now add the actual entry!
         !    diag_header_store%h_string(endpos - value_size:endpos) = header_value
         !end subroutine nc_diag_header_string_v
-end module nclayer_lheader
+end module ncdw_lheader
