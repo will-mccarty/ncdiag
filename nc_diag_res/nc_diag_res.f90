@@ -37,6 +37,8 @@ module nc_diag_res
     use ncdres_climsg, only: ncdres_error
     use fson, only: fson_value, fson_parse, fson_get, fson_destroy
     
+    implicit none
+    
     type(fson_value), pointer :: nc_diag_json => null()
     
     contains

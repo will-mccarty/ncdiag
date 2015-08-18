@@ -1,6 +1,7 @@
 module ncdres_climsg
     ! NetCDF Diag Reader - CLI Message portion
-    ! (Declarations)
+    implicit none
+    
     logical :: ncdres_enable_info = .FALSE.
     
     contains
