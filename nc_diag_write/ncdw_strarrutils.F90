@@ -7,7 +7,6 @@ module ncdw_strarrutils
     
     contains
         function lentrim(s)
-            implicit none
             character(len=*) :: s
             integer lentrim
 
@@ -118,7 +117,6 @@ module ncdw_strarrutils
         end function string_get_max_split
         
         function string_split_index(s, delimiter) result(split_strings)
-            implicit none
             character(len=*)      :: s
             character(len=*)      :: delimiter
             
