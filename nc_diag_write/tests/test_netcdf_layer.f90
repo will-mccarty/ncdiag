@@ -1,7 +1,7 @@
 program test_netcdf_layer
     use kinds
     use netcdf
-    use netcdf_layer
+    use nc_diag_write_mod
     implicit none
     
     integer :: i
