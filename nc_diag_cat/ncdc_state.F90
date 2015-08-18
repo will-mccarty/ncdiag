@@ -1,13 +1,15 @@
 module ncdc_state
-    use kinds
-    use ncdc_types
+    use kinds, only: i_long
+    use ncdc_types, only: nc_diag_cat_dim_names, data_blob
+    
+    implicit none
     
 #ifdef USE_MPI
     integer(i_long)                    :: cur_proc, num_procs, ierr
 #endif
     
     character(len=10000000) :: prgm_name, dummy_arg, output_file, input_file
-    integer(i_long)         :: cli_arg_count, input_count, arg_index, var_index
+    integer(i_long)         :: cli_arg_count, input_count
     
     integer(i_long)                    :: ncid_output, ncid_input
     

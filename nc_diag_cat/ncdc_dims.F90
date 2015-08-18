@@ -1,7 +1,9 @@
 module ncdc_dims
-    use ncdc_state
-    use ncdc_realloc
-    use ncdc_climsg
+    use kinds, only: i_long
+    use ncdc_state, only: dim_names, dim_sizes, dim_unlim_sizes, &
+        dim_counters, dim_output_ids, dim_arr_total, dim_arr_size
+    use ncdc_realloc, only: nc_diag_realloc
+    use ncdc_climsg, only: ncdc_error, ncdc_warning
     
     implicit none
     
@@ -10,7 +12,7 @@ module ncdc_dims
     contains
         function nc_diag_cat_lookup_dim(dim_name) result(ind)
             character(len=*), intent(in)    :: dim_name
-            integer :: i, ind
+            integer(i_long)                 :: i, ind
             
             ind = -1
             
@@ -25,11 +27,11 @@ module ncdc_dims
         end function nc_diag_cat_lookup_dim
         
         subroutine nc_diag_cat_metadata_add_dim(dim_name, dim_size, dim_ul_size)
-            character(len=*), intent(in)    :: dim_name
-            integer         , intent(in)    :: dim_size
-            integer,optional, intent(in)    :: dim_ul_size
+            character(len=*),         intent(in) :: dim_name
+            integer(i_long) ,         intent(in) :: dim_size
+            integer(i_long),optional, intent(in) :: dim_ul_size
             
-            integer                         :: dim_index
+            integer(i_long)                 :: dim_index
             character(len=1000)             :: err_string
             
             dim_index = nc_diag_cat_lookup_dim(dim_name)
@@ -88,7 +90,7 @@ module ncdc_dims
                             "to ", &
                             dim_size, &
                             "!)"
-                        call error(trim(err_string))
+                        call ncdc_error(trim(err_string))
                     end if
                     dim_sizes(dim_index) = dim_size
                 end if
@@ -104,14 +106,14 @@ module ncdc_dims
                         "length of ", &
                         dim_sizes(dim_index), &
                         "!)"
-                    call error(trim(err_string))
+                    call ncdc_error(trim(err_string))
                 end if
                 dim_sizes(dim_index) = -1
                 
                 if (present(dim_ul_size)) then
                     dim_unlim_sizes(dim_index) = dim_unlim_sizes(dim_index) + dim_ul_size
                 else
-                    call warning("Call made for unlimited dimension without specifying unlimited size!")
+                    call ncdc_warning("Call made for unlimited dimension without specifying unlimited size!")
                 end if
             end if
         end subroutine nc_diag_cat_metadata_add_dim

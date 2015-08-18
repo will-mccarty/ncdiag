@@ -1,9 +1,13 @@
 module ncdc_vars
-    use kinds
-    use ncdc_state
-    use ncdc_dims
-    use ncdc_climsg
-    use netcdf
+    use kinds, only: i_long
+    use ncdc_state, only: var_names, var_types, var_output_ids, &
+        var_counters, var_hasunlim, var_dim_names, var_arr_total, &
+        var_arr_size
+    use ncdc_dims, only: dim_sizes, nc_diag_cat_lookup_dim
+    use ncdc_realloc, only: nc_diag_realloc
+    use ncdc_climsg, only: ncdc_error
+    use netcdf, only: NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, &
+        NF90_DOUBLE, NF90_CHAR
     
     implicit none
     
@@ -12,7 +16,7 @@ module ncdc_vars
     contains
         function nc_diag_cat_lookup_var(var_name) result(ind)
             character(len=*), intent(in)    :: var_name
-            integer :: i, ind
+            integer(i_long)                 :: i, ind
             
             ind = -1
             
@@ -87,7 +91,7 @@ module ncdc_vars
             if (allocated(var_dim_names(var_index)%dim_names)) then
                 ! Just do a sanity check!
                 if (var_types(var_index) /= var_type) &
-                    call error("Variable type changed!" // &
+                    call ncdc_error("Variable type changed!" // &
                         CHAR(10) // "             " // &
                         "(Type of variable '" // var_name // "' changed from " // &
                         trim(nc_diag_cat_metadata_type_to_str(var_types(var_index))) // &
@@ -106,12 +110,12 @@ module ncdc_vars
                         "to ", &
                         var_ndims, &
                         "!)"
-                    call error(trim(err_string))
+                    call ncdc_error(trim(err_string))
                 end if
                 
                 do i = 1, var_ndims
                     if (var_dim_names(var_index)%dim_names(i) /= var_dims(i)) &
-                        call error("Variable dimensions changed!" // &
+                        call ncdc_error("Variable dimensions changed!" // &
                         CHAR(10) // "             " // &
                         "(Variable '" // var_name // "' changed dimension from " // &
                         trim(var_dim_names(var_index)%dim_names(i)) // &

@@ -1,6 +1,8 @@
 module ncdc_realloc
-    use kinds
-    use ncdc_types
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    use ncdc_types, only: nc_diag_cat_dim_names
+    
+    implicit none
     
     !===============================================================
     ! nc_diag_realloc - reallocation support (declaration)
@@ -23,9 +25,9 @@ module ncdc_realloc
     interface nc_diag_realloc
         module procedure nc_diag_realloc_byte, &
             nc_diag_realloc_short, nc_diag_realloc_long, &
-            nc_diag_realloc_llong, nc_diag_realloc_rsingle, &
-            nc_diag_realloc_rdouble, nc_diag_realloc_string, &
-            nc_diag_realloc_logical, nc_diag_realloc_ncdcdn
+            nc_diag_realloc_rsingle, nc_diag_realloc_rdouble, &
+            nc_diag_realloc_string, nc_diag_realloc_logical, &
+            nc_diag_realloc_ncdcdn
     end interface nc_diag_realloc
     
     contains
@@ -133,45 +135,6 @@ module ncdc_realloc
 #endif
         end subroutine nc_diag_realloc_long
         
-        ! nc_diag_realloc_llong(arr, addl_num_entries)
-        !   input:
-        !     integer(i_long), dimension(:)  :: arr
-        !         array to reallocate
-        !     integer(i_long), intent(in)    :: addl_num_entries
-        !         additional number of elements to allocate to the
-        !         specified array
-        subroutine nc_diag_realloc_llong(arr, addl_num_entries)
-            integer(i_llong), dimension(:), allocatable, intent(inout) :: arr
-            integer(i_long),intent(in) :: addl_num_entries
-            
-            integer(i_llong), dimension(:), allocatable   :: tmp
-            integer(i_long)                             :: new_size
-            
-            integer(i_byte)                              :: alloc_err
-            character(len=100)                           :: err_msg
-            
-#ifdef _DEBUG_MEM_
-            call debug("Reallocating long array...")
-#endif
-            
-            new_size = size(arr) + addl_num_entries
-            
-            allocate(tmp(new_size), STAT=alloc_err)
-            if (alloc_err /= 0) then
-                write(err_msg, "(A, I0)") "Reallocator was unable to reallocate memory! Error code: ", alloc_err
-                call nc_diag_realloc_error(trim(err_msg))
-            end if
-            
-            tmp(1:size(arr)) = arr
-            deallocate(arr)
-            allocate(arr(new_size))
-            arr = tmp
-            
-#ifdef _DEBUG_MEM_
-            call debug("Realloc finished for long")
-#endif
-        end subroutine nc_diag_realloc_llong
-        
         ! nc_diag_realloc_rsingle(arr, addl_num_entries)
         !   input:
         !     real(r_single), dimension(:)   :: arr
@@ -250,7 +213,7 @@ module ncdc_realloc
             character(len=100)                           :: err_msg
             
 #ifdef _DEBUG_MEM_
-            integer :: string_len, string_arr_size
+            integer(i_long) :: string_len, string_arr_size
             
             string_len = len(arr(1))
             string_arr_size = size(arr)
@@ -349,7 +312,7 @@ module ncdc_realloc
         subroutine nc_diag_realloc_error(err)
             character(len=*), intent(in) :: err
 #ifdef ERROR_TRACEBACK
-            integer                      :: div0
+            integer(i_long)              :: div0
 #endif
 #ifdef ANSI_TERM_COLORS
             write(*, "(A)") CHAR(27) // "[31m" // &

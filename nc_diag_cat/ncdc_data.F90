@@ -1,10 +1,29 @@
 module ncdc_data
-    use kinds
-    use netcdf
-    use ncdc_state
-    use ncdc_cli_process
-    use ncdc_dims
-    use ncdc_vars
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
+    
+    use ncdc_state, only: prgm_name, cli_arg_count, input_count, &
+        input_file, output_file,  ncid_input, &
+        ncid_input, ncid_output, &
+        var_arr_total, var_names, var_dim_names, var_output_ids, &
+        var_types, var_counters, &
+        dim_sizes, dim_names, dim_output_ids, dim_arr_total, &
+        dim_counters, &
+        data_blobs
+    
+    use ncdc_climsg, only: ncdc_error, ncdc_warning, ncdc_info, &
+        ncdc_check
+    use ncdc_cli_process, only: ncdc_usage
+    
+    use ncdc_dims, only: nc_diag_cat_lookup_dim
+    use ncdc_vars, only: nc_diag_cat_lookup_var
+    
+    use netcdf, only: nf90_open, nf90_close, nf90_inquire, &
+        nf90_inquire_dimension, nf90_inquire_variable, nf90_get_var, &
+        nf90_put_var, nf90_inq_dimid, &
+        NF90_NOWRITE, NF90_BYTE, NF90_SHORT, NF90_INT, NF90_FLOAT, &
+        NF90_DOUBLE, NF90_CHAR, NF90_FILL_CHAR, NF90_MAX_NAME
+    
+    implicit none
     
     contains
         subroutine nc_diag_cat_data_pass
@@ -30,7 +49,7 @@ module ncdc_data
             character(1) ,dimension(:,:), allocatable :: tmp_string_buffer
             character(1),dimension(:,:,:),allocatable :: string_2d_buffer
             
-            integer :: i
+            integer(i_long) :: arg_index, var_index, i
             
             character(len=NF90_MAX_NAME) , allocatable :: tmp_in_dim_names(:)
             
@@ -39,11 +58,11 @@ module ncdc_data
             character(:), allocatable :: input_file_cut
             
             if (.NOT. allocated(var_names)) then
-                call warning("No variables found to concatenate.")
+                call ncdc_warning("No variables found to concatenate.")
                 return
             end if
             
-            call info("Reading in data from all files...")
+            call ncdc_info("Reading in data from all files...")
             
 #ifdef DEBUG
             print *, " !!! BEGINNING DATA PASS!!"
@@ -60,25 +79,25 @@ module ncdc_data
                 input_file_cut = trim(input_file)
                 
                 if (len(input_file_cut) <= 0) then
-                    call usage("Invalid input file name - likely blank!")
+                    call ncdc_usage("Invalid input file name - likely blank!")
                 end if
                 
                 if (input_file_cut == output_file) then
                     ! No warning here - we've already shown it in metadata.
-                    call info(" -> Skipping " // input_file_cut // " since it is the output file...")
+                    call ncdc_info(" -> Skipping " // input_file_cut // " since it is the output file...")
                 else
-                    call info(" -> Opening " // input_file_cut // " for reading...")
-                    call check(nf90_open(input_file, NF90_NOWRITE, ncid_input, &
+                    call ncdc_info(" -> Opening " // input_file_cut // " for reading...")
+                    call ncdc_check(nf90_open(input_file, NF90_NOWRITE, ncid_input, &
                         cache_size = 2147483647))
                     
                     ! Get top level info about the file!
-                    call check(nf90_inquire(ncid_input, nDimensions = input_ndims, &
+                    call ncdc_check(nf90_inquire(ncid_input, nDimensions = input_ndims, &
                         nVariables = input_nvars, nAttributes = input_nattrs))
                     
                     ! Dimensions
                     allocate(tmp_in_dim_names(input_ndims))
                     do tmp_dim_index = 1, input_ndims
-                        call check(nf90_inquire_dimension(ncid_input, tmp_dim_index, &
+                        call ncdc_check(nf90_inquire_dimension(ncid_input, tmp_dim_index, &
                             tmp_in_dim_names(tmp_dim_index)))
                     end do
                     
@@ -92,7 +111,7 @@ module ncdc_data
                     ! Loop through each variable!
                     do var_index = 1, input_nvars
                         ! Grab number of dimensions and attributes first
-                        call check(nf90_inquire_variable(ncid_input, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
+                        call ncdc_check(nf90_inquire_variable(ncid_input, var_index, name = tmp_var_name, ndims = tmp_var_ndims))
                         
 #ifdef DEBUG
                         print *, "** PROCESSING VARIABLE: " // trim(tmp_var_name)
@@ -111,7 +130,7 @@ module ncdc_data
 #endif
                         
                         ! Grab the actual dimension IDs and attributes
-                        call check(nf90_inquire_variable(ncid_input, var_index, dimids = tmp_var_dimids, &
+                        call ncdc_check(nf90_inquire_variable(ncid_input, var_index, dimids = tmp_var_dimids, &
                             xtype = tmp_var_type))
                         
 #ifdef DEBUG
@@ -133,7 +152,7 @@ module ncdc_data
 #ifdef DEBUG
                             if (i /= 1) write (*, "(A)", advance = "NO") ", "
 #endif
-                            call check(nf90_inquire_dimension(ncid_input, tmp_var_dimids(i), tmp_var_dim_names(i), cur_dim_sizes(i)))
+                            call ncdc_check(nf90_inquire_dimension(ncid_input, tmp_var_dimids(i), tmp_var_dim_names(i), cur_dim_sizes(i)))
 #ifdef DEBUG
                             write (*, "(A)", advance = "NO") trim(tmp_var_dim_names(i))
 #endif
@@ -177,35 +196,35 @@ module ncdc_data
                                 !! CONTINUE DEV/TESTING THERE!!!
                                 
                                 if (tmp_var_type == NF90_BYTE) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%byte_buffer &
                                             (data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1), &
                                         start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
                                 else if (tmp_var_type == NF90_SHORT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%short_buffer &
                                             (data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1), &
                                         start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
                                 else if (tmp_var_type == NF90_INT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%long_buffer &
                                             (data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1), &
                                         start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
                                 else if (tmp_var_type == NF90_FLOAT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%rsingle_buffer &
                                             (data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1), &
                                         start = (/ 1 /), &
                                         count = (/ cur_dim_sizes(1) /) ))
                                 else if (tmp_var_type == NF90_DOUBLE) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%rdouble_buffer &
                                             (data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(1) - 1), &
@@ -223,7 +242,7 @@ module ncdc_data
                                     !        data_blobs(cur_out_var_ind)%cur_pos : &
                                     !        data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1) &
                                     !            = NF90_FILL_CHAR
-                                    !call check(nf90_get_var(ncid_input, var_index, &
+                                    !call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                     !    data_blobs(cur_out_var_ind)%string_buffer &
                                     !        (1 : data_blobs(cur_out_var_ind)%alloc_size(1), &
                                     !            data_blobs(cur_out_var_ind)%cur_pos : &
@@ -236,7 +255,7 @@ module ncdc_data
                                     
                                     !do i = data_blobs(cur_out_var_ind)%cur_pos, &
                                     !    data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1
-                                    !    call check(nf90_get_var(ncid_input, var_index, &
+                                    !    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                     !        data_blobs(cur_out_var_ind)%string_buffer &
                                     !            (1 : cur_dim_sizes(1), &
                                     !                i), &
@@ -257,7 +276,7 @@ module ncdc_data
                                     allocate(tmp_string_buffer (cur_dim_sizes(1), cur_dim_sizes(2)))
                                     tmp_string_buffer = NF90_FILL_CHAR
                                     
-                                    call check(nf90_get_var(ncid_input, var_index, tmp_string_buffer, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, tmp_string_buffer, &
                                         start = (/ 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                     
@@ -288,25 +307,25 @@ module ncdc_data
                                         tmp_var_type, "," // &
                                         CHAR(10) // "             " // &
                                         "which is invalid!)"
-                                    call error(trim(err_string))
+                                    call ncdc_error(trim(err_string))
                                 end if
                             else if ((cur_out_var_ndims == 2) .OR. &
                                 ((cur_out_var_ndims == 3) .AND. (tmp_var_type == NF90_CHAR))) then
                                 
                                 if (tmp_var_type == NF90_BYTE) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%byte_2d_buffer &
                                             (1 : cur_dim_sizes(1), &
                                                 data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1)))
                                 else if (tmp_var_type == NF90_SHORT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%short_2d_buffer &
                                             (1 : cur_dim_sizes(1), &
                                                 data_blobs(cur_out_var_ind)%cur_pos : &
                                                 data_blobs(cur_out_var_ind)%cur_pos + cur_dim_sizes(2) - 1)))
                                 else if (tmp_var_type == NF90_INT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%long_2d_buffer &
                                             (1 : cur_dim_sizes(1), &
                                                 data_blobs(cur_out_var_ind)%cur_pos : &
@@ -315,7 +334,7 @@ module ncdc_data
                                     print *, "Storage place: ", dim_counters(nc_diag_cat_lookup_dim(tmp_var_dim_names(2)))
 #endif
                                 else if (tmp_var_type == NF90_FLOAT) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%rsingle_2d_buffer &
                                             (1 : cur_dim_sizes(1), &
                                                 data_blobs(cur_out_var_ind)%cur_pos : &
@@ -323,7 +342,7 @@ module ncdc_data
                                         start = (/ 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                 else if (tmp_var_type == NF90_DOUBLE) then
-                                    call check(nf90_get_var(ncid_input, var_index, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                         data_blobs(cur_out_var_ind)%rdouble_2d_buffer &
                                         (1 : cur_dim_sizes(1), &
                                             data_blobs(cur_out_var_ind)%cur_pos : &
@@ -332,7 +351,7 @@ module ncdc_data
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2) /) ))
                                 else if (tmp_var_type == NF90_CHAR) then
                                     ! Use string buffer variable - same issue as before with 1D strings!
-                                    !call check(nf90_get_var(ncid_input, var_index, &
+                                    !call ncdc_check(nf90_get_var(ncid_input, var_index, &
                                     !    data_blobs(cur_out_var_ind)%string_2d_buffer &
                                     !        (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
                                     !            data_blobs(cur_out_var_ind)%cur_pos : &
@@ -341,7 +360,7 @@ module ncdc_data
                                     !    count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                     allocate(string_2d_buffer (cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3)))
                                     string_2d_buffer = NF90_FILL_CHAR
-                                    call check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
+                                    call ncdc_check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                         start = (/ 1, 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
                                     data_blobs(cur_out_var_ind)%string_2d_buffer &
@@ -358,7 +377,7 @@ module ncdc_data
                                         tmp_var_type, "," // &
                                         CHAR(10) // "             " // &
                                         "which is invalid!)"
-                                    call error(trim(err_string))
+                                    call ncdc_error(trim(err_string))
                                 end if
                             end if
                             
@@ -401,10 +420,10 @@ module ncdc_data
 #ifdef DEBUG
                                 print *, "Unlimited dimension name: ", trim(dim_names(i))
 #endif
-                                call check(nf90_inq_dimid(ncid_input, dim_names(i), cur_dim_id))
+                                call ncdc_check(nf90_inq_dimid(ncid_input, dim_names(i), cur_dim_id))
                                 
                                 ! Then, grab the current unlimited dimension length!
-                                call check(nf90_inquire_dimension(ncid_input, cur_dim_id, len = cur_dim_len))
+                                call ncdc_check(nf90_inquire_dimension(ncid_input, cur_dim_id, len = cur_dim_len))
                                 
                                 ! Add the length to the counter!
                                 dim_counters(i) = dim_counters(i) + cur_dim_len
@@ -412,7 +431,7 @@ module ncdc_data
                         end do
                     end if
                     
-                    call check(nf90_close(ncid_input))
+                    call ncdc_check(nf90_close(ncid_input))
                     
                     !deallocate(unlim_dims)
                     !deallocate(tmp_input_dimids)
@@ -423,40 +442,42 @@ module ncdc_data
         end subroutine nc_diag_cat_data_pass
         
         subroutine nc_diag_cat_data_commit
-            call info("Doing final data commit...")
+            integer(i_long) :: var_index
+            
+            call ncdc_info("Doing final data commit...")
             
             do var_index = 1, var_arr_total
-                call info(" => Writing variable " // trim(var_names(var_index)) // "...")
+                call ncdc_info(" => Writing variable " // trim(var_names(var_index)) // "...")
                 if ((var_dim_names(var_index)%num_names == 1) .OR. &
                     ((var_dim_names(var_index)%num_names == 2) .AND. (var_types(var_index) == NF90_CHAR)) ) then
                     if (var_types(var_index) == NF90_BYTE) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%byte_buffer, &
                             start = (/ 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1) /) ))
                     if (var_types(var_index) == NF90_SHORT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%short_buffer, &
                             start = (/ 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1) /) ))
                     if (var_types(var_index) == NF90_INT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%long_buffer, &
                             start = (/ 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1) /) ))
                     if (var_types(var_index) == NF90_FLOAT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%rsingle_buffer, &
                             start = (/ 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1) /) ))
                     
                     if (var_types(var_index) == NF90_DOUBLE) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%rdouble_buffer, &
                             start = (/ 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1) /) ))
                     if (var_types(var_index) == NF90_CHAR) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%string_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
@@ -464,37 +485,37 @@ module ncdc_data
                 else if ((var_dim_names(var_index)%num_names == 2) .OR. &
                     ((var_dim_names(var_index)%num_names == 3) .AND. (var_types(var_index) == NF90_CHAR)) ) then
                     if (var_types(var_index) == NF90_BYTE) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%byte_2d_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
                                 data_blobs(var_index)%alloc_size(2) /) ))
                     if (var_types(var_index) == NF90_SHORT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%short_2d_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
                                 data_blobs(var_index)%alloc_size(2) /) ))
                     if (var_types(var_index) == NF90_INT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%long_2d_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
                                 data_blobs(var_index)%alloc_size(2) /) ))
                     if (var_types(var_index) == NF90_FLOAT) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%rsingle_2d_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
                                 data_blobs(var_index)%alloc_size(2) /) ))
                     if (var_types(var_index) == NF90_DOUBLE) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%rdouble_2d_buffer, &
                             start = (/ 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &
                                 data_blobs(var_index)%alloc_size(2) /) ))
                     if (var_types(var_index) == NF90_CHAR) &
-                        call check(nf90_put_var(ncid_output, var_output_ids(var_index), &
+                        call ncdc_check(nf90_put_var(ncid_output, var_output_ids(var_index), &
                             data_blobs(var_index)%string_2d_buffer, &
                             start = (/ 1, 1, 1 /), &
                             count = (/ data_blobs(var_index)%alloc_size(1), &

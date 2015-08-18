@@ -1,7 +1,10 @@
 module ncdc_climsg
-    use kinds
-    use netcdf
-    use ncdc_state
+    use kinds, only: i_long
+    use netcdf, only: nf90_noerr, nf90_strerror
+    
+#ifdef USE_MPI
+    use ncdc_state, only: cur_proc
+#endif
     
     implicit none
     
@@ -12,15 +15,15 @@ module ncdc_climsg
 #endif
     
     contains
-        subroutine check(status)
+        subroutine ncdc_check(status)
           integer(i_long), intent(in) :: status
           
           if(status /= nf90_noerr) then 
-            call error(trim(nf90_strerror(status)))
+            call ncdc_error(trim(nf90_strerror(status)))
           end if
-        end subroutine check
+        end subroutine ncdc_check
         
-        subroutine error(err)
+        subroutine ncdc_error(err)
             character(len=*), intent(in) :: err
 #ifdef ERROR_TRACEBACK
             integer(i_long)              :: div0
@@ -52,9 +55,9 @@ module ncdc_climsg
 #else
             stop " ** Failed to concatenate NetCDF4."
 #endif
-        end subroutine error
+        end subroutine ncdc_error
         
-        subroutine warning(warn)
+        subroutine ncdc_warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef USE_MPI
             write(*, "(A, I0, A)") &
@@ -71,9 +74,9 @@ module ncdc_climsg
 #ifdef ANSI_TERM_COLORS
                             CHAR(27) // "[0m"
 #endif
-        end subroutine warning
+        end subroutine ncdc_warning
         
-        subroutine info(ifo)
+        subroutine ncdc_info(ifo)
             character(len=*), intent(in) :: ifo
             if (enable_info) &
 #ifdef USE_MPI
@@ -91,12 +94,12 @@ module ncdc_climsg
 #ifdef ANSI_TERM_COLORS
                                 CHAR(27) // "[0m"
 #endif
-        end subroutine info
+        end subroutine ncdc_info
         
 #ifdef _DEBUG_MEM_
-        subroutine debug(dbg)
+        subroutine ncdc_debug(dbg)
             character(len=*), intent(in) :: dbg
             write(*, "(A, A)") "D: ", dbg
-        end subroutine debug
+        end subroutine ncdc_debug
 #endif
 end module ncdc_climsg

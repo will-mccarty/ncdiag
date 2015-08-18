@@ -1,8 +1,10 @@
 module ncdc_types
-    use kinds
+    use kinds, only: i_byte, i_short, i_long, r_single, r_double
     
-    integer, parameter                 :: NC_DIAG_CAT_GZIP_COMPRESS = 6
-    integer, parameter                 :: NC_DIAG_CAT_CHUNK_SIZE = 16384
+    implicit none
+    
+    integer(i_long), parameter         :: NC_DIAG_CAT_GZIP_COMPRESS = 6
+    integer(i_long), parameter         :: NC_DIAG_CAT_CHUNK_SIZE = 16384
     
     ! Variable dimensions storage
     type nc_diag_cat_dim_names

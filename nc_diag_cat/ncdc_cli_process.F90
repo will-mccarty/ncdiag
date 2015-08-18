@@ -1,8 +1,11 @@
 module ncdc_cli_process
-    use ncdc_state
+    use ncdc_state, only: input_file, output_file, prgm_name, &
+        cli_arg_count, dummy_arg
+    
+    implicit none
     
     contains
-        subroutine usage(err)
+        subroutine ncdc_usage(err)
             character(len=*), intent(in), optional :: err
             
             if (present(err)) then
@@ -23,13 +26,13 @@ module ncdc_cli_process
             write (*, "(A)") "     At least 2 input files must be specified in order for this tool"
             write (*, "(A)") "     to run. The resulting file will be compressed."
             stop
-        end subroutine usage
+        end subroutine ncdc_usage
         
         subroutine nc_diag_cat_process_args
             cli_arg_count = command_argument_count()
             
             if (cli_arg_count < 4) then
-                call usage
+                call ncdc_usage
             end if
             
             ! Check for -o.
@@ -38,28 +41,28 @@ module ncdc_cli_process
             call get_command_argument(1, dummy_arg)
             
             if (trim(dummy_arg) /= "-o") then
-                call usage("Invalid option - '-o' must be specified in the 1st argument.")
+                call ncdc_usage("Invalid option - '-o' must be specified in the 1st argument.")
             end if
             
             ! Grab output file argument
             call get_command_argument(2, output_file)
             
             if (len_trim(output_file) <= 0) then
-                call usage("Invalid output file name.")
+                call ncdc_usage("Invalid output file name.")
             end if
             
             ! Grab first input file argument
             call get_command_argument(3, input_file)
             
             if (len_trim(input_file) <= 0) then
-                call usage("Invalid first input file name.")
+                call ncdc_usage("Invalid first input file name.")
             end if
             
             ! Grab second input file argument
             call get_command_argument(4, input_file)
             
             if (len_trim(input_file) <= 0) then
-                call usage("Invalid second input file name.")
+                call ncdc_usage("Invalid second input file name.")
             end if
             
             ! Sanity checks done!
