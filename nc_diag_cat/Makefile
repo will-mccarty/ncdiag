@@ -2,14 +2,14 @@
 include Makefile.config
 
 NC_DIAG_CAT_OBJS+=\
-	ncdc_realloc.o ncdc_state.o ncdc_climsg.o ncdc_types.o \
-	ncdc_cli_process.o \
-	ncdc_dims.o ncdc_vars.o \
-	ncdc_metadata.o \
-	netcdf_unlimdims.o
+    ncdc_realloc.o ncdc_state.o ncdc_climsg.o ncdc_types.o \
+    ncdc_cli_process.o \
+    ncdc_dims.o ncdc_vars.o \
+    ncdc_metadata.o \
+    netcdf_unlimdims.o
 
 NC_DIAG_CAT_DEPS+=Makefile \
-	$(NC_DIAG_CAT_OBJS)
+    $(NC_DIAG_CAT_OBJS)
 
 all: nc_diag_cat.x test_nc_unlimdims.x
 
