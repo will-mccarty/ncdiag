@@ -9,9 +9,9 @@ module ncdc_climsg
     implicit none
     
 #ifdef QUIET
-    logical                            :: enable_info = .FALSE.
+    logical                            :: ncdc_enable_info = .FALSE.
 #else
-    logical                            :: enable_info = .TRUE.
+    logical                            :: ncdc_enable_info = .TRUE.
 #endif
     
     contains
@@ -78,7 +78,7 @@ module ncdc_climsg
         
         subroutine ncdc_info(ifo)
             character(len=*), intent(in) :: ifo
-            if (enable_info) &
+            if (ncdc_enable_info) &
 #ifdef USE_MPI
                 write(*, "(A, I0, A)") &
 #else
