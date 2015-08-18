@@ -1,1 +1,0 @@
-ifort -o generic_data.x generic_data.f90
