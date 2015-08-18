@@ -1,8 +1,6 @@
 program test_nclayer_allcov
     use kinds
-#ifndef NO_NETCDF
     use netcdf
-#endif
     use netcdf_layer
     implicit none
     
@@ -366,7 +364,7 @@ program test_nclayer_allcov
     print *, "==============================="
     print *, "Appending to NetCDF file:"
     print *, "==============================="
-    call nc_diag_init("test_stress.nc", .TRUE.)
+    call nc_diag_init("test_allcov.nc", .TRUE.)
     
     do i = 11, 12
         int_byte    = i

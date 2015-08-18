@@ -1,8 +1,6 @@
 program test_netcdf_layer
     use kinds
-#ifndef NO_NETCDF
     use netcdf
-#endif
     use netcdf_layer
     implicit none
     

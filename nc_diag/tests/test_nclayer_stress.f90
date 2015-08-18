@@ -1,8 +1,6 @@
 program test_nclayer_stress
     use kinds
-#ifndef NO_NETCDF
     use netcdf
-#endif
     use netcdf_layer
     implicit none
     
