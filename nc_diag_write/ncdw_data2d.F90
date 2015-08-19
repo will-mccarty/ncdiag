@@ -329,7 +329,8 @@ module ncdw_data2d
                             ! Create dimension needed!
                             write (data_dim_str_name, "(A, A)") trim(data2d_name), "_str_dim"
                             if (.NOT. append_only) &
-                                call nclayer_check(nf90_def_dim(ncid, data_dim_str_name, max_str_len, tmp_dim_id))
+                                call nclayer_check(nf90_def_dim(ncid, data_dim_str_name, &
+                                    diag_data2d_store%max_str_lens(curdatindex), tmp_dim_id))
                             
 #ifdef _DEBUG_MEM_
                             print *, "Defining char var type..."
@@ -337,12 +338,13 @@ module ncdw_data2d
                             
                             if (.NOT. append_only) &
                                 call nclayer_check(nf90_def_var(ncid, data2d_name, nc_data_type, &
-                                    (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), diag_varattr_store%nobs_dim_id /), &
+                                    (/ tmp_dim_id, diag_data2d_store%var_dim_ids(curdatindex), &
+                                    diag_varattr_store%nobs_dim_id /), &
                                     diag_data2d_store%var_ids(curdatindex)))
                             
 #ifdef _DEBUG_MEM_
                             write (*, "(A, A, A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** at data2d_name ", trim(data2d_name), ", result VID is ", diag_data2d_store%var_ids(curdatindex)
-                            write (*, "(A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** result dim is unlim x max_len = ", max_len, " x max_str_len = ", max_str_len
+                            write (*, "(A, I0, A, I0)") "DEBUG DATA2D DEF WRITE: ** result dim is unlim x max_len = ", max_len, " x max_str_len = ", diag_data2d_store%max_str_lens(curdatindex)
                             print *, "data2d part 2"
 #endif
                             
