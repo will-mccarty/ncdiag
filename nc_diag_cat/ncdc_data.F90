@@ -30,6 +30,7 @@ module ncdc_data
             integer(i_long) :: cur_dim_id, cur_dim_len
             integer(i_long) :: cur_out_var_id, cur_out_var_ndims, cur_out_var_counter
             integer(i_long) :: cur_out_dim_ind, cur_out_var_ind
+            integer(i_long) :: max_cur_pos
             integer(i_long), dimension(:), allocatable :: cur_out_dim_ids, cur_dim_ids
             integer(i_long), dimension(:), allocatable :: cur_out_dim_sizes
             integer(i_long), dimension(:), allocatable :: cur_dim_sizes
@@ -299,6 +300,7 @@ module ncdc_data
                                     call ncdc_check(nf90_get_var(ncid_input, var_index, string_2d_buffer, &
                                         start = (/ 1, 1, 1 /), &
                                         count = (/ cur_dim_sizes(1), cur_dim_sizes(2), cur_dim_sizes(3) /) ))
+                                    print *, "CUR_POS COUNTER:", data_blobs(cur_out_var_ind)%cur_pos
                                     data_blobs(cur_out_var_ind)%string_2d_buffer &
                                         (1 : cur_dim_sizes(1), 1 : cur_dim_sizes(2), &
                                             data_blobs(cur_out_var_ind)%cur_pos : &
@@ -341,6 +343,26 @@ module ncdc_data
                         print *, " (end dealloc)"
 #endif
                     end do
+                    
+                    ! For variables that we didn't cover - check for those,
+                    ! and update to the latest nobs position. That way, we
+                    ! can leave blanks for variables that didn't exist!
+                    ! Basically, we can just set all cur_pos to nobs.
+                    ! Latest nobs is max(all var cur_pos).
+                    ! Therefore, for every var, var%cur_pos = max(all var cur_pos).
+                    if (var_arr_total > 0) then
+                        max_cur_pos = -9999
+                        do var_index = 1, var_arr_total
+                            if (data_blobs(var_index)%cur_pos > max_cur_pos) &
+                                max_cur_pos = data_blobs(var_index)%cur_pos
+                        end do
+                        
+                        if (max_cur_pos > 0) then
+                            do var_index = 1, var_arr_total
+                                data_blobs(var_index)%cur_pos = max_cur_pos
+                            end do
+                        end if
+                    end if
                     
                     ! Update any unlimited counters
                     if (any(dim_sizes == -1)) then
