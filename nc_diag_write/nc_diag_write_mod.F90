@@ -1,14 +1,102 @@
+! nc_diag_write - NetCDF Layer Diag Writing Module
+! Copyright 2015 Albert Huang - SSAI/NASA for NASA GSFC GMAO (610.1).
+! 
+! Licensed under the Apache License, Version 2.0 (the "License");
+! you may not use this file except in compliance with the License.
+! You may obtain a copy of the License at
+! 
+!   http://www.apache.org/licenses/LICENSE-2.0
+! 
+! Unless required by applicable law or agreed to in writing, software
+! distributed under the License is distributed on an "AS IS" BASIS,
+! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+! implied. See the License for the specific language governing
+! permissions and limitations under the License.
+! 
+! Main Module - nc_diag_write_mod
+!
+
 module nc_diag_write_mod
+    ! Library that provides a high level interface for storing channel-
+    ! based and observation-based data.
+    ! 
+    ! This library allows developers to easily store channel-based data
+    ! (e.g. chaninfo) and observation-based data (metadata and data2d)
+    ! to a NetCDF file via an easy to use API.
+    ! 
+    ! Internally, the process for storing this data looks like this:
+    !   -> When the developer calls nc_diag_init, the NetCDF file is
+    !      opened internally. The corresponding NCID is stored, and
+    !      any memory allocation needed is done at this step.
+    !      => If the file was opened in append mode, nc_diag_write will
+    !         attempt to load any existing variable definitions for all
+    !         types of variables - chaninfo, metadata, and data2d.
+    !         Appropriate variable counters and data for each variable
+    !         type will be set during init, and data writing will start
+    !         at the end of the variable.
+    !      
+    !   -> Headers are essentially NetCDF global attributes, or
+    !      attributes that describe a file. These can be added at any
+    !      time during the writing session.
+    !      
+    !   -> varattr, or variable attributes, describe an associated
+    !      variable. (This is a NetCDF4 variable attribute!) These can
+    !      only be added after variable definitions have been locked.
+    !      
+    !   -> chaninfo variables:
+    !      => nc_diag_chaninfo_dim_set must be called first to set
+    !         the nchans dimension. If it isn't called, doing any
+    !         chaninfo operation will result in an error.
+    !      => chaninfo variables are 1D, with nchans number of elements.
+    !      
+    !   -> metadata and data2d variables:
+    !      => metadata and data2d variables do not require any initial
+    !         dimension setting - nc_diag_write will keep track of your
+    !         number of observations for you!
+    !      => metadata variables are 1D, with nobs number of elements.
+    !         nobs can increase infinitely to fit the number of
+    !         observations recorded.
+    !      => data2d variables are 2D, with dimensions of nobs by
+    !         another fixed dimension.
+    !      
+    !   -> Data calls will store the input data into memory. The
+    !      implementation and design of the variable storage is
+    !      dependent on the variable type being stored. chaninfo
+    !      variables have a certain storage format, and metadata/data2d
+    !      variables have another storage format. Note that metadata
+    !      and data2d code have a few similarities in data storage
+    !      since the variables themselves share common features, like
+    !      the nobs dimension.
+    !      
+    !   -> Once data is done being queued ("stored"), nc_diag_write is
+    !      called. The variables will have their data re-read from
+    !      memory and actually written to the file. This is also very
+    !      much variable type independent, since every variable has its
+    !      own way of storing variable data. Again, metadata and data2d
+    !      have similar code, with the only difference being the
+    !      dimensionality. Note that this is where NetCDF calls are
+    !      made to define and "put" data.
+    !      
+    !   -> Once all the data has been written out, it is safe to call
+    !      nc_diag_finish. This will close the NetCDF file being
+    !      written. Note that NetCDF also keeps a cache of data being
+    !      stored in memory as well, so actual I/O writing may not
+    !      be completely done until here.
+    
+    ! Load state variables
     use ncdw_state, only: init_done, append_only, ncid, &
         enable_trim, cur_nc_file, &
         diag_chaninfo_store, diag_metadata_store, diag_data2d_store, &
         diag_varattr_store
+    
+    ! Load needed NetCDF functions and constants
     use netcdf, only: nf90_inq_libvers, nf90_open, nf90_create, &
         nf90_enddef, nf90_close, nf90_sync, &
         NF90_WRITE, NF90_NETCDF4, NF90_CLOBBER
     
     !------------------------------------------------------------------
     ! API imports to expose API from this module
+    ! (Plus general imports for this module as well!)
     !------------------------------------------------------------------
     use ncdw_climsg, only: &
 #ifdef ENABLE_ACTION_MSGS
