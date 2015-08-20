@@ -10,8 +10,10 @@ module ncdc_climsg
     
 #ifdef QUIET
     logical                            :: ncdc_enable_info = .FALSE.
+    logical                            :: ncdc_enable_warn = .FALSE.
 #else
     logical                            :: ncdc_enable_info = .TRUE.
+    logical                            :: ncdc_enable_warn = .TRUE.
 #endif
     
     contains
@@ -59,10 +61,11 @@ module ncdc_climsg
         
         subroutine ncdc_warning(warn)
             character(len=*), intent(in) :: warn
+            if (ncdc_enable_warn) &
 #ifdef USE_MPI
-            write(*, "(A, I0, A)") &
+                write(*, "(A, I0, A)") &
 #else
-            write(*, "(A)") &
+                write(*, "(A)") &
 #endif
 #ifdef ANSI_TERM_COLORS
                             CHAR(27) // "[33m" // &

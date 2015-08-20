@@ -126,10 +126,12 @@ module ncdc_metadata
             
             input_count = cli_arg_count - 2
             
+#ifndef QUIET
 #ifdef USE_MPI
             if (cur_proc == 0) &
 #endif
                 call ncdc_info("Scanning NetCDF files for dimensions and variables...")
+#endif
             
             do arg_index = 1, input_count
                 call get_command_argument(2 + arg_index, input_file)
@@ -144,10 +146,12 @@ module ncdc_metadata
                     call ncdc_warning(" -> Ignoring output file in input file list.")
                     call ncdc_info(" -> Skipping " // input_file_cut // " since it is the output file...")
                 else
+#ifndef QUIET
 #ifdef USE_MPI
                     if (cur_proc == 0) &
 #endif
                         call ncdc_info(" -> Opening " // input_file_cut // " for reading...")
+#endif
                     
                     call ncdc_check(nf90_open(input_file, NF90_NOWRITE, ncid_input))
                     
@@ -238,8 +242,10 @@ module ncdc_metadata
 #endif
                     
                     if (cached_nvars == -1) cached_nvars = input_nvars
+#ifndef QUIET
                     if (cached_nvars /= input_nvars) &
                         call ncdc_warning("Number of variables in " // trim(input_file) // " does not match first input file.")
+#endif
                     
                     allocate(tmp_input_varids(input_nvars))
                     

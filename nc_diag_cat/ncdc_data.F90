@@ -87,7 +87,9 @@ module ncdc_data
                     ! No warning here - we've already shown it in metadata.
                     call ncdc_info(" -> Skipping " // input_file_cut // " since it is the output file...")
                 else
+#ifndef QUIET
                     call ncdc_info(" -> Opening " // input_file_cut // " for reading...")
+#endif
                     call ncdc_check(nf90_open(input_file, NF90_NOWRITE, ncid_input, &
                         cache_size = 2147483647))
                     
@@ -398,10 +400,14 @@ module ncdc_data
         subroutine nc_diag_cat_data_commit
             integer(i_long) :: var_index
             
+#ifndef QUIET
             call ncdc_info("Doing final data commit...")
+#endif
             
             do var_index = 1, var_arr_total
+#ifndef QUIET
                 call ncdc_info(" => Writing variable " // trim(var_names(var_index)) // "...")
+#endif
                 if ((var_dim_names(var_index)%num_names == 1) .OR. &
                     ((var_dim_names(var_index)%num_names == 2) .AND. (var_types(var_index) == NF90_CHAR)) ) then
                     if (var_types(var_index) == NF90_BYTE) &
