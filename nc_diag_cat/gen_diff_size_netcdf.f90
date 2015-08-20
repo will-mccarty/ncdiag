@@ -1,7 +1,7 @@
 program gen_diff_size_netcdf
     use kinds
     use netcdf
-    use netcdf_layer
+    use nc_diag_write_mod
     implicit none
     
     integer :: i
@@ -58,6 +58,9 @@ program gen_diff_size_netcdf
         
         write(str_metadata, "(A, I0)") "hellometameta_", i
         call nc_diag_metadata("metadatasimple6_str", str_metadata)
+        
+        write(str_metadata, "(A, I0)") "hellometameta_", i
+        call nc_diag_metadata("metadatasimpleX_str", str_metadata)
     end do
     
     do i = 1, 10
