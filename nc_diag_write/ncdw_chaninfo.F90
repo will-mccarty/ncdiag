@@ -59,6 +59,9 @@ module ncdw_chaninfo
                     call nclayer_error("Critical error - specified a nchan < 1!")
                 end if
                 
+                if (diag_chaninfo_store%nchans /= -1) &
+                    call nclayer_error("nchans already set!")
+                
                 diag_chaninfo_store%nchans = nchans
             else
                 call nclayer_error("NetCDF4 layer not initialized yet!")
