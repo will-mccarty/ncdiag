@@ -24,8 +24,7 @@ module ncdc_state
     integer(i_long)                                   :: dim_arr_total = 0
     integer(i_long)                                   :: dim_arr_size = 0
     
-    integer(i_long)                                   :: num_unlims, i
-    integer(i_long), dimension(:), allocatable        :: unlim_dims
+    integer(i_long)                                   :: num_unlims
     
     ! dim_sizes(i) of -1 designates an unlimited dimension
     

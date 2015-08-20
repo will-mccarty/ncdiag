@@ -2,7 +2,7 @@ module ncdc_metadata
     use kinds, only: i_byte, i_short, i_long, r_single, r_double
     use ncdc_state, only: ncid_input, input_count, input_file, &
         ncid_output, output_file, &
-        num_unlims, unlim_dims, &
+        num_unlims, &
         dim_arr_total, dim_sizes, dim_names, dim_output_ids, &
         dim_unlim_sizes, &
         var_arr_total, var_dim_names, var_names, var_types, &
@@ -111,8 +111,7 @@ module ncdc_metadata
             integer(i_long), dimension(:), allocatable :: tmp_var_dimids
             character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
             
-            integer(i_long), dimension(:), allocatable :: tmp_input_dimids, tmp_input_varids
-            
+            integer(i_long), dimension(:), allocatable :: unlim_dims
             logical                                    :: is_unlim = .FALSE.
             
             character(len=NF90_MAX_NAME)               :: tmp_dim_name, tmp_attr_name
@@ -187,10 +186,22 @@ module ncdc_metadata
                     if (cached_ndims == -1) &
                         cached_ndims = input_ndims
                     
+
+                    if (input_ndims == 0) then
+#ifndef QUIET
+                        call ncdc_warning("No dimensions found in file " // input_file_cut // "! Skipping file...")
+#endif
+                        call ncdc_check(nf90_close(ncid_input))
+                        cycle
+                    end if
+                    
+#ifndef QUIET
+                    if (input_nvars == 0) &
+                        call ncdc_warning("No variables found in file " // input_file_cut // "!")
+                    
                     if (cached_ndims /= input_ndims) &
                         call ncdc_warning("Number of dimensions in " // trim(input_file) // " does not match first input file.")
-                    
-                    allocate(tmp_input_dimids(input_ndims))
+#endif
                     
                     ! Get unlimited dimension information
                     call ncdc_check(pf_nf90_inq_unlimdims(ncid_input, num_unlims))
@@ -236,6 +247,8 @@ module ncdc_metadata
                         end if
                     end do
                     
+                    deallocate(unlim_dims)
+                    
                     ! Variables
 #ifdef DEBUG
                     write (*, "(A, I0)") "Number of variables: ", input_nvars
@@ -247,7 +260,10 @@ module ncdc_metadata
                         call ncdc_warning("Number of variables in " // trim(input_file) // " does not match first input file.")
 #endif
                     
-                    allocate(tmp_input_varids(input_nvars))
+                    if (input_nvars == 0) then
+                        call ncdc_check(nf90_close(ncid_input))
+                        cycle
+                    end if
                     
                     ! Loop through each variable!
                     do var_index = 1, input_nvars
@@ -316,16 +332,6 @@ module ncdc_metadata
 #endif
                     
                     call ncdc_check(nf90_close(ncid_input))
-                    
-                    deallocate(unlim_dims)
-                    deallocate(tmp_input_dimids)
-                    deallocate(tmp_input_varids)
-                    
-                    if (input_ndims == 0) &
-                        call ncdc_warning("No dimensions found in file " // input_file_cut // "!")
-                    
-                    if (input_nvars == 0) &
-                        call ncdc_warning("No variables found in file " // input_file_cut // "!")
                     
                     old_dim_arr_total = dim_arr_total
                     old_var_arr_total = var_arr_total
