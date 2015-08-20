@@ -9,7 +9,11 @@ NC_DIAG_EXECS+= \
 all: $(NC_DIAG_LIBS) $(NC_DIAG_EXECS)
 
 libnc_diag.a: $(NC_DIAG_LIBS)
-	ar rcs libnc_diag.a nc_diag_write/*.o nc_diag_read/*.o nc_diag_res/*.o
+	rm -rf tmp_nc_libs
+	mkdir -p tmp_nc_libs
+	cd tmp_nc_libs && $(foreach nc_lib_ar,$(NC_DIAG_LIBS),ar x ../$(nc_lib_ar);)
+	ar rcs libnc_diag.a tmp_nc_libs/*.o
+	rm -rf tmp_nc_libs
 
 nc_diag_write/libnc_diag_write.a:
 	make -C nc_diag_write libnc_diag_write.a
