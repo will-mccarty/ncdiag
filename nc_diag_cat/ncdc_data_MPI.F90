@@ -264,7 +264,16 @@ module ncdc_data_MPI
                             allocate(cur_out_dim_ids(tmp_var_ndims))
                             allocate(cur_out_dim_sizes(tmp_var_ndims))
                             
+#ifdef DEBUG
+                            write (*, "(A)") "*************************************"
+                            write (*, "(A)") "NR0 DEBUG: file is " // input_file_cut
+                            write (*, "(A)") "NR0 DEBUG: var is " // trim(var_names(local_var_index))
+#endif
+                            
                             if (found_blank) then
+#ifdef DEBUG
+                                write (*, "(A)") "NR0 DEBUG: (in found_blank state)"
+#endif
                                 do i = 1, tmp_var_ndims
                                     cur_out_dim_ind = nc_diag_cat_lookup_dim(var_dim_names(local_var_index)%dim_names(i))
                                     cur_out_dim_ids(i)   = dim_output_ids(cur_out_dim_ind)
@@ -273,6 +282,10 @@ module ncdc_data_MPI
                                     nc_err = nf90_inq_dimid(ncid_input, var_dim_names(local_var_index)%dim_names(i), &
                                             tmp_dim_id)
                                     
+#ifdef DEBUG
+                                    write (*, "(A, I0, A)") "NR0 DEBUG: dim is " // trim(var_dim_names(local_var_index)%dim_names(i)) // " (ID = ", i, ")"
+#endif
+                                    
                                     if (nc_err /= NF90_EBADDIM) then
                                         if (nc_err /= NF90_NOERR) then
                                             call ncdc_check(nc_err)
@@ -280,11 +293,23 @@ module ncdc_data_MPI
                                             call ncdc_check( &
                                                 nf90_inquire_dimension(ncid_input, &
                                                 tmp_dim_id, len = cur_dim_sizes(i)) )
+#ifdef DEBUG
+                                            write (*, "(A)") "NR0 DEBUG: using file cur_dim_sizes"
+#endif
                                         end if
                                     else
                                         cur_dim_sizes(i) = cur_out_dim_sizes(i)
+#ifdef DEBUG
+                                        write (*, "(A)") "NR0 DEBUG: using cur_dim_sizes = cur_out_dim_sizes"
+#endif
                                     end if
+#ifdef DEBUG
+                                    write (*, "(A, I0)") "NR0 DEBUG: final cur_dim_sizes(i) = ", cur_dim_sizes(i)
+#endif
                                 end do
+                                
+                                ! Make sure to set the var type for the "blank" var!
+                                tmp_var_type = var_types(local_var_index)
                             else
                                 ! Grab the actual dimension IDs and attributes
                                 call ncdc_check(nf90_inquire_variable(ncid_input, var_index, dimids = tmp_var_dimids, &
@@ -296,6 +321,9 @@ module ncdc_data_MPI
                                     cur_out_dim_ind = nc_diag_cat_lookup_dim(tmp_var_dim_names(i))
                                     cur_out_dim_ids(i)   = dim_output_ids(cur_out_dim_ind)
                                     cur_out_dim_sizes(i) = dim_sizes(cur_out_dim_ind)
+#ifdef DEBUG
+                                    write (*, "(A, I0)") "NR0 DEBUG: final cur_dim_sizes(i) = ", cur_dim_sizes(i)
+#endif
                                 end do
                             end if
                             
@@ -310,6 +338,10 @@ module ncdc_data_MPI
                                 .AND. (found_blank)) then
                                 cycle
                             end if
+                            
+#ifdef DEBUG
+                            write (*, "(A, I0)") "NR0 DEBUG: cur_out_var_ndims = ", cur_out_var_ndims
+#endif
                             
                             ! Check for one-time only vars...
                             if (((.NOT. any(cur_out_dim_sizes == -1)) .AND. (cur_out_var_counter == 0)) &
@@ -404,6 +436,10 @@ module ncdc_data_MPI
                                         
                                         temp_storage_arr(mpi_requests_total)%string_expanded_buffer(1:cur_dim_sizes(1), 1:cur_dim_sizes(2)) = &
                                             string_buffer
+                                        
+#ifdef DEBUG
+                                        write (*, "(A, I0)") "NR0 DEBUG: cur_out_dim_sizes(1)* cur_dim_sizes(2) = ", cur_out_dim_sizes(1)* cur_dim_sizes(2)
+#endif
                                         
                                         call MPI_ISend(temp_storage_arr(mpi_requests_total)%string_expanded_buffer, &
                                             cur_out_dim_sizes(1)* cur_dim_sizes(2), MPI_BYTE, &
@@ -796,7 +832,13 @@ module ncdc_data_MPI
                                     ! numeric tag for extra info, and communicator.
                                     call MPI_Recv(string_buffer, num_count, MPI_BYTE, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
-                                    
+                                    write (*, "(A)") "*****************************************************"
+                                    write (*, "(A)") "DEBUG: var_name = [" // trim(var_names(cur_out_var_ind)) // "]"
+                                    write (*, "(A)") "DEBUG: string_buffer = [" // string_buffer(1:cur_out_dim_sizes(1), 1) // "]"
+                                    write (*, "(A, I0)") "DEBUG: num_count = ", num_count
+                                    write (*, "(A, I0)") "DEBUG: cur_out_dim_sizes(1) = ", cur_out_dim_sizes(1)
+                                    write (*, "(A, I0)") "DEBUG: (num_count / cur_out_dim_sizes(1)) = ", (num_count / cur_out_dim_sizes(1))
+                                    write (*, "(A, I0)") "DEBUG: data_blobs(cur_out_var_ind)%cur_pos = ", data_blobs(cur_out_var_ind)%cur_pos
                                     data_blobs(cur_out_var_ind)%string_buffer &
                                         (1 : cur_out_dim_sizes(1), &
                                             data_blobs(cur_out_var_ind)%cur_pos : &
