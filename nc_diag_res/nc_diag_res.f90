@@ -35,11 +35,12 @@ module nc_diag_res
     !     call nc_diag_close_resource_file
     
     use ncdres_climsg, only: ncdres_error
-    use fson, only: fson_value, fson_parse, fson_get, fson_destroy
+    use nc_diag_fson, only: ncdf_value, ncdf_parse, &
+        ncdf_get, ncdf_destroy
     
     implicit none
     
-    type(fson_value), pointer :: nc_diag_json => null()
+    type(ncdf_value), pointer :: nc_diag_json => null()
     
     contains
         ! Opens a given resource file for reading.
@@ -67,7 +68,7 @@ module nc_diag_res
             if (associated(nc_diag_json)) &
                 call ncdres_error("Resource file already open!")
             
-            nc_diag_json => fson_parse(filename)
+            nc_diag_json => ncdf_parse(filename)
         end subroutine nc_diag_load_resource_file
         
         ! Lookup a variable and check its status.
@@ -98,7 +99,7 @@ module nc_diag_res
             
             var_enabled = .FALSE.
             
-            call fson_get(nc_diag_json, trim(var_str), var_enabled)
+            call ncdf_get(nc_diag_json, trim(var_str), var_enabled)
         end function nc_diag_load_check_variable
         
         ! Closes the current resource file.
@@ -117,7 +118,7 @@ module nc_diag_res
         ! 
         subroutine nc_diag_close_resource_file
             if (associated(nc_diag_json)) then
-                call fson_destroy(nc_diag_json)
+                call ncdf_destroy(nc_diag_json)
                 nullify(nc_diag_json)
             else
                 call ncdres_error("No resource file open!")

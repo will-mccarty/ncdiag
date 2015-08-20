@@ -1,11 +1,17 @@
 # Include build configuration:
 include Makefile.config
 
-FSON_DEPS+=fson/Makefile \
-    fson/src/fson.f90 \
-    fson/src/fson_path_m.f90 \
-    fson/src/fson_string_m.f90 \
-    fson/src/fson_value_m.f90
+FSON_DEPS+=nc_diag_fson/Makefile \
+    nc_diag_fson/src/nc_diag_fson.f90 \
+    nc_diag_fson/src/ncdf_path_m.f90 \
+    nc_diag_fson/src/ncdf_string_m.f90 \
+    nc_diag_fson/src/ncdf_value_m.f90
+
+FSON_OBJS+= \
+    nc_diag_fson/build/nc_diag_fson.o \
+    nc_diag_fson/build/ncdf_path_m.o \
+    nc_diag_fson/build/ncdf_string_m.o \
+    nc_diag_fson/build/ncdf_value_m.o
 
 NC_DIAG_RES_DEPS+=Makefile \
     ncdres_climsg.o
@@ -26,14 +32,14 @@ check:
 
 libnc_diag_res.a: $(NC_DIAG_RES_OBJS)
 	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
-	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_RES_OBJS)
+	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_RES_OBJS) $(FSON_OBJS)
 	$(NCDRES_MAKE_FANCY_BIG_END)
 
-nc_diag_res.o: nc_diag_res.f90 fson/lib/libfson.a $(NC_DIAG_RES_DEPS)
+nc_diag_res.o: nc_diag_res.f90 nc_diag_fson/lib/libnc_diag_fson.a $(NC_DIAG_RES_DEPS)
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c nc_diag_res.f90 \
-		-Ifson/lib -Lfson/lib -lfson
+		-Inc_diag_fson/lib -Lnc_diag_fson/lib -lnc_diag_fson
 	$(NCDRES_MAKE_FANCY_END)
 
 ncdres_climsg.o: ncdres_climsg.F90 Makefile.config Makefile.libconfig
@@ -42,10 +48,10 @@ ncdres_climsg.o: ncdres_climsg.F90 Makefile.config Makefile.libconfig
 		-c ncdres_climsg.F90
 	$(NCDRES_MAKE_FANCY_END)
 
-fson/lib/libfson.a: $(FSON_DEPS)
-	make -C fson lib
+nc_diag_fson/lib/libnc_diag_fson.a: $(FSON_DEPS)
+	make -C nc_diag_fson lib
 
 clean:
 	rm -f *.mod *.x *.o *.a
-	make -C fson clean clobber
+	make -C nc_diag_fson clean clobber
 	make -C tests clean

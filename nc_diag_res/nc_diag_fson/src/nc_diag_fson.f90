@@ -19,22 +19,22 @@
 
 ! FSON MODULE 
 !
-! File:   fson.f95
+! File:   nc_diag_fson.f95
 ! Author: Joseph A. Levin
 !
 ! Created on March 6, 2012, 7:48 PM
 !
 
-module fson
-    use fson_value_m, fson_print => fson_value_print, fson_destroy => fson_value_destroy
-    use fson_string_m
-    use fson_path_m, fson_get => fson_path_get
+module nc_diag_fson
+    use ncdf_value_m, ncdf_print => ncdf_value_print, ncdf_destroy => ncdf_value_destroy
+    use ncdf_string_m
+    use ncdf_path_m, ncdf_get => ncdf_path_get
 
     implicit none
 
     private
 
-    public :: fson_parse, fson_value, fson_get, fson_print, fson_destroy
+    public :: ncdf_parse, ncdf_value, ncdf_get, ncdf_print, ncdf_destroy
 
     ! FILE IOSTAT CODES
     integer, parameter :: end_of_file = -1
@@ -43,6 +43,7 @@ module fson
     ! PARSING STATES
     integer, parameter :: STATE_LOOKING_FOR_VALUE = 1
     integer, parameter :: STATE_IN_OBJECT = 2
+    
     integer, parameter :: STATE_IN_PAIR_NAME = 3
     integer, parameter :: STATE_IN_PAIR_VALUE = 4
 
@@ -55,8 +56,8 @@ contains
     !
     ! FSON PARSE
     !
-    function fson_parse(file, unit, str) result(p)
-        type(fson_value), pointer :: p
+    function ncdf_parse(file, unit, str) result(p)
+        type(ncdf_value), pointer :: p
         integer, optional, intent(inout) :: unit
         character(len = *), optional, intent(in) :: file
         character(len = *), optional, intent(in) :: str
@@ -92,10 +93,10 @@ contains
         end if
 
         ! create the value and associate the pointer        
-        p => fson_value_create()
+        p => ncdf_value_create()
 
         ! parse as a value
-        call parse_value(unit = u, value = p, str = strBuffer)
+        call ncdf_parse_value(unit = u, value = p, str = strBuffer)
 
         ! close the file
         if( .not. present(unit)) then
@@ -104,20 +105,20 @@ contains
 
         if(allocated(strBuffer)) deallocate(strBuffer)
 
-    end function fson_parse
+    end function ncdf_parse
 
     !
     ! PARSE_VALUE
     !
-    recursive subroutine parse_value(unit, str, value)
+    recursive subroutine ncdf_parse_value(unit, str, value)
         integer, intent(inout) :: unit
         character(*), intent(inout) :: str
-        type(fson_value), pointer :: value
+        type(ncdf_value), pointer :: value
         logical :: eof
         character :: c
 
         ! pop the next non whitespace character off the file
-        c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+        c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
 
         if (eof) then
             return
@@ -126,57 +127,57 @@ contains
             case ("{")
                 ! start object                
                 value % value_type = TYPE_OBJECT
-                call parse_object(unit, str, value)
+                call ncdf_parse_object(unit, str, value)
             case ("[")
                 ! start array
                 value % value_type = TYPE_ARRAY
-                call parse_array(unit, str, value)
+                call ncdf_parse_array(unit, str, value)
             case ("]")
                 ! end an empty array
-               call push_char(c)
+               call ncdf_push_char(c)
                nullify(value)
             case ('"')
                 ! string                                      
                 value % value_type = TYPE_STRING
-                value % value_string => parse_string(unit, str)
+                value % value_string => ncdf_parse_string(unit, str)
             case ("t")
                 !true
                 value % value_type = TYPE_LOGICAL
-                call parse_for_chars(unit, str, "rue")
+                call ncdf_parse_for_chars(unit, str, "rue")
                 value % value_logical = .true.
             case ("f")
                 !false
                 value % value_type = TYPE_LOGICAL
                 value % value_logical = .false.
-                call parse_for_chars(unit, str, "alse")
+                call ncdf_parse_for_chars(unit, str, "alse")
             case ("n")
                 value % value_type = TYPE_NULL
-                call parse_for_chars(unit, str, "ull")
+                call ncdf_parse_for_chars(unit, str, "ull")
             case("-", "0": "9")
-                call push_char(c)
-                call parse_number(unit, str, value)
+                call ncdf_push_char(c)
+                call ncdf_parse_number(unit, str, value)
             case default
                 print *, "ERROR: Unexpected character while parsing value. '", c, "' ASCII=", iachar(c)
                 call exit (1)
             end select
         end if
 
-    end subroutine parse_value
+    end subroutine ncdf_parse_value
 
     !
     ! PARSE OBJECT
     !    
-    recursive subroutine parse_object(unit, str, parent)
+    recursive subroutine ncdf_parse_object(unit, str, parent)
         integer, intent(inout) :: unit
         character(*), intent(inout) :: str
-        type(fson_value), pointer :: parent, pair
+        type(ncdf_value), pointer :: parent, pair
 
 
         logical :: eof
         character :: c
 
         ! pair name
-        c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+        c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
         if (eof) then
             print *, "ERROR: Unexpected end of file while parsing start of object."
             call exit (1)
@@ -184,34 +185,34 @@ contains
             ! end of an empty object
             return
         else if ('"' == c) then
-            pair => fson_value_create()
-            pair % name => parse_string(unit, str)
+            pair => ncdf_value_create()
+            pair % name => ncdf_parse_string(unit, str)
         else
             print *, "ERROR: Expecting string: '", c, "'"
             call exit (1)
         end if
 
         ! pair value
-        c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+        c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
         if (eof) then
             print *, "ERROR: Unexpected end of file while parsing object member. 1"
             call exit (1)
         else if (":" == c) then
             ! parse the value                       
-            call parse_value(unit, str, pair)
-            call fson_value_add(parent, pair)
+            call ncdf_parse_value(unit, str, pair)
+            call ncdf_value_add(parent, pair)
         else
             print *, "ERROR: Expecting : and then a value. ", c
             call exit (1)
         end if
 
         ! another possible pair
-        c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+        c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
         if (eof) then
             return
         else if ("," == c) then
             ! read the next member            
-            call parse_object(unit = unit, str=str, parent = parent)
+            call ncdf_parse_object(unit = unit, str=str, parent = parent)
         else if ("}" == c) then
             return
         else
@@ -219,17 +220,17 @@ contains
             call exit (1)
         end if
 
-    end subroutine parse_object
+    end subroutine ncdf_parse_object
 
     !
     ! PARSE ARRAY
     !    
-    recursive subroutine parse_array(unit, str, array)
+    recursive subroutine ncdf_parse_array(unit, str, array)
 
       implicit none
       integer, intent(inout) :: unit
       character(*), intent(inout) :: str
-      type(fson_value), pointer :: array, element
+      type(ncdf_value), pointer :: array, element
 
       logical :: eof, finished
       character :: c
@@ -238,16 +239,16 @@ contains
       do while (.not. finished)
 
          ! try to parse an element value
-         element => fson_value_create()
-         call parse_value(unit, str, element)
+         element => ncdf_value_create()
+         call ncdf_parse_value(unit, str, element)
 
          ! parse value will disassociate an empty array value
          if (associated(element)) then
-            call fson_value_add(array, element)
+            call ncdf_value_add(array, element)
          end if
 
          ! pop the next character
-         c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+         c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
 
          if (eof) then
             finished = .true.
@@ -258,29 +259,29 @@ contains
 
       end do
 
-    end subroutine parse_array
+    end subroutine ncdf_parse_array
 
     !
     ! PARSE STRING
     !
-    function parse_string(unit, str) result(string)
+    function ncdf_parse_string(unit, str) result(string)
         integer, intent(inout) :: unit
         character(*), intent(inout) :: str
-        type(fson_string), pointer :: string
+        type(ncdf_string), pointer :: string
 
         logical :: eof, escape
         character :: c
 
-        string => fson_string_create()
+        string => ncdf_string_create()
         escape = .false.
 
         do
-            c = pop_char(unit, str, eof = eof, skip_ws = .false.)
+            c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .false.)
             if (eof) then
                print *, "Expecting end of string"
                call exit(1)
             else if (escape) then
-              call fson_string_append(string,c)
+              call ncdf_string_append(string,c)
               escape = .false.
             else
                if (c == '\') then
@@ -288,16 +289,16 @@ contains
                else if (c == '"') then
                   exit
                else
-                  call fson_string_append(string,c)
+                  call ncdf_string_append(string,c)
                end if
             end if
         end do
-    end function parse_string
+    end function ncdf_parse_string
 
     !
     ! PARSE FOR CHARACTERS
     !
-    subroutine parse_for_chars(unit, str, chars)
+    subroutine ncdf_parse_for_chars(unit, str, chars)
         integer, intent(in) :: unit
         character(*), intent(inout) :: str
         character(len = *), intent(in) :: chars
@@ -308,7 +309,7 @@ contains
         length = len_trim(chars)
 
         do i = 1, length
-            c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+            c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
             if (eof) then
                 print *, "ERROR: Unexpected end of file while parsing array."
                 call exit (1)
@@ -318,15 +319,15 @@ contains
             end if
         end do
 
-    end subroutine parse_for_chars
+    end subroutine ncdf_parse_for_chars
 
     !
     ! PARSE NUMBER
     !
-    subroutine parse_number(unit, str, value)
+    subroutine ncdf_parse_number(unit, str, value)
         integer, intent(inout) :: unit
         character(*), intent(inout) :: str
-        type(fson_value), pointer :: value
+        type(ncdf_value), pointer :: value
         logical :: eof, negative, decimal, scientific
         character :: c
         integer :: integral, exp, digit_count
@@ -334,7 +335,7 @@ contains
 
 
         ! first character is either - or a digit        
-        c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+        c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
         if (eof) then
             print *, "ERROR: Unexpected end of file while parsing number."
             call exit (1)
@@ -342,19 +343,19 @@ contains
             negative = .true.
         else
             negative = .false.
-            call push_char(c)
+            call ncdf_push_char(c)
         end if
 
 
         ! parse the integral
-        integral = parse_integer(unit, str)
+        integral = ncdf_parse_integer(unit, str)
 
         decimal = .false.
         scientific = .false.
 
         do
             ! first character is either - or a digit        
-            c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+            c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
             if (eof) then
                 print *, "ERROR: Unexpected end of file while parsing number."
                 call exit (1)
@@ -368,7 +369,7 @@ contains
                         call exit(1)
                     end if
                     decimal = .true.
-                    frac = parse_integer(unit, str, digit_count)
+                    frac = ncdf_parse_integer(unit, str, digit_count)
                     frac = frac / (10.0d0 ** digit_count)
                 case ("e", "E")
                     ! this is already an exponent number
@@ -379,7 +380,7 @@ contains
                     end if
                     scientific = .true.
                     ! this number has an exponent
-                    exp = parse_integer(unit, str)
+                    exp = ncdf_parse_integer(unit, str)
                     if (exp < 0) then
                        decimal = .true.
                     end if
@@ -419,7 +420,7 @@ contains
                         value % value_type = TYPE_INTEGER
                         value % value_integer = integral
                     end if
-                    call push_char(c)
+                    call ncdf_push_char(c)
                     exit
                 end select
             end if
@@ -432,7 +433,7 @@ contains
     !
     ! PARSE INTEGER    
     !
-    integer(kind=8) function parse_integer(unit, str, digit_count) result(integral)
+    integer(kind=8) function ncdf_parse_integer(unit, str, digit_count) result(integral)
         integer, intent(in) :: unit
         character(*), intent(inout) :: str
         integer, optional, intent(inout) :: digit_count
@@ -448,7 +449,7 @@ contains
         found_sign = .false.
         found_digit = .false.
         do
-            c = pop_char(unit, str, eof = eof, skip_ws = .true.)
+            c = ncdf_pop_char(unit, str, eof = eof, skip_ws = .true.)
             if (eof) then
                 print *, "ERROR: Unexpected end of file while parsing digit."
                 call exit (1)
@@ -488,19 +489,19 @@ contains
                     if (present(digit_count)) then
                         digit_count = icount
                     end if
-                    call push_char(c)
+                    call ncdf_push_char(c)
                     integral = isign * integral
                     return
                 end select
             end if
         end do
 
-    end function parse_integer
+    end function ncdf_parse_integer
 
     !
     ! POP CHAR
     !
-    recursive character function pop_char(unit, str, eof, skip_ws) result(popped)
+    recursive character function ncdf_pop_char(unit, str, eof, skip_ws) result(popped)
         integer, intent(in) :: unit
         character(*), intent(inout) :: str
         logical, intent(out) :: eof
@@ -547,16 +548,16 @@ contains
             end if
         end do
 
-    end function pop_char
+    end function ncdf_pop_char
 
     !
     ! PUSH CHAR
     !
-    subroutine push_char(c)
+    subroutine ncdf_push_char(c)
         character, intent(inout) :: c
         pushed_index = pushed_index + 1
         pushed_char(pushed_index:pushed_index) = c
 
-    end subroutine push_char
+    end subroutine ncdf_push_char
 
-end module fson
+end module nc_diag_fson

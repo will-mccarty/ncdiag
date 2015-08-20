@@ -15,8 +15,8 @@ EXE=
 BUILD_SHARED=0
 BUILD_STATIC=1
 
-LIBTARGET=$(DIST)/libfson$(SO)
-LIBTARGET_STATIC=$(DIST)/libfson.a
+LIBTARGET=$(DIST)/libnc_diag_fson$(SO)
+LIBTARGET_STATIC=$(DIST)/libnc_diag_fson.a
 
 ifeq ($(BUILD_SHARED), 1)
     BUILD_LIBS += $(LIBTARGET)
@@ -36,7 +36,11 @@ all: lib
 JSON = $(shell find src -name '*.json')
 json: $(patsubst $(SRC)%, $(DIST)%, $(JSON))
 
-FSON = fson_string_m fson_value_m fson_path_m fson
+FSON = \
+    ncdf_string_m \
+    ncdf_value_m \
+    ncdf_path_m \
+    nc_diag_fson
 OBJECTS = $(patsubst %, $(BUILD)/%$(OBJ), $(FSON))
 
 $(LIBTARGET) : $(OBJECTS)
@@ -67,7 +71,6 @@ $(BUILD)/%$(OBJ): $(SRC)/%$(F95)
 clean:
 	rm -rf $(BUILD)
 	rm -rf *$(MOD)
-	rm -rf 
 
 clobber: clean
 	rm -rf $(DIST)/*

@@ -23,15 +23,18 @@
 ! Created on March 7, 2012, 10:14 PM
 !
 
-module fson_value_m
+module ncdf_value_m
 
-    use fson_string_m
+    use ncdf_string_m
 
     implicit none
 
     private
 
-    public :: fson_value, fson_value_create, fson_value_destroy, fson_value_add, fson_value_get, fson_value_count, fson_value_print
+    public :: ncdf_value, ncdf_value_create, &
+        ncdf_value_destroy, ncdf_value_add, &
+        ncdf_value_get, ncdf_value_count, &
+        ncdf_value_print
 
     !constants for the value types
     integer, public, parameter :: TYPE_UNKNOWN = -1
@@ -47,54 +50,54 @@ module fson_value_m
     !
     ! FSON VALUE
     !
-    type fson_value
-        type(fson_string), pointer :: name => null()
+    type ncdf_value
+        type(ncdf_string), pointer :: name => null()
         integer :: value_type = TYPE_UNKNOWN
         logical :: value_logical
         integer :: value_integer
         real :: value_real
         double precision :: value_double
         integer, private :: count = 0
-        type(fson_string), pointer :: value_string => null()
-        type(fson_value), pointer :: next => null()
-        type(fson_value), pointer :: parent => null()
-        type(fson_value), pointer :: children => null()
-        type(fson_value), pointer :: tail => null()
-    end type fson_value
+        type(ncdf_string), pointer :: value_string => null()
+        type(ncdf_value), pointer :: next => null()
+        type(ncdf_value), pointer :: parent => null()
+        type(ncdf_value), pointer :: children => null()
+        type(ncdf_value), pointer :: tail => null()
+    end type ncdf_value
 
     !
     ! FSON VALUE GET
     !
     ! Use either a 1 based index or member name to get the value.
-    interface fson_value_get
-        module procedure get_by_index
-        module procedure get_by_name_chars
-        module procedure get_by_name_string
-    end interface fson_value_get
+    interface ncdf_value_get
+        module procedure ncdf_get_by_index
+        module procedure ncdf_get_by_name_chars
+        module procedure ncdf_get_by_name_string
+    end interface ncdf_value_get
 
 contains
 
     !
     ! FSON VALUE CREATE
     !
-    function fson_value_create() result(new)
-        type(fson_value), pointer :: new
+    function ncdf_value_create() result(new)
+        type(ncdf_value), pointer :: new
 
         nullify(new)
         allocate(new)
 
-    end function fson_value_create
+    end function ncdf_value_create
 
     !
     ! FSON VALUE DESTROY
     !
-    recursive subroutine fson_value_destroy(this, destroy_next)
+    recursive subroutine ncdf_value_destroy(this, destroy_next)
 
       implicit none
-      type(fson_value), pointer :: this
+      type(ncdf_value), pointer :: this
       logical, intent(in), optional :: destroy_next
 
-      type(fson_value), pointer :: p
+      type(ncdf_value), pointer :: p
       integer :: count
       logical :: donext
 
@@ -107,12 +110,12 @@ contains
       if (associated(this)) then
 
          if(associated(this % name)) then
-            call fson_string_destroy(this % name)
+            call ncdf_string_destroy(this % name)
             nullify (this % name)
          end if
 
          if(associated(this % value_string)) then
-            call fson_string_destroy(this % value_string)
+            call ncdf_string_destroy(this % value_string)
             nullify (this % value_string)
          end if
 
@@ -121,13 +124,13 @@ contains
                p => this % children
                this % children => this % children % next
                this % count = this % count - 1
-               call fson_value_destroy(p, .false.)
+               call ncdf_value_destroy(p, .false.)
             end do
             nullify(this % children)
          end if
 
          if ((associated(this % next)) .and. (donext)) then
-            call fson_value_destroy(this % next)
+            call ncdf_value_destroy(this % next)
             nullify (this % next)
          end if
 
@@ -140,17 +143,17 @@ contains
 
       end if
 
-    end subroutine fson_value_destroy
+    end subroutine ncdf_value_destroy
 
     !
     ! FSON VALUE ADD
     !
     ! Adds the member to the linked list
 
-    subroutine fson_value_add(this, member)
+    subroutine ncdf_value_add(this, member)
 
       implicit none
-      type(fson_value), pointer :: this, member
+      type(ncdf_value), pointer :: this, member
 
       ! associate the parent
       member % parent => this
@@ -165,13 +168,13 @@ contains
       this % tail => member
       this % count = this % count + 1
 
-    end subroutine fson_value_add
+    end subroutine ncdf_value_add
 
     !
     ! FSON_VALUE_COUNT
     !
-    integer function fson_value_count(this) result(count)
-        type(fson_value), pointer :: this, p
+    integer function ncdf_value_count(this) result(count)
+        type(ncdf_value), pointer :: this, p
 
         count = this % count
 
@@ -180,8 +183,8 @@ contains
     !
     ! GET BY INDEX
     !
-    function get_by_index(this, index) result(p)
-        type(fson_value), pointer :: this, p
+    function ncdf_get_by_index(this, index) result(p)
+        type(ncdf_value), pointer :: this, p
         integer, intent(in) :: index
         integer :: i
 
@@ -191,32 +194,32 @@ contains
             p => p % next
         end do
 
-    end function get_by_index
+    end function ncdf_get_by_index
 
     !
     ! GET BY NAME CHARS
     !
-    function get_by_name_chars(this, name) result(p)
-        type(fson_value), pointer :: this, p
+    function ncdf_get_by_name_chars(this, name) result(p)
+        type(ncdf_value), pointer :: this, p
         character(len=*), intent(in) :: name
         
-        type(fson_string), pointer :: string
+        type(ncdf_string), pointer :: string
         
         ! convert the char array into a string
-        string => fson_string_create(name)
+        string => ncdf_string_create(name)
         
-        p => get_by_name_string(this, string)
+        p => ncdf_get_by_name_string(this, string)
 
-        call fson_string_destroy(string)
+        call ncdf_string_destroy(string)
         
-    end function get_by_name_chars
+    end function ncdf_get_by_name_chars
     
     !
     ! GET BY NAME STRING
     !
-    function get_by_name_string(this, name) result(p)
-        type(fson_value), pointer :: this, p
-        type(fson_string), pointer :: name
+    function ncdf_get_by_name_string(this, name) result(p)
+        type(ncdf_value), pointer :: this, p
+        type(ncdf_string), pointer :: name
         integer :: i                
         
         if(this % value_type .ne. TYPE_OBJECT) then
@@ -224,9 +227,9 @@ contains
             return 
         end if
         
-        do i=1, fson_value_count(this)
-            p => fson_value_get(this, i)
-            if (fson_string_equals(p%name, name)) then                
+        do i=1, ncdf_value_count(this)
+            p => ncdf_value_get(this, i)
+            if (ncdf_string_equals(p%name, name)) then                
                 return
             end if
         end do
@@ -235,13 +238,13 @@ contains
         nullify(p)
         
         
-    end function get_by_name_string
+    end function ncdf_get_by_name_string
     
     !
     ! FSON VALUE PRINT
     !
-    recursive subroutine fson_value_print(this, indent)
-        type(fson_value), pointer :: this, element
+    recursive subroutine ncdf_value_print(this, indent)
+        type(ncdf_value), pointer :: this, element
         integer, optional, intent(in) :: indent
         character (len = 1024) :: tmp_chars
         integer :: tab, i, count, spaces
@@ -257,16 +260,16 @@ contains
         select case (this % value_type)
         case(TYPE_OBJECT)
             print *, repeat(" ", spaces), "{"
-            count = fson_value_count(this)
+            count = ncdf_value_count(this)
             do i = 1, count
                 ! get the element
-                element => fson_value_get(this, i)
+                element => ncdf_value_get(this, i)
                 ! get the name
-                call fson_string_copy(element % name, tmp_chars)
+                call ncdf_string_copy(element % name, tmp_chars)
                 ! print the name
                 print *, repeat(" ", spaces), '"', trim(tmp_chars), '":'
                 ! recursive print of the element
-                call fson_value_print(element, tab + 1)
+                call ncdf_value_print(element, tab + 1)
                 ! print the separator if required
                 if (i < count) then
                     print *, repeat(" ", spaces), ","
@@ -276,12 +279,12 @@ contains
             print *, repeat(" ", spaces), "}"
         case (TYPE_ARRAY)
             print *, repeat(" ", spaces), "["
-            count = fson_value_count(this)
+            count = ncdf_value_count(this)
             do i = 1, count
                 ! get the element
-                element => fson_value_get(this, i)
+                element => ncdf_value_get(this, i)
                 ! recursive print of the element
-                call fson_value_print(element, tab + 1)
+                call ncdf_value_print(element, tab + 1)
                 ! print the separator if required
                 if (i < count) then
                     print *, ","
@@ -291,7 +294,7 @@ contains
         case (TYPE_NULL)
             print *, repeat(" ", spaces), "null"
         case (TYPE_STRING)
-            call fson_string_copy(this % value_string, tmp_chars)
+            call ncdf_string_copy(this % value_string, tmp_chars)
             print *, repeat(" ", spaces), '"', trim(tmp_chars), '"'
         case (TYPE_LOGICAL)
             if (this % value_logical) then
@@ -304,7 +307,7 @@ contains
         case (TYPE_REAL)
             print *, repeat(" ", spaces), this % value_double
         end select
-    end subroutine fson_value_print
+    end subroutine ncdf_value_print
        
 
-end module fson_value_m
+end module ncdf_value_m

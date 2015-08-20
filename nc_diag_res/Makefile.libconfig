@@ -100,5 +100,4 @@ NCDRES_LIB_DEPS=$(NCDRES_PATH)/*.f90 $(NCDRES_PATH)/*.F90 \
 NCDRES_BUILD_CMD=make -C $(NCDRES_PATH) $(NCDRES_LIB_FILE)
 
 # Define the necessary build flags to link with nc_diag_res:
-NC_DIAG_RES_FLAGS=-I$(NCDRES_PATH) -L$(NCDRES_PATH) -lnc_diag_res \
-    -I$(NCDRES_PATH)/fson/lib -L$(NCDRES_PATH)/fson/lib -lfson
+NC_DIAG_RES_FLAGS=-I$(NCDRES_PATH) -L$(NCDRES_PATH) -lnc_diag_res

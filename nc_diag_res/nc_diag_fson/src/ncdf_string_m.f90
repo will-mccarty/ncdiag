@@ -23,68 +23,68 @@
 ! Created on March 7, 2012, 7:40 PM
 !
 
-module fson_string_m
+module ncdf_string_m
 
     private
 
-    public :: fson_string, fson_string_create, fson_string_destroy, fson_string_length, fson_string_append, fson_string_clear 
-    public :: fson_string_equals, fson_string_copy
+    public :: ncdf_string, ncdf_string_create, ncdf_string_destroy, ncdf_ncdf_string_length, ncdf_string_append, ncdf_ncdf_string_clear 
+    public :: ncdf_string_equals, ncdf_string_copy
 
     integer, parameter :: BLOCK_SIZE = 32
 
-    type fson_string
+    type ncdf_string
         character (len = BLOCK_SIZE) :: chars
         integer :: index = 0
-        type(fson_string), pointer :: next => null()
-    end type fson_string
+        type(ncdf_string), pointer :: next => null()
+    end type ncdf_string
 
-    interface fson_string_append
-        module procedure append_chars, append_string
-    end interface fson_string_append
+    interface ncdf_string_append
+        module procedure ncdf_append_chars, ncdf_append_string
+    end interface ncdf_string_append
 
-    interface fson_string_copy
-        module procedure copy_chars
-    end interface fson_string_copy
+    interface ncdf_string_copy
+        module procedure ncdf_copy_chars
+    end interface ncdf_string_copy
 
-    interface fson_string_equals
-        module procedure equals_string
-    end interface fson_string_equals
+    interface ncdf_string_equals
+        module procedure ncdf_equals_string
+    end interface ncdf_string_equals
     
-    interface fson_string_length
-        module procedure string_length
-    end interface fson_string_length
+    interface ncdf_ncdf_string_length
+        module procedure ncdf_string_length
+    end interface ncdf_ncdf_string_length
 
 contains
 
     !
     ! FSON STRING CREATE
     !
-    function fson_string_create(chars) result(new)
+    function ncdf_string_create(chars) result(new)
         character(len=*), optional :: chars
-        type(fson_string), pointer :: new
+        type(ncdf_string), pointer :: new
 
         nullify(new)
         allocate(new)
         
         ! append chars if available
         if(present(chars)) then
-            call append_chars(new, chars)
+            call ncdf_append_chars(new, chars)
         end if
 
-    end function fson_string_create
+    end function ncdf_string_create
     
     !
     ! FSON STRING CREATE
     !
-    recursive subroutine fson_string_destroy(this)
+    recursive subroutine ncdf_string_destroy(this)
 
       implicit none
-      type(fson_string), pointer :: this
+      type(ncdf_string), pointer :: this
 
       if (associated(this)) then
 
          if(associated(this % next)) then
-            call fson_string_destroy(this % next)
+            call ncdf_string_destroy(this % next)
          end if
 
          deallocate(this)
@@ -92,16 +92,16 @@ contains
 
       end if
 
-    end subroutine fson_string_destroy
+    end subroutine ncdf_string_destroy
 
     !
     ! ALLOCATE BLOCK
     !
-    subroutine allocate_block(this)
+    subroutine ncdf_allocate_block(this)
 
       implicit none
-      type(fson_string), pointer :: this
-      type(fson_string), pointer :: new
+      type(ncdf_string), pointer :: this
+      type(ncdf_string), pointer :: new
 
       if (.not.associated(this % next)) then
          nullify(new)
@@ -109,53 +109,53 @@ contains
          this % next => new
       end if
 
-    end subroutine allocate_block
+    end subroutine ncdf_allocate_block
 
 
     !
     ! APPEND_STRING
     !
-    subroutine append_string(str1, str2)
-        type(fson_string), pointer :: str1, str2
+    subroutine ncdf_append_string(str1, str2)
+        type(ncdf_string), pointer :: str1, str2
         integer length, i
 
-        length = string_length(str2)
+        length = ncdf_string_length(str2)
 
         do i = 1, length
-            call append_char(str1, get_char_at(str2, i))
+            call ncdf_append_char(str1, ncdf_get_char_at(str2, i))
         end do
 
 
-    end subroutine append_string
+    end subroutine ncdf_append_string
 
     !
     ! APPEND_CHARS
     !
-    subroutine append_chars(str, c)
-        type(fson_string), pointer :: str
+    subroutine ncdf_append_chars(str, c)
+        type(ncdf_string), pointer :: str
         character (len = *), intent(in) :: c
         integer length, i
 
         length = len(c)
 
         do i = 1, length
-            call append_char(str, c(i:i))
+            call ncdf_append_char(str, c(i:i))
         end do
 
 
-    end subroutine append_chars
+    end subroutine ncdf_append_chars
 
     !
     ! APPEND_CHAR
     !
-    recursive subroutine append_char(str, c)
-        type(fson_string), pointer :: str
+    recursive subroutine ncdf_append_char(str, c)
+        type(ncdf_string), pointer :: str
         character, intent(in) :: c
 
         if (str % index .GE. BLOCK_SIZE) then
             !set down the chain
-            call allocate_block(str)
-            call append_char(str % next, c)
+            call ncdf_allocate_block(str)
+            call ncdf_append_char(str % next, c)
 
         else
             ! set local
@@ -163,20 +163,20 @@ contains
             str % chars(str % index:str % index) = c
         end if
 
-    end subroutine append_char
+    end subroutine ncdf_append_char
 
     !
     ! COPY CHARS
     !
-    subroutine copy_chars(this, to)
-        type(fson_string), pointer :: this
+    subroutine ncdf_copy_chars(this, to)
+        type(ncdf_string), pointer :: this
         character(len = *), intent(inout) :: to
         integer :: length
 
-        length = min(string_length(this), len(to))
+        length = min(ncdf_string_length(this), len(to))
 
         do i = 1, length
-            to(i:i) = get_char_at(this, i)
+            to(i:i) = ncdf_get_char_at(this, i)
         end do
 
         ! pad with nothing
@@ -185,74 +185,74 @@ contains
         end do
 
 
-    end subroutine copy_chars
+    end subroutine ncdf_copy_chars
 
 
 
     !
     ! CLEAR
     !
-    recursive subroutine string_clear(this)
-        type(fson_string), pointer :: this
+    recursive subroutine ncdf_string_clear(this)
+        type(ncdf_string), pointer :: this
 
         if (associated(this % next)) then
-            call string_clear(this % next)
+            call ncdf_string_clear(this % next)
             deallocate(this % next)
             nullify (this % next)
         end if
 
         this % index = 0
 
-    end subroutine string_clear
+    end subroutine ncdf_string_clear
 
     !
     ! SIZE    
     !
-    recursive integer function string_length(str) result(count)
-        type(fson_string), pointer :: str
+    recursive integer function ncdf_string_length(str) result(count)
+        type(ncdf_string), pointer :: str
 
         count = str % index
 
         if (str % index == BLOCK_SIZE .AND. associated(str % next)) then
-            count = count + string_length(str % next)
+            count = count + ncdf_string_length(str % next)
         end if
 
-    end function string_length
+    end function ncdf_string_length
 
 
     !
     ! GET CHAR AT
     !
-    recursive character function get_char_at(this, i) result(c)
-        type(fson_string), pointer :: this
+    recursive character function ncdf_get_char_at(this, i) result(c)
+        type(ncdf_string), pointer :: this
         integer, intent(in) :: i
 
         if (i .LE. this % index) then
             c = this % chars(i:i)
         else
-            c = get_char_at(this % next, i - this % index)
+            c = ncdf_get_char_at(this % next, i - this % index)
         end if
 
-    end function get_char_at
+    end function ncdf_get_char_at
 
     !
     ! EQUALS STRING
     !
-    logical function equals_string(this, other) result(equals)
-        type(fson_string), pointer :: this, other
+    logical function ncdf_equals_string(this, other) result(equals)
+        type(ncdf_string), pointer :: this, other
         integer :: i
         equals = .false.
         
-        if(fson_string_length(this) .ne. fson_string_length(other)) then
+        if(ncdf_ncdf_string_length(this) .ne. ncdf_ncdf_string_length(other)) then
             equals = .false.
             return
-        else if(fson_string_length(this) == 0) then
+        else if(ncdf_ncdf_string_length(this) == 0) then
             equals = .true.
             return
         end if
         
-        do i=1, fson_string_length(this)
-            if(get_char_at(this, i) .ne. get_char_at(other, i)) then
+        do i=1, ncdf_string_length(this)
+            if(ncdf_get_char_at(this, i) .ne. ncdf_get_char_at(other, i)) then
                 equals = .false.
                 return
             end if
@@ -260,6 +260,6 @@ contains
         
         equals = .true.
         
-    end function equals_string
+    end function ncdf_equals_string
 
-end module fson_string_m
+end module ncdf_string_m

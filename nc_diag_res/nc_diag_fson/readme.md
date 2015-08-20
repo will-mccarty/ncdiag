@@ -1,6 +1,13 @@
 Fortran 95 JSON Parser
 ======================
 
+Note
+-----
+All of the work for FSON is done by Joseph A. Levin. The tool's name is
+modified to prevent collision with the actual FSON library!
+
+(No modifications have been made, just the name!)
+
 Getting Started
 ---------------
 ```fortran
