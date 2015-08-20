@@ -207,8 +207,6 @@ module nc_diag_write_mod
                 allocate(diag_data2d_store)
                 allocate(diag_varattr_store)
                 
-                write (*,"(A, I0, A)") 'NetCDF will use ', bsize, ' bytes of cache.'
-                
                 cur_nc_file = filename
                 
                 init_done = .TRUE.
@@ -338,12 +336,61 @@ module nc_diag_write_mod
             end if
         end subroutine nc_diag_finish
         
+        ! Flush all of the current variable data to NetCDF, and reset
+        ! all of the variable storage to an initial state.
+        ! 
+        ! Attempt to write the currently stored variable definitions
+        ! and data to the NetCDF file via NetCDF API calls.
+        ! 
+        ! Once done, this will effectively "flush" the data from the
+        ! current variable buffers. Internally, this sets a starting
+        ! counter and resets the buffer counter so that new data can
+        ! be stored sequentially without requiring more memory, at least
+        ! until memory runs out for the current buffer.
+        ! 
+        ! Definitions MUST be locked in order for flushing to work.
+        ! Without definition locking, nc_diag_write is unable to make
+        ! calls to NetCDF due to the lack of variable IDs.
+        ! 
+        ! If definitions are not locked, calling this will result in an
+        ! error.
+        ! 
+        ! Data locking does NOT occur with flushing. As a result, this
+        ! subroutine may be called multiple times, and a final
+        ! nc_diag_write can be called once after this call.
+        ! 
+        ! (Note that calling nc_diag_write will lock the data and close
+        ! the file, regardless of flushing the buffer here!)
+        ! 
+        ! Args:
+        !     None
+        ! 
+        ! Raises:
+        !     If definitions have not been locked, this will result in
+        !     an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If the variable data writing has already been locked, this
+        !     will result in an error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_flush_buffer
 #ifdef ENABLE_ACTION_MSGS
             if (nclayer_enable_action) then
                 call nclayer_actionm("nc_diag_flush_buffer()")
             end if
 #endif
+            if (.NOT. init_done) &
+                call nclayer_error("Attempted to flush nc_diag_write buffers without initializing!")
+            
             if ((.NOT. diag_chaninfo_store%def_lock) .OR. &
                 (.NOT. diag_metadata_store%def_lock) .OR. &
                 (.NOT. diag_data2d_store%def_lock)) &
@@ -368,6 +415,11 @@ module nc_diag_write_mod
                 call nclayer_actionm("nc_diag_flush_to_file()")
             end if
 #endif
+            ! Make sure we have something open + initialized
+            if (.NOT. init_done) &
+                call nclayer_error("Attempted to flush NetCDF buffers without initializing!")
+            
+            ! Call nf90_sync to try and commit the put'd data to disk
             call nclayer_check(nf90_sync(ncid))
         end subroutine nc_diag_flush_to_file
         
