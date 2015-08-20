@@ -1,7 +1,7 @@
 program test_nc_unlimdims
     use kinds, only: i_long
     use ncdc_state, only: prgm_name, cli_arg_count, input_file, &
-        ncid_input, num_unlims, unlim_dims
+        ncid_input, num_unlims
     use ncdc_climsg, only: ncdc_error, ncdc_info, ncdc_check
     use netcdf, only: nf90_open, nf90_inquire_dimension, nf90_close, &
         NF90_MAX_NAME, NF90_NOWRITE
@@ -17,6 +17,7 @@ program test_nc_unlimdims
     
     integer(i_long) :: tmp_dim_size, i
     character(len=NF90_MAX_NAME) :: tmp_dim_name
+    integer(i_long), dimension(:), allocatable        :: unlim_dims
     
     call get_command_argument(0, prgm_name)
     cli_arg_count = command_argument_count()
