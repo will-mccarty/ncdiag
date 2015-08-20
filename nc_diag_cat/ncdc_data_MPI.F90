@@ -832,13 +832,16 @@ module ncdc_data_MPI
                                     ! numeric tag for extra info, and communicator.
                                     call MPI_Recv(string_buffer, num_count, MPI_BYTE, &
                                         i_proc, cur_out_var_ind, MPI_COMM_WORLD, mpi_status, ierr)
+#ifdef DEBUG
                                     write (*, "(A)") "*****************************************************"
                                     write (*, "(A)") "DEBUG: var_name = [" // trim(var_names(cur_out_var_ind)) // "]"
-                                    write (*, "(A)") "DEBUG: string_buffer = [" // string_buffer(1:cur_out_dim_sizes(1), 1) // "]"
                                     write (*, "(A, I0)") "DEBUG: num_count = ", num_count
+                                    if (num_count > 0) &
+                                        write (*, "(A)") "DEBUG: string_buffer = [" // string_buffer(1:cur_out_dim_sizes(1), 1) // "]"
                                     write (*, "(A, I0)") "DEBUG: cur_out_dim_sizes(1) = ", cur_out_dim_sizes(1)
                                     write (*, "(A, I0)") "DEBUG: (num_count / cur_out_dim_sizes(1)) = ", (num_count / cur_out_dim_sizes(1))
                                     write (*, "(A, I0)") "DEBUG: data_blobs(cur_out_var_ind)%cur_pos = ", data_blobs(cur_out_var_ind)%cur_pos
+#endif
                                     data_blobs(cur_out_var_ind)%string_buffer &
                                         (1 : cur_out_dim_sizes(1), &
                                             data_blobs(cur_out_var_ind)%cur_pos : &
