@@ -1,0 +1,16 @@
+# TODO FOR nc_diag_write
+ -> get rid of the NLAYER type and fill constants - the NF90_* ones work
+    just as well!
+ -> rip out the silly allocation multiplier stuff - get rid of the type
+    and subroutines, and just reallocate like this:
+    
+    new_size = old_size * 2
+ -> move the actual nf90 def locking (nf90_enddef) to our lockdef, and
+    have our nc_diag_write call our own def lock
+ -> private/public for funcs and subs - you really, really, really don't
+    want people to call functions that are private!
+ -> clarify naming schemes for write/finish - finish is super tempting
+    to call...
+     -> make nc_diag_write just write + lock data, and maybe make
+        nc_diag_finish public? so we can have a solely data/def lock
+        mode, with the ability to still do varattr fun
