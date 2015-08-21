@@ -127,10 +127,11 @@ module nc_diag_write_mod
     !      own way of storing variable data. Again, metadata and data2d
     !      have similar code, with the only difference being the
     !      dimensionality. Note that this is where NetCDF calls are
-    !      made to define and "put" data.
+    !      made to define and "put" data. Once done, if we are NOT in
+    !      append mode, we call nf90_enddef to end define mode.
     !      
     !   -> Once all the data has been queued and/or written out, it is 
-    !      safe to call nc_diag_finish.
+    !      safe to call nc_diag_finish. We call this from nc_diag_write.
     !      => This will first write definitions and data, if applicable.
     !         The calls will have a special flag set to ensure that no
     !         errors are triggered for already having a lock set, since
@@ -151,7 +152,26 @@ module nc_diag_write_mod
     ! file. Attempting to create another file without closing the
     ! previous one will result in an error.
     
-    ! Load state variables
+    ! Load state variables! We need to know:
+    !   init_done           - ...whether a file is currently loaded or
+    !                         not.
+    !   append_only         - ...whether we are in append mode or not.
+    !   ncid                - ...the current NCID of our file.
+    !   enable_trim         - ...whether we need to automatically trim
+    !                         our strings for chaninfo string storage or
+    !                         not.
+    !   diag_chaninfo_store - ...chaninfo variable information.
+    !                         Specifically, whether it's allocated or
+    !                         not, and if it's allocated, whether the
+    !                         definitions are locked or not.
+    !   diag_metadata_store - ...metadata variable information.
+    !                         Specifically, whether it's allocated or
+    !                         not, and if it's allocated, whether the
+    !                         definitions are locked or not.
+    !   diag_data2d_store   - ...data2d variable information.
+    !                         Specifically, whether it's allocated or
+    !                         not, and if it's allocated, whether the
+    !                         definitions are locked or not.
     use ncdw_state, only: init_done, append_only, ncid, &
         enable_trim, cur_nc_file, &
         diag_chaninfo_store, diag_metadata_store, diag_data2d_store, &
@@ -421,6 +441,7 @@ module nc_diag_write_mod
 #endif
             call nclayer_info("Locking all variable definitions!")
             
+            ! Call all of the variable write_def
             call nclayer_info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def
             
@@ -487,6 +508,10 @@ module nc_diag_write_mod
             end if
 #endif
             
+            ! Call all variable write_def, with an extra option to make
+            ! sure that no errors occur during write, even when locked!
+            ! (We could have previously locked, but here we're doing it
+            ! on purpose!)
             call nclayer_info("Defining chaninfo:")
             call nc_diag_chaninfo_write_def(.TRUE.)
             
@@ -502,6 +527,7 @@ module nc_diag_write_mod
                 (.NOT. diag_data2d_store%def_lock))) & &
                 call nclayer_check(nf90_enddef(ncid))
             
+            ! Call all variable write_data
             call nclayer_info("Writing chaninfo:")
             call nc_diag_chaninfo_write_data
             
@@ -511,11 +537,13 @@ module nc_diag_write_mod
             call nclayer_info("Writing data2d:")
             call nc_diag_data2d_write_data
             
+            ! Call nf90_close to save everything to disk!
             call nclayer_info("All done queuing in data, letting NetCDF take over!")
             call nclayer_check(nf90_close(ncid))
             
             call nclayer_info("All done!")
             
+            ! Call our cleanup subroutine
             call nc_diag_finish
         end subroutine nc_diag_write
         

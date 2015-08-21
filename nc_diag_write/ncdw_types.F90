@@ -36,6 +36,11 @@ module ncdw_types
     type diag_chaninfo
         ! Number of channels to store
         integer(i_long)                               :: nchans = -1
+        
+        ! The NetCDF dimension ID for nchans
+        ! (This doesn't get set unless we do nc_diag_chaninfo_load_def,
+        ! or we write out the nchans dimension and fetch the ID with
+        ! nc_diag_chaninfo_write_def.)
         integer(i_long)                               :: nchans_dimid
         
         ! # of times we needed to realloc chaninfo
@@ -43,11 +48,13 @@ module ncdw_types
         integer(i_byte)                               :: alloc_multi
         
         ! Did we write anything out yet?
+        ! Definition writing lock and data writing lock
         logical                                       :: def_lock
         logical                                       :: data_lock
         
-        ! Strict checking for bounds?
+        ! Enable strict checking for bounds?
         ! (Making sure that the sizes are consistent!)
+        ! If true, this makes inconsistency result in an error!
         logical                                       :: strict_check
         
         !-----------------------------------------------------------
@@ -55,9 +62,11 @@ module ncdw_types
         !-----------------------------------------------------------
         
         ! Name array for each variable
+        ! Size: number of variables stored
         character(len=100),  dimension(:),allocatable :: names
         
         ! Type constants array for each variable
+        ! Size: number of variables stored
         integer(i_byte),     dimension(:),allocatable :: types
         
         ! Relative positioning for each variable - relative position
@@ -65,17 +74,22 @@ module ncdw_types
         ! if "asdf" has a relative value of 2, type of BYTE, and nchan
         ! of 10, then variable "asdf" will start at 1 + [(2 - 1) * 10] = 11
         ! within the byte storage array. Eqn: 1 + [(REL_VAL - 1) * nchan]
+        ! 
+        ! Size: number of variables stored
         integer(i_long),     dimension(:),allocatable :: var_rel_pos
         
         ! Current variable usage (which, for each element,
         ! should be <= nchans)
+        ! Size: number of variables stored
         integer(i_long),     dimension(:),allocatable :: var_usage
         
         ! Variable IDs (for use with NetCDF API)
+        ! Size: number of variables stored
         integer(i_long),     dimension(:),allocatable :: var_ids
         
         ! Maximum string length - only used when the variable
         ! definitions are locked.
+        ! Size: number of variables stored
         integer(i_long),    dimension(:), allocatable :: max_str_lens
         
         ! Relative indexes - for buffer flushing, keep track of the
@@ -83,6 +97,8 @@ module ncdw_types
         ! variable count here so that we can reference it when we
         ! reset our variable counter to zero, allowing us to reuse
         ! memory while still preserving data order!
+        ! 
+        ! Size: number of variables stored
         integer(i_long),    dimension(:), allocatable :: rel_indexes
         
         !-----------------------------------------------------------
@@ -92,25 +108,37 @@ module ncdw_types
         ! Type array variable usage count - number of variables
         ! in each type array. For instance, if element 1 (ci_byte) has
         ! a value of 3 here, it means it has 3 variables stored already.
-        ! (Hypothetically, if nchan = 10, then it has 30 stored variables.
+        ! (Hypothetically, if nchan = 10, then that particular type has
+        ! 30 stored values.
+        ! 
         ! That means I can start creating vars at 1 + [(4-1) * 10] = 31.)
         !  1  2  3  4  5  6  7  8  9 10
         ! 11 12 13 14 15 16 17 18 19 20
         ! 21 22 23 24 25 26 27 28 29 30
         ! 31
+        ! 
+        ! Size: number of types (currently 6)
         integer(i_long),     dimension(6)             :: acount_v
         
         ! Total variables stored
         integer(i_long)                               :: total = 0
         
         ! Array size for each type array
+        ! Size: number of types (currently 6)
         integer(i_long),     dimension(6)             :: asize
         
         ! Array count for each type array - used with the internal
         ! resizing tool
+        ! (This is basically the number of elements stored in ci_*)
+        ! Size: number of types (currently 6)
         integer(i_long),     dimension(6)             :: acount
         
         ! Storage arrays for specific types
+        ! 
+        ! These store the actual data, and can be tracked using the
+        ! information and formula above!
+        ! 
+        ! Size: variable (dynamically (re)-allocated)
         integer(i_byte),     dimension(:),allocatable :: ci_byte
         integer(i_short),    dimension(:),allocatable :: ci_short
         integer(i_long),     dimension(:),allocatable :: ci_long
