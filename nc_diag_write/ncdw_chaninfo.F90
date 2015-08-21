@@ -269,6 +269,8 @@ module ncdw_chaninfo
     !     The following errors will trigger indirectly from other
     !     subroutines called here:
     !     
+    !     If nchans has not been set yet, this will result in an error.
+    !     
     !     If there is no file open (or the file is already closed),
     !     this will result in an error.
     !     
@@ -284,6 +286,36 @@ module ncdw_chaninfo
     end interface nc_diag_chaninfo
     
     contains
+        ! Set the number of channels (nchans) for chaninfo to use for
+        ! variable storage and configuration.
+        ! 
+        ! This set the number of channels (nchans) for all of the future
+        ! chaninfo variables that will be added. nchans will be used
+        ! as the number of elements to use for every chaninfo variable
+        ! added. It will also be used as a bounds check for variable
+        ! data amounts.
+        ! 
+        ! Args:
+        !     nchans (integer(i_long)): the number of channels to use
+        !         for chaninfo.
+        !     
+        ! Raises:
+        !     If nchans was already set, this will result in an error.
+        !     (You can't change nchans arbitarily - otherwise, variable
+        !     data amounts could become invalid!)
+        !     
+        !     If the nchans specified is invalid (<1), this will result
+        !     in an error. If you have no chaninfo variables to write,
+        !     don't call this subroutine at all. No chaninfo variables
+        !     will be processed or written if you don't set anything!
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     See the called subroutines' documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_dim_set(nchans)
             integer(i_long), intent(in) :: nchans
 #ifdef ENABLE_ACTION_MSGS
@@ -294,7 +326,9 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
+            ! Check if everything is initialized / file is open
             if (init_done .AND. allocated(diag_chaninfo_store)) then
+                ! nchans can't be less than 1! 
                 if (nchans < 1) then
                     call nclayer_error("Critical error - specified a nchan < 1!")
                 end if
