@@ -163,15 +163,15 @@ module nc_diag_write_mod
     !   diag_chaninfo_store - ...chaninfo variable information.
     !                         Specifically, whether it's allocated or
     !                         not, and if it's allocated, whether the
-    !                         definitions are locked or not.
+    !                         definitions are locked or not. (def_lock)
     !   diag_metadata_store - ...metadata variable information.
     !                         Specifically, whether it's allocated or
     !                         not, and if it's allocated, whether the
-    !                         definitions are locked or not.
+    !                         definitions are locked or not. (def_lock)
     !   diag_data2d_store   - ...data2d variable information.
     !                         Specifically, whether it's allocated or
     !                         not, and if it's allocated, whether the
-    !                         definitions are locked or not.
+    !                         definitions are locked or not. (def_lock)
     use ncdw_state, only: init_done, append_only, ncid, &
         enable_trim, cur_nc_file, &
         diag_chaninfo_store, diag_metadata_store, diag_data2d_store, &
