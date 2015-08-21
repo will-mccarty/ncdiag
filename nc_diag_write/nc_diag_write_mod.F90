@@ -254,6 +254,9 @@ module nc_diag_write_mod
         ! open the file specified, read the file's dimension and
         ! variable storage information, and set things up so that
         ! data writing starts at the end of the file's existing data.
+        ! Note that append mode only works for nc_diag_write NetCDF
+        ! files. Attempting to open a non-nc_diag_write file could
+        ! result in errors!
         ! 
         ! In order for the file to be written to successfully,
         ! nc_diag_finish MUST be called for all of the data to be

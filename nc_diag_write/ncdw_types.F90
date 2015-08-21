@@ -98,6 +98,11 @@ module ncdw_types
         ! reset our variable counter to zero, allowing us to reuse
         ! memory while still preserving data order!
         ! 
+        ! Note that the relative index follows Fortran order, e.g. we
+        ! start at 1. If it's 1, there's 1 element already stored for
+        ! that variable. We add 1 to the rel_indexes value to make
+        ! things work, since we start 1 after the last stored value.
+        ! 
         ! Size: number of variables stored
         integer(i_long),    dimension(:), allocatable :: rel_indexes
         

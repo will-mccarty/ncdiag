@@ -333,15 +333,56 @@ module ncdw_chaninfo
                     call nclayer_error("Critical error - specified a nchan < 1!")
                 end if
                 
+                ! Is nchans already set?
                 if (diag_chaninfo_store%nchans /= -1) &
                     call nclayer_error("nchans already set!")
                 
+                ! Set nchans
                 diag_chaninfo_store%nchans = nchans
             else
                 call nclayer_error("NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_dim_set
         
+        ! Set the allocation multiplier for chaninfo variable storage
+        ! allocation and reallocation.
+        ! 
+        ! This set the allocation multiplier (exponentiator?) for
+        ! chaninfo variable storage allocation and reallocation.
+        ! 
+        ! Reallocation looks like this:
+        !     new_size = old_size + addl_num_entries + 
+        !       (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** 
+        !                             diag_chaninfo_store%alloc_multi))
+        ! 
+        ! NLAYER_DEFAULT_ENT and NLAYER_MULTI_BASE are constants defined
+        ! in ncdw_types. The alloc_multi part is set with this
+        ! subroutine.
+        ! 
+        ! As reallocation occurs, the alloc_multi continues to increase
+        ! by one, causing subsequent reallocations to allocate
+        ! exponentially more memory.
+        ! 
+        ! You can use this subroutine to increase the initial amount of
+        ! memory allocated/reallocated, or you can use it to prevent
+        ! the reallocating counter from increasing by calling this
+        ! every so often.
+        ! 
+        ! If this is not set, it will be initially set to 0 and will
+        ! increase from there.
+        ! 
+        ! Args:
+        !     multiplier (integer(i_long)): the multiplier to use when
+        !         allocating or reallocating.
+        !     
+        ! Raises:
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     See the called subroutines' documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_allocmulti(multiplier)
             integer(i_long), intent(in)    :: multiplier
 #ifdef ENABLE_ACTION_MSGS
@@ -359,18 +400,61 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_allocmulti
         
+        ! Load chaninfo variable definitions from an existing, already
+        ! open NetCDF file.
+        ! 
+        ! This will scan the currently open NetCDF file for chaninfo
+        ! variables. If any exist, the metadata and last position will
+        ! get loaded into the chaninfo variable data buffer.
+        ! 
+        ! Basically, this scans for the "nchans" dimension. If it
+        ! exists, we set our internal nchans to that dimension's value.
+        ! Then we fetch the dimension names for all variables, and try
+        ! to match them to "nchans". (This is slow... see TODO.txt for
+        ! a better idea!)
+        ! 
+        ! Once we find our chaninfo variable(s), we scan them for NetCDF
+        ! fill bytes, starting at the end of the variable. When we find
+        ! a spot that does NOT have a fill byte, we set our relative
+        ! index at that spot, and set everything up to resume at that
+        ! position.
+        ! 
+        ! For string data, we also our maximum string length constraint
+        ! so that we still keep additional variable data within bounds.
+        ! 
+        ! Args:
+        !     None
+        !     
+        ! Raises:
+        !     If the chaninfo variable uses an unsupported type (e.g.
+        !     not one of the types listed above), this will result in
+        !     an error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error. (NetCDF error here, since
+        !     init_done is not being checked... see TODO.txt)
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_load_def
             integer(i_long) :: ndims, nvars, var_index, type_index
             integer(i_long) :: rel_index, i, j
             
+            ! Temporary variables used when scanning variables and dimensions
+            ! from our NetCDF file
             character(len=NF90_MAX_NAME)               :: tmp_var_name
             integer(i_long)                            :: tmp_var_type, tmp_var_ndims
             
             integer(i_long), dimension(:), allocatable :: tmp_var_dimids, tmp_var_dim_sizes
             character(len=NF90_MAX_NAME) , allocatable :: tmp_var_dim_names(:)
             
+            ! Is this a nchans var?
             logical                                    :: is_nchans_var
             
+            ! Data buffers - we need these to fetch our data and see where
+            ! we left off...
             integer(i_byte),    dimension(:), allocatable     :: byte_buffer
             integer(i_short),   dimension(:), allocatable     :: short_buffer
             integer(i_long),    dimension(:), allocatable     :: long_buffer
@@ -380,23 +464,24 @@ module ncdw_chaninfo
             
             character(1),     dimension(:,:), allocatable     :: string_buffer
             
-            integer(i_long)                                   :: dim_ierr
+            ! Dimension checking NetCDF error storage
+            integer(i_long)                                   :: dim_nc_err
             
             ! Get top level info about the file!
             call nclayer_check(nf90_inquire(ncid, nDimensions = ndims, &
                 nVariables = nvars))
             
             ! Fetch nchans first!
-            dim_ierr = nf90_inq_dimid(ncid, "nchans", diag_chaninfo_store%nchans_dimid)
+            dim_nc_err = nf90_inq_dimid(ncid, "nchans", diag_chaninfo_store%nchans_dimid)
             
             ! Check if we found anything!
             ! If we got NF90_EBADDIM, then exit.
-            if (dim_ierr == NF90_EBADDIM) then
+            if (dim_nc_err == NF90_EBADDIM) then
                 return
-            else if (dim_ierr /= NF90_NOERR) then
+            else if (dim_nc_err /= NF90_NOERR) then
                 ! If an error besides not finding the dimension occurs,
                 ! raise an exception.
-                call nclayer_check(dim_ierr)
+                call nclayer_check(dim_nc_err)
             end if
             
             ! Then grab nchans value...
@@ -415,14 +500,19 @@ module ncdw_chaninfo
                 allocate(tmp_var_dim_sizes(tmp_var_ndims))
                 
                 ! Grab the actual dimension IDs and attributes
-                
                 call nclayer_check(nf90_inquire_variable(ncid, var_index, dimids = tmp_var_dimids, &
                     xtype = tmp_var_type))
                 
                 if ((tmp_var_ndims == 1) .OR. &
                     ((tmp_var_ndims == 2) .AND. (tmp_var_type == NF90_CHAR))) then
+                    ! Reset our is_nchans_var switch to FALSE!
                     is_nchans_var = .FALSE.
                     
+                    ! Fetch all dimension names for the dimensions in the
+                    ! variable, and check if the variable is a nchans
+                    ! variable. We do so by (slowly) checking all
+                    ! dimension names and seeing if they match "nchans".
+                    ! If they do, is_nchans_var is set to TRUE.
                     do i = 1, tmp_var_ndims
                         call nclayer_check(nf90_inquire_dimension(ncid, tmp_var_dimids(i), tmp_var_dim_names(i), &
                             tmp_var_dim_sizes(i)))
@@ -440,7 +530,20 @@ module ncdw_chaninfo
                         ! Store name and type!
                         diag_chaninfo_store%names(diag_chaninfo_store%total) = trim(tmp_var_name)
                         
+                        ! Reset relative index to zero...
                         rel_index = 0
+                        
+                        ! For the rest of the code, we basically do the following:
+                        !  -> We allocate a temporary data storage variable.
+                        !  -> We set the NLAYER variable type for the variable.
+                        !  -> We fetch all of the data for the variable.
+                        !  -> We search, starting at the end of the variable, for
+                        !     fill bytes. We keep going if we see filler bytes, and
+                        !     stop when we encounter a non-fill byte.
+                        !  -> Since the place we stop is where we last stored a value,
+                        !     we set our relative index to the stopped index variable.
+                        !  -> We deallocate our temporary data storage variable.
+                        !  -> We set our type_index to update our data storage array count.
                         
                         if (tmp_var_type == NF90_BYTE) then
                             diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
@@ -548,6 +651,7 @@ module ncdw_chaninfo
                             
                             type_index = 6
                         else
+                            ! The type is not supported by chaninfo - error!
                             call nclayer_error("NetCDF4 type invalid!")
                         end if
                         
@@ -581,9 +685,54 @@ module ncdw_chaninfo
                 deallocate(tmp_var_dim_sizes)
             end do
             
+            ! Set our definition lock!
             diag_chaninfo_store%def_lock = .TRUE.
         end subroutine nc_diag_chaninfo_load_def
         
+        ! Load chaninfo variable definitions from an existing, already
+        ! open NetCDF file.
+        ! 
+        ! This will scan the currently open NetCDF file for chaninfo
+        ! variables. If any exist, the metadata and last position will
+        ! get loaded into the chaninfo variable data buffer.
+        ! 
+        ! Basically, this scans for the "nchans" dimension. If it
+        ! exists, we set our internal nchans to that dimension's value.
+        ! Then we fetch the dimension names for all variables, and try
+        ! to match them to "nchans". (This is slow... see TODO.txt for
+        ! a better idea!)
+        ! 
+        ! Once we find our chaninfo variable(s), we scan them for NetCDF
+        ! fill bytes, starting at the end of the variable. When we find
+        ! a spot that does NOT have a fill byte, we set our relative
+        ! index at that spot, and set everything up to resume at that
+        ! position.
+        ! 
+        ! For string data, we also our maximum string length constraint
+        ! so that we still keep additional variable data within bounds.
+        ! 
+        ! Note that this only works for nc_diag_write NetCDF files.
+        ! Attempting to load definitions from a non-nc_diag_write file
+        ! could result in errors! (In particular, if the "nchans"
+        ! dimension is involved in a strange way, or if a "nchans"
+        ! variable uses a strange type, things will break!)
+        ! 
+        ! Args:
+        !     None
+        !     
+        ! Raises:
+        !     If the chaninfo variable uses an unsupported type (e.g.
+        !     not one of the types listed above), this will result in
+        !     an error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error. (NetCDF error here, since
+        !     init_done is not being checked... see TODO.txt)
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_write_def(internal)
             logical, intent(in), optional :: internal
             
@@ -719,6 +868,31 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_write_def
         
+        !!!!!!!!!! TODO TODO TODO
+        ! Write all of the currently stored chaninfo data to NetCDF via
+        ! the NetCDF APIs ("put").
+        ! 
+        ! This will go through all of the variables stored in chaninfo,
+        ! and write their data to NetCDF.
+        ! 
+        ! Args:
+        !     flush_data_only (logical, optional): whether to only flush
+        !         the chaninfo data buffers or not. If we flush data,
+        !         
+        !     
+        ! Raises:
+        !     If the chaninfo variable uses an unsupported type (e.g.
+        !     not one of the types listed above), this will result in
+        !     an error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error. (NetCDF error here, since
+        !     init_done is not being checked... see TODO.txt)
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_write_data(flush_data_only)
             ! Optional internal flag to only flush data - if this is
             ! true, data flushing will be performed, and the data will

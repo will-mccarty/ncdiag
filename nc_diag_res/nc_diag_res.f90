@@ -56,7 +56,7 @@ module nc_diag_res
         ! and the program will terminate.
         ! 
         ! Args:
-        !     filename (character(len=*): resource file name to load.
+        !     filename (character(len=*)): resource file name to load.
         ! 
         ! Raises:
         !     Resource file already open error if there is already a
