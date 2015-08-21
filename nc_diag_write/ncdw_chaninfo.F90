@@ -205,6 +205,77 @@ module ncdw_chaninfo
     
     implicit none
     
+    ! Add a single chaninfo value to a new or existing chaninfo
+    ! variable.
+    ! 
+    ! Given the chaninfo variable name and value, add or update the
+    ! variable with the corresponding value.
+    ! 
+    ! If the variable doesn't already exist, this will automatically
+    ! create it and store the value into it.
+    ! 
+    ! If the variable does exist, it will simply append to the
+    ! variable's existing values.
+    ! 
+    ! chaninfo is stored element by element - no arrays are accepted,
+    ! only scalar values. The best way to call chaninfo is in a loop,
+    ! where each channel is being accessed and stored.
+    ! 
+    ! Once a value has been added, it may not be removed. Make sure you
+    ! are certain that the value should be added!
+    ! 
+    ! The number of values may not exceed the number of channels
+    ! (nchans). If more values are added and nchans is exceeded, an
+    ! error will occur.
+    ! 
+    ! Data locking and definition locking will also affect adding
+    ! chaninfo variables and value. If data locking is in effect, any
+    ! variable or value adding will not work. If definition locking is
+    ! in effect, adding variable values to existing variables will still
+    ! work, but adding new variables will not.
+    ! 
+    ! For strings, if the length of the string changes when trimming is
+    ! disabled, or when the definitions have been locked, an error will
+    ! occur as well.
+    ! 
+    ! To see more details about what checks are made, see the
+    ! corresponding called subroutine documentation for details.
+    ! 
+    ! Valid data types (represented below as data_types):
+    ! integer(i_byte), integer(i_short), integer(i_long),
+    ! real(r_single), real(r_double), character(len=*)
+    ! 
+    ! Args:
+    !     name (character(len=*)): the name of the chaninfo variable to
+    !         add or update.
+    !     value (data_types): the value to add to chaninfo.
+    !     
+    ! Raises:
+    !     If data writing is locked, this will result in an error.
+    !     
+    !     If the variable doesn't exist yet, and definitions are locked,
+    !     this will result in an error.
+    !     
+    !     If the amount of data in the chaninfo variable is already at
+    !     or exceeding nchans, this will result in an error.
+    !     
+    !     For string data, if the string length changes and the
+    !     definitions have already been locked, this will result in an
+    !     error.
+    !     
+    !     Also, for string data, if the string length changes and
+    !     trimming is turned off, this will also result in an error.
+    !     
+    !     The following errors will trigger indirectly from other
+    !     subroutines called here:
+    !     
+    !     If there is no file open (or the file is already closed),
+    !     this will result in an error.
+    !     
+    !     Other errors may result from invalid data storage, NetCDF
+    !     errors, or even a bug. See the called subroutines'
+    !     documentation for details.
+    ! 
     interface nc_diag_chaninfo
         module procedure nc_diag_chaninfo_byte, &
             nc_diag_chaninfo_short, nc_diag_chaninfo_long, &
