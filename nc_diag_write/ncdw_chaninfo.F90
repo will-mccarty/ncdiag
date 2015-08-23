@@ -772,8 +772,7 @@ module ncdw_chaninfo
         !     result in an error.
         !     
         !     If there is no file open (or the file is already closed),
-        !     this will result in an error. (NetCDF error here, since
-        !     init_done is not being checked... see TODO.txt)
+        !     this will result in an error.
         !     
         !     Other errors may result from invalid data storage, NetCDF
         !     errors, or even a bug. See the called subroutines'
@@ -961,19 +960,83 @@ module ncdw_chaninfo
         ! This will go through all of the variables stored in chaninfo,
         ! and write their data to NetCDF.
         ! 
+        ! Buffer flushing mode is enabled if flush_data_only is set and
+        ! is TRUE. Otherwise, this will operate normally.
+        ! 
+        ! For buffer flushing mode, data locking will not be performed.
+        ! Instead, it "flushes" the variable storage buffer. For all
+        ! of the variables stored, it increments the relative index of
+        ! the variable with the amount of data currently stored in the
+        ! variable.
+        ! 
+        ! (Essentially, new_rel_index = old_rel_index + var_data_count)
+        ! 
+        ! Recall that the relative index stores the position of the last
+        ! data entered for the variable. This is set by write_data, as
+        ! well as load_def for the data append mode. In turn, write_data
+        ! also uses it to store at the correct position.
+        ! 
+        ! We also reset the var_usage, or the variable memory usage
+        ! counter, back to zero to allow data storage to start at the
+        ! beginning again. We use var_usage in write_data and in the
+        ! storage subroutines to keep track of how much data we're
+        ! storing, and how much we need to "read" from the array to
+        ! store the data in NetCDF4 efficiently and within bounds.
+        ! 
+        ! A quick example:
+        !   -> If we have 2 elements, var_usage (variable memory usage)
+        !      is initially 2, and rel_index (variable relative index,
+        !      or our starting position) is initially 0.
+        !   -> We flush the buffer. Since we flushed our buffer,
+        !      var_usage is reset to 0, and rel_index is now 2 since
+        !      we stored 2 elements.
+        !   -> If we add 3 elements, we get a var_usage of 3 (for 3
+        !      elements stored), and rel_index stays the same (2).
+        !   -> When we finally flush or write, this time we know to
+        !      start at element number 3 (rel_index), and we know to
+        !      write 3 elements from there (var_usage).
+        !   -> We now have a total of 5 elements! Indicies 1-2 were
+        !      stored with the flush, and indicies 3-5 were stored
+        !      afterwards - all thanks to buffer flushing!
+        ! 
+        ! Finally, if data flushing mode is enabled, the data_lock is
+        ! not set to allow additional data to be written in the future.
+        ! 
+        ! However, if data flushing mode is not set, or it is disabled,
+        ! we assume that we are writing only one more time (or once,
+        ! depending on if buffer flushing was ever enabled or not).
+        ! Therefore, we set the data_lock (data writing lock) to TRUE
+        ! in this case, assuming data writing was successful.
+        ! 
+        ! If data writing has already been locked, this will error.
+        ! 
+        ! If data flushing mode is disabled, we will also check to see
+        ! if each variable's data fills up the nchans dimension.
+        ! 
+        ! Depending on the strictness (strict_check), if the data is
+        ! not filled to the nchans dimension, it could either result in
+        ! an error (if strict_check is TRUE), or a warning (if
+        ! strict_check is FALSE).
+        ! 
         ! Args:
         !     flush_data_only (logical, optional): whether to only flush
         !         the chaninfo data buffers or not. If we flush data,
-        !         
-        !     
+        !         data locking will not be set.
+        ! 
         ! Raises:
-        !     If the chaninfo variable uses an unsupported type (e.g.
-        !     not one of the types listed above), this will result in
-        !     an error.
+        !     If data writing has already been locked, and the data
+        !     flushing argument is not set or is not TRUE, this will
+        !     result in an error.
+        !     
+        !     If the nchans dimension hasn't been defined yet, this will
+        !     result in an error.
+        !     
+        !     If strict checking (strict_check) is enabled, and a
+        !     variable's data doesn't fill to the nchans dimension,
+        !     this will result in an error.
         !     
         !     If there is no file open (or the file is already closed),
-        !     this will result in an error. (NetCDF error here, since
-        !     init_done is not being checked... see TODO.txt)
+        !     this will result in an error.
         !     
         !     Other errors may result from invalid data storage, NetCDF
         !     errors, or even a bug. See the called subroutines'
@@ -1008,20 +1071,32 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Check to make sure a file is open / things are loaded!
             if (init_done .AND. allocated(diag_chaninfo_store)) then
+                ! Check to see if we have any variables to write in the
+                ! first place!
                 if (diag_chaninfo_store%total > 0) then
+                    ! Check to make sure that we have nchans defined!
                     if (diag_chaninfo_store%nchans /= -1) then
+                        ! Check if we can still write any data!
                         if (.NOT. diag_chaninfo_store%data_lock) then
+                            ! Iterate through all of our variables!
                             do curdatindex = 1, diag_chaninfo_store%total
+                                ! Fetch the variable's name and type!
                                 data_name = diag_chaninfo_store%names(curdatindex)
                                 data_type = diag_chaninfo_store%types(curdatindex)
+                                
+                                ! Figure out where our data is stored, given var_rel_pos
+                                ! and nchans... (see equation/discussion above for more
+                                ! details!)
                                 data_type_index = 1 + &
                                     ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                                 
                                 call nclayer_info("chaninfo: writing " // trim(data_name))
                                 
-                                ! Warn about low data filling
+                                ! Warn about low data filling... but only if we are finishing
+                                ! our data write (or writing once) - basically, we're NOT in
+                                ! flushing data mode!
                                 if ((.NOT. (present(flush_data_only) .AND. flush_data_only)) .AND. &
                                     ((diag_chaninfo_store%var_usage(curdatindex) + &
                                         diag_chaninfo_store%rel_indexes(curdatindex)) < diag_chaninfo_store%nchans)) then
@@ -1033,6 +1108,8 @@ module ncdw_chaninfo
                                         ")"  // char(10) // &
                                         "             is less than nchans (", diag_chaninfo_store%nchans, ")!"
                                     
+                                    ! If we are set to strict checking mode, error.
+                                    ! Otherwise, just show a warning.
                                     if (diag_chaninfo_store%strict_check) then
                                         call nclayer_error(trim(nchan_empty_msg))
                                     else
@@ -1057,7 +1134,20 @@ module ncdw_chaninfo
                                 print *, (data_type_index + &
                                             diag_chaninfo_store%var_usage(curdatindex) - 1)
 #endif
-                                ! Make sure we have data to write in the first place!
+                                ! Make sure we have variable data to write in the first place!
+                                ! 
+                                ! If we do, we essentially:
+                                !   -> Find the right type to save to.
+                                !   -> If we are NOT storing a string, we just store a subsection
+                                !      of our variable storage array at (1 + rel_index) in the
+                                !      NetCDF variable.
+                                !   -> If we are storing a string, we create our own array to
+                                !      store all of our strings in to standardize the length
+                                !      (e.g. a 3, 4, and 5 character string is expanded to
+                                !      a 5, 5, and 5 character string array). This is needed
+                                !      to store all strings at once and match the NetCDF bounds.
+                                !      Once done, the array is sent through the NetCDF API for
+                                !      data storage. We deallocate the array once we're done!
                                 if (diag_chaninfo_store%var_usage(curdatindex) > 0) then
                                     if (data_type == NLAYER_BYTE) then
 #ifdef _DEBUG_MEM_
@@ -1158,12 +1248,14 @@ module ncdw_chaninfo
                                 end if
                             end do
                             
+                            ! If we're flushing data, don't do anything...
                             if (present(flush_data_only) .AND. flush_data_only) then
 #ifdef _DEBUG_MEM_
                                 print *, "In buffer flush mode!"
 #endif
                             else
-                                ! Lock data writing
+                                ! Otherwise, lock data writing! Note that we do this,
+                                ! even if we have no data!
                                 diag_chaninfo_store%data_lock = .TRUE.
 #ifdef _DEBUG_MEM_
                                 print *, "In data lock mode!"

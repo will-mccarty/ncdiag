@@ -124,3 +124,41 @@ hair out while documenting my code...)
  -> optimization: only allocate temp string_arr and set string_arr if
     enable_trim is enabled - don't allocate/assign/deallocate outside
     of the enable_trim check!
+    
+ -> potentially combine conditions (depending on how much we can assume
+    and how much specificity is needed with errors) to avoid super-
+    tabbing our conditional statements!
+    
+    if specificity is still desired, we could try something like this:
+    
+    old:
+        if (cond1) then
+            if (cond2) then
+                if (cond3) then
+                    ...
+                else
+                    ERROR cond 3
+                end if
+            else
+                ERROR cond 2
+            end if
+        else
+            ERROR cond 1
+        end if
+    
+    new:
+        if (cond1 .AND. cond2 .AND. cond3) then
+            ...
+        else
+            if (.NOT. cond1) &
+                ERROR cond 1
+            
+            if (.NOT. cond2) &
+                ERROR cond 2
+            
+            if (.NOT. cond3) &
+                ERROR cond 3
+            
+            ERROR bug - strange things are happening if we reach here!
+        end if
+    
