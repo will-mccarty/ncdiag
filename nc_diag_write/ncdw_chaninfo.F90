@@ -422,6 +422,11 @@ module ncdw_chaninfo
         ! For string data, we also our maximum string length constraint
         ! so that we still keep additional variable data within bounds.
         ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption!
+        ! 
         ! Args:
         !     None
         !     
@@ -689,36 +694,60 @@ module ncdw_chaninfo
             diag_chaninfo_store%def_lock = .TRUE.
         end subroutine nc_diag_chaninfo_load_def
         
-        ! Load chaninfo variable definitions from an existing, already
-        ! open NetCDF file.
+        ! Write out chaninfo variable dimensions and variable
+        ! definitions to NetCDF via the NetCDF API.
         ! 
-        ! This will scan the currently open NetCDF file for chaninfo
-        ! variables. If any exist, the metadata and last position will
-        ! get loaded into the chaninfo variable data buffer.
+        ! Commit the current variables and make them known to NetCDF to
+        ! allow chaninfo variable data writing. If successfully written,
+        ! this will always set the definition lock flag to prevent any
+        ! further changes.
         ! 
-        ! Basically, this scans for the "nchans" dimension. If it
-        ! exists, we set our internal nchans to that dimension's value.
-        ! Then we fetch the dimension names for all variables, and try
-        ! to match them to "nchans". (This is slow... see TODO.txt for
-        ! a better idea!)
+        ! Definitions are only written once for every file opened, and
+        ! can not be modified or written again within the opened file.
+        ! This is enforced with a definition lock (def_lock) that is
+        ! set here and checked everywhere.
         ! 
-        ! Once we find our chaninfo variable(s), we scan them for NetCDF
-        ! fill bytes, starting at the end of the variable. When we find
-        ! a spot that does NOT have a fill byte, we set our relative
-        ! index at that spot, and set everything up to resume at that
-        ! position.
+        ! If definitions are already locked, no additional definitions
+        ! will be created. Depending on conditions, the following may
+        ! occur:
         ! 
-        ! For string data, we also our maximum string length constraint
-        ! so that we still keep additional variable data within bounds.
+        !   -> If the internal argument is defined and set to TRUE, no
+        !      error will be triggered. This is used internally by
+        !      nc_diag_write to prevent errors from occuring when the
+        !      lock may have already been set elsewhere.
+        !      
+        !   -> Otherwise, an error will be triggered, since the
+        !      definition write occurred when the definitions were
+        !      already written and locked.
         ! 
-        ! Note that this only works for nc_diag_write NetCDF files.
-        ! Attempting to load definitions from a non-nc_diag_write file
-        ! could result in errors! (In particular, if the "nchans"
-        ! dimension is involved in a strange way, or if a "nchans"
-        ! variable uses a strange type, things will break!)
+        ! The inner workings:
+        ! 
+        !   -> First and foremost, it performs sanity checks to ensure
+        !      that we have a file loaded. If the check fails, an error
+        !      occurs.
+        !   -> It then checks to make sure we have chaninfo variables to
+        !      write in the first place. If we don't have any, we simply
+        !      return.
+        !   -> We then do another sanity check to ensure that nchans is
+        !      defined. We probably shouldn't have any variables in the
+        !      first place if nchans isn't defined, but it doesn't hurt
+        !      to check! (If this check fails, we probably have a
+        !      serious bug...)
+        !   -> (WIP)
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption!
         ! 
         ! Args:
-        !     None
+        !     internal (logical, optional): whether or not to disable
+        !         triggering an error when a definition lock is
+        !         detected. This flag is used internally for the final
+        !         nc_diag_write, where this flag is purposely set to
+        !         avoid any errors with definition locking, since the
+        !         lock could have already been set earlier by
+        !         nc_diag_lock_def or others.
         !     
         ! Raises:
         !     If the chaninfo variable uses an unsupported type (e.g.
