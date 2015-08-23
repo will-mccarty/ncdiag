@@ -63,3 +63,64 @@ hair out while documenting my code...)
     
  -> use better preallocs - current preallocs are really messy, and
     tends to waste memory...
+    
+ -> remove redundant code within write_def - checking append_only
+    shouldn't be needed (though maybe it's good for sanity?) since
+    append_only already calls load_def, and load_def sets the lock... so
+    locking would never load the check in the first place - therefore,
+    we can assume that append_only is false! (but again, maybe for
+    sanity's sake, keep it?)
+    
+ -> sanity checking - for chaninfo's write_def, perhaps do a check to
+    ensure that the type is valid? this probably isn't necessary if
+    private/public is implemented correctly, since none of the variable
+    storage subroutines will ever store the type incorrectly...
+    
+ -> another nitpick (but might not be a problem) - should we set the
+    def_lock even when there are no variables? the answer may be yes
+    assuming we strictly want the write_def to only be called once - but
+    that also depends on the usage scenario. what if a dev/user wanted
+    to do metadata variables, write, and then later add chaninfo
+    variables? setting the def_lock flag would prevent that!
+    
+    actually, I take that back... this should probably be locked.
+    writing definitions should ALWAYS lock the definitions... at least
+    for now. changing this behavior would require changes in how
+    nc_diag_write handles buffering, which enforces a definition lock
+    in the first place. to prevent confusion in the future, this
+    behavior should probably not be changed!
+    
+    (in fact, this actually may be a bug in itself - if I write just a
+    metadata variable, lock definitions, and then call flush_buffer,
+    the call may actually fail since we don't lock for chaninfo! same
+    for other variables - we may not lock at all!)
+    
+ -> write_def check for nchans - again, just sanity-ness, but:
+    
+        if (diag_chaninfo_store%nchans /= -1) then
+    
+    ...should be changed to:
+    
+        if (diag_chaninfo_store%nchans > 0) then
+    
+    this may not be necessary assuming things are private, since
+    set_nchans_dim enforces the nchans > 0 rule, but just in case...
+    
+ -> another sanity check thing - make sure def_lock is set before
+    writing data (write_data)! this probably won't ever happen
+    (assuming private), but you never know...
+    
+ -> when creating data_dim_name, maybe it would be better to do that
+    under the append_only portion? (then again, that might not matter -
+    since we may not need append_only check anyways - see above!)
+    
+    probably just not liking the placement, should probably go after
+    finding the maxstrlen!
+    
+ -> don't assume 10000 to be the max - be safe and use NF90_MAX_NAME
+    instead! (for finding maxstrlen within chaninfo, and probably
+    others...)
+    
+ -> optimization: only allocate temp string_arr and set string_arr if
+    enable_trim is enabled - don't allocate/assign/deallocate outside
+    of the enable_trim check!

@@ -733,7 +733,21 @@ module ncdw_chaninfo
         !      first place if nchans isn't defined, but it doesn't hurt
         !      to check! (If this check fails, we probably have a
         !      serious bug...)
-        !   -> (WIP)
+        !   -> If necessary (aka not in append mode, where this might
+        !      already exist), define the nchans dimension in NetCDF.
+        !   -> For every variable, fetch the type and name of the
+        !      variable. If the variable is a string type, we also
+        !      figure out the maximum string length, and create an
+        !      extra dimension for that as well. Finally, we can go and
+        !      define the variable itself to NetCDF, with the variable's
+        !      respective dimensions (and NetCDF dimension IDs).
+        !   -> We then add the variable to the varattr list to allow
+        !      variable attributes for the chaninfo variable.
+        !   -> If we're not in append mode, we set the appropriate
+        !      chunking and compression settings for the variable to
+        !      make storing the data more efficient.
+        !   -> After we've gone through all of the chaninfo variables,
+        !      we lock the definitions. That's it!
         ! 
         ! This is an internal subroutine, and is NOT meant to be called
         ! outside of nc_diag_write. Calling this subroutine in your
@@ -750,9 +764,12 @@ module ncdw_chaninfo
         !         nc_diag_lock_def or others.
         !     
         ! Raises:
-        !     If the chaninfo variable uses an unsupported type (e.g.
-        !     not one of the types listed above), this will result in
-        !     an error.
+        !     If definitions are already locked, and the internal
+        !     argument is not set or is not TRUE, this will result in an
+        !     error.
+        !     
+        !     If the nchans dimension hasn't been defined yet, this will
+        !     result in an error.
         !     
         !     If there is no file open (or the file is already closed),
         !     this will result in an error. (NetCDF error here, since
@@ -789,10 +806,14 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Ensure that we have a file open and that things are loaded!
             if (init_done .AND. allocated(diag_chaninfo_store)) then
+                ! Ensure that we have at least one variable to store!
+                ! Otherwise, just return and do nothing.
                 if (diag_chaninfo_store%total > 0) then
+                    ! Make sure nchans is defined before doing anything!
                     if (diag_chaninfo_store%nchans /= -1) then
+                        ! Finally, make sure definitions are not locked!
                         if (.NOT. diag_chaninfo_store%def_lock) then
                             ! First, set the dimensions... if necessary!
                             if (.NOT. append_only) &
@@ -801,13 +822,19 @@ module ncdw_chaninfo
                             ! Once we have the dimension, we can start writing
                             ! variable definitions!
                             do curdatindex = 1, diag_chaninfo_store%total
+                                ! Fetch variable name and type:
                                 data_name = diag_chaninfo_store%names(curdatindex)
                                 data_type = diag_chaninfo_store%types(curdatindex)
+                                
+                                ! Figure out where our data is stored, given var_rel_pos
+                                ! and nchans... (see equation/discussion above for more
+                                ! details!)
                                 data_type_index = 1 + &
                                     ((diag_chaninfo_store%var_rel_pos(curdatindex) - 1) * diag_chaninfo_store%nchans)
                                 
                                 call nclayer_info("chaninfo: defining " // trim(data_name))
-                                                            
+                                
+                                ! Map our NLAYER type to the NF90 NetCDF native type!
                                 if (data_type == NLAYER_BYTE)   nc_data_type = NF90_BYTE
                                 if (data_type == NLAYER_SHORT)  nc_data_type = NF90_SHORT
                                 if (data_type == NLAYER_LONG)   nc_data_type = NF90_INT
@@ -819,12 +846,30 @@ module ncdw_chaninfo
                                 print *, "chaninfo part 1"
 #endif
                                 
+                                ! If our variable type is a string, we need to compute the maximum
+                                ! string length.
+                                ! 
+                                ! If we're trimming, we take the maximum of the length of strings
+                                ! in the variable, and use that as our maximum string length.
+                                ! 
+                                ! Otherwise, we simply use the previously defined fixed length,
+                                ! which is already stored as the maximum string length from the
+                                ! initial string add.
+                                ! 
+                                ! Once we know our maximum string length, we add that as a
+                                ! dimension, and use it (along with our nchans dimension) to
+                                ! create our string chaninfo variable!
+                                
                                 if (data_type == NLAYER_STRING) then
+                                    ! Figure out the dimension name for this chaninfo variable
                                     write (data_dim_name, "(A, A)") trim(data_name), "_maxstrlen"
                                     
-                                    ! Dimension is # of chars by # of obs (unlimited)
+                                    ! Assume that the maximum string length is 10000
+                                    ! Allocate an array of 10000, with a size of the
+                                    ! variable's var_usage
                                     allocate(character(10000) :: string_arr(diag_chaninfo_store%var_usage(curdatindex)))
                                     
+                                    ! Fetch the strings from our variable storage
                                     string_arr = diag_chaninfo_store%ci_string(data_type_index:(data_type_index + &
                                             diag_chaninfo_store%var_usage(curdatindex) - 1))
                                     
@@ -836,6 +881,7 @@ module ncdw_chaninfo
                                             max_len_string_array(string_arr, diag_chaninfo_store%var_usage(curdatindex))
                                     end if
                                     
+                                    ! Add our custom string dimension to NetCDF, if necessary
                                     if (.NOT. append_only) &
                                         call nclayer_check(nf90_def_dim(ncid, data_dim_name, &
                                             diag_chaninfo_store%max_str_lens(curdatindex), &
@@ -843,6 +889,7 @@ module ncdw_chaninfo
 #ifdef _DEBUG_MEM_
                                     print *, "Defining char var type..."
 #endif
+                                    ! Add our string variable to NetCDF!
                                     if (.NOT. append_only) &
                                         call nclayer_check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                             nc_data_type, (/ tmp_dim_id, diag_chaninfo_store%nchans_dimid /), &
@@ -850,8 +897,11 @@ module ncdw_chaninfo
 #ifdef _DEBUG_MEM_
                                     print *, "Done defining char var type..."
 #endif
+                                    ! Deallocate temp string array
                                     deallocate(string_arr)
                                 else
+                                    ! Nothing fancy here!
+                                    ! Just add our non-string variable to NetCDF!
                                     if (.NOT. append_only) &
                                         call nclayer_check(nf90_def_var(ncid, diag_chaninfo_store%names(curdatindex), &
                                             nc_data_type, diag_chaninfo_store%nchans_dimid, &
@@ -862,11 +912,17 @@ module ncdw_chaninfo
                                 print *, "chaninfo part 2"
 #endif
                                 
+                                ! Make our variable known to varattr - add it to the varattr database!
                                 call nc_diag_varattr_add_var(diag_chaninfo_store%names(curdatindex), &
                                     diag_chaninfo_store%types(curdatindex), &
                                     diag_chaninfo_store%var_ids(curdatindex))
                                 
+                                ! If we are not appending, make sure to also set chunking and
+                                ! compression for efficiency + optimization!
                                 if (.NOT. append_only) then
+                                    ! If we're storing a string, we need to specify both dimensions
+                                    ! for our chunking parameters. Otherwise, we just need to
+                                    ! specify nchans...
                                     if (data_type == NLAYER_STRING) then
                                         call nclayer_check(nf90_def_var_chunking(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                             NF90_CHUNKED, (/ diag_chaninfo_store%max_str_lens(curdatindex), diag_chaninfo_store%nchans /)))
@@ -875,8 +931,7 @@ module ncdw_chaninfo
                                             NF90_CHUNKED, (/ diag_chaninfo_store%nchans /)))
                                     end if
                                     
-                                    ! Enable compression
-                                    ! Args: ncid, varid, enable_shuffle (yes), enable_deflate (yes), deflate_level
+                                    ! Enable zlib (gzip-like) compression based on our level settings
                                     call nclayer_check(nf90_def_var_deflate(ncid, diag_chaninfo_store%var_ids(curdatindex), &
                                         1, 1, NLAYER_COMPRESSION))
                                 end if
@@ -885,19 +940,21 @@ module ncdw_chaninfo
                             ! Lock the definitions!
                             diag_chaninfo_store%def_lock = .TRUE.
                         else
+                            ! Show an error message if we didn't suppress errors on purpose
                             if(.NOT. present(internal)) &
                                 call nclayer_error("Can't write definitions - definitions have already been written and locked!")
                         end if
                     else
                         call nclayer_error("Can't write definitions - number of chans not set yet!")
                     end if
+                    
+                    ! End: if (diag_chaninfo_store%total > 0)
                 end if
             else
                 call nclayer_error("Can't write definitions - NetCDF4 layer not initialized yet!")
             end if
         end subroutine nc_diag_chaninfo_write_def
         
-        !!!!!!!!!! TODO TODO TODO
         ! Write all of the currently stored chaninfo data to NetCDF via
         ! the NetCDF APIs ("put").
         ! 
