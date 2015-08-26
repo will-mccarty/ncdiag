@@ -1532,6 +1532,22 @@ module ncdw_chaninfo
         ! no reallocations should occur, therefore speeding up the
         ! variable data insertion process!
         ! 
+        ! Note that this is a state-based subroutine call - by design,
+        ! it preallocates the largest amount provided. For instance, if
+        ! you attempted to preallocate 10 floats, then 9000 floats, then
+        ! 5 floats, 20 floats will be preallocated.
+        ! 
+        ! Specifically, it looks like this:
+        ! 
+        !   -> Preallocate 10 floats - nothing allocated, so 10 floats
+        !      allocated.
+        !      
+        !   -> Preallocate 9000 floats - only 10 floats allocated, so
+        !      reallocating to 9000.
+        !      
+        !   -> Preallocate 20 floats - 9000 floats already allocated, so
+        !      no need to do anything.
+        ! 
         ! Args:
         !     nclayer_type (integer(i_byte)): the type of variable to
         !         preallocate data elements/slots for.
