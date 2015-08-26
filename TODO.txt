@@ -191,3 +191,10 @@ added to this list, regardless of whether it already exists or not.
  -> nc_diag_chaninfo (_*) doesn't check for type changes. that is, if
     I put in an integer, and suddenly switch to a float, it doesn't
     complain... not good!
+    
+ -> in chaninfo prealloc_vars: diag_chaninfo_store%total by itself
+    doesn't make much sense - should be the total + num_addl_vars.
+    (does total even belong to a prealloc subroutine?)
+    
+ -> sanity check - ciresize should check file open + init for all
+    subroutines!
