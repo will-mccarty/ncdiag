@@ -3,11 +3,15 @@ This is a general TODO list that should be fixed for better code and
 speed! (Also, consider this a list of the number of times I've pulled my
 hair out while documenting my code...)
 
+Note that the TODO list may be redundant and repetitive. This list was
+created while I was documenting my code, so problems that I see are
+added to this list, regardless of whether it already exists or not.
+
 # TODO FOR nc_diag_write
  -> initialize EVERYTHING - some vars are not initialized, and things
     can get a little strange... initialize to 0 or -1 (maybe 1 as well,
     but don't know if there's anything that should EVER be initialized
-    to 1...)
+    to 1...) this especially applies to derived types!
     
  -> get rid of the NLAYER type and fill constants - the NF90_* ones work
     just as well!
@@ -162,3 +166,28 @@ hair out while documenting my code...)
             ERROR bug - strange things are happening if we reach here!
         end if
     
+ -> nc_diag_chaninfo_prealloc_vars_storage doesn't check for init or
+    if diag_chaninfo_store is allocated - that's bad! this should be 
+    fixed ASAP!
+    
+ -> nc_diag_chaninfo_prealloc_vars_storage should re-init after alloc!
+    (Maybe... might break preallocation after data add! maybe this
+    should have a lock to only call before any data adding occurs?
+    
+ -> sanity checks for prealloc (maybe not necessary): ensure that
+    preallocated amount > 0. (maybe do the same for ciresize
+    subroutines?)
+    
+ -> potential bug: if someone purposely added an empty fill value to
+    a chaninfo variable, the append will probably ignore the empty value
+    and overwrite it, since it treats empty values as blanks.
+    HOWEVER, if someone wrote a non-empty value afterwards, it would
+    continue after that non-empty value. there will only be an issue if
+    the last value is a fill value.
+    
+ -> nc_diag_chaninfo (and the nc_diag_chaninfo_* type specific calls)
+    don't check for file open + initialization...
+    
+ -> nc_diag_chaninfo (_*) doesn't check for type changes. that is, if
+    I put in an integer, and suddenly switch to a float, it doesn't
+    complain... not good!

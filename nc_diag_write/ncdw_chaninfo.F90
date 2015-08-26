@@ -109,8 +109,8 @@ module ncdw_chaninfo
     !     above, and combining with var_usage, we can figure out where
     !     to put our data!
     !     
-    !     Assume var_usage(i) = 2, block starts at index 11 with equation
-    !     above.
+    !     Assume var_usage(i) = 2, block starts at index 11 with the
+    !     equation above.
     !     
     !     Again, with our fun little diagram:
     !     
@@ -122,6 +122,44 @@ module ncdw_chaninfo
     !       \                    ci_rsingle array                   /
     !     
     !     The capital Y marks the place we store our data!
+    !   
+    !   For the non-data variables (e.g. variable names, types, etc.),
+    !   they are indexed by variable insertion order. This allows for
+    !   easy lookup by looking up the variable name, and using the
+    !   resulting index for fetching other information.
+    !   
+    !   Example:
+    !     names:       [ 'asdf', 'ghjk', 'zxcv' ]
+    !     types:       [   BYTE,  FLOAT,   BYTE ]
+    !     var_rel_pos: [      1,      1,      2 ]
+    !     
+    !     Lookup: "ghjk", result index = 2
+    !     
+    !     Therefore, the "ghjk" variable type is types(2) = FLOAT, and
+    !     the var_rel_pos for "ghjk" variable is var_rel_pos(2) = 1.
+    !   
+    !   These variables are allocated and reallocated, as needed.
+    !   
+    !   For the variable metadata fields (variable names, types,
+    !   relative indicies, etc.), these are reallocated incrementally
+    !   when a new variable is added.
+    !   
+    !   For the data storage fields, these are reallocated incrementally
+    !   when new data is added.
+    !   
+    !   Initial allocation and subsequent reallocation is done by
+    !   chunks. Allocating one element and/or reallocating and adding
+    !   just one element is inefficient, since it's likely that much
+    !   more data (and variables) will be added. Thus, allocation and
+    !   reallocation is done by (re-)allocating exponentially increasing
+    !   chunk sizes. See nc_diag_chaninfo_allocmulti help for more
+    !   details.
+    !   
+    !   Because (re-)allocation is done in chunks, we keep a count of
+    !   how much of the memory we're using so that we know when it's
+    !   time to (re-)allocate. Once we need to (re-)allocate, we
+    !   perform it, and then update our total memory counter to keep
+    !   track of the memory already allocated.
     !   
     !   With all of these variables (and a few more state variables),
     !   we can reliably store our chaninfo data quickly and
@@ -216,6 +254,11 @@ module ncdw_chaninfo
     ! 
     ! If the variable does exist, it will simply append to the
     ! variable's existing values.
+    ! 
+    ! Values are inserted in the order of the calls made. As such,
+    ! this subroutine is best designed to be used in a loop, where
+    ! for every channel iteration, a value is added using this
+    ! subroutine.
     ! 
     ! chaninfo is stored element by element - no arrays are accepted,
     ! only scalar values. The best way to call chaninfo is in a loop,
@@ -347,7 +390,7 @@ module ncdw_chaninfo
         ! Set the allocation multiplier for chaninfo variable storage
         ! allocation and reallocation.
         ! 
-        ! This set the allocation multiplier (exponentiator?) for
+        ! This sets the allocation multiplier (exponentiator?) for
         ! chaninfo variable storage allocation and reallocation.
         ! 
         ! Reallocation looks like this:
@@ -526,7 +569,9 @@ module ncdw_chaninfo
                     end do
                     
                     if (is_nchans_var) then
-                        ! Expand things first!
+                        ! Expand variable metadata first!
+                        ! Make sure we have enough variable metadata storage
+                        ! (and if not, reallocate!)
                         call nc_diag_chaninfo_expand
                         
                         ! Add to the total!
@@ -725,27 +770,34 @@ module ncdw_chaninfo
         !   -> First and foremost, it performs sanity checks to ensure
         !      that we have a file loaded. If the check fails, an error
         !      occurs.
+        !      
         !   -> It then checks to make sure we have chaninfo variables to
         !      write in the first place. If we don't have any, we simply
         !      return.
+        !      
         !   -> We then do another sanity check to ensure that nchans is
         !      defined. We probably shouldn't have any variables in the
         !      first place if nchans isn't defined, but it doesn't hurt
         !      to check! (If this check fails, we probably have a
         !      serious bug...)
+        !      
         !   -> If necessary (aka not in append mode, where this might
         !      already exist), define the nchans dimension in NetCDF.
+        !      
         !   -> For every variable, fetch the type and name of the
         !      variable. If the variable is a string type, we also
         !      figure out the maximum string length, and create an
         !      extra dimension for that as well. Finally, we can go and
         !      define the variable itself to NetCDF, with the variable's
         !      respective dimensions (and NetCDF dimension IDs).
+        !      
         !   -> We then add the variable to the varattr list to allow
         !      variable attributes for the chaninfo variable.
+        !      
         !   -> If we're not in append mode, we set the appropriate
         !      chunking and compression settings for the variable to
         !      make storing the data more efficient.
+        !      
         !   -> After we've gone through all of the chaninfo variables,
         !      we lock the definitions. That's it!
         ! 
@@ -987,14 +1039,18 @@ module ncdw_chaninfo
         !   -> If we have 2 elements, var_usage (variable memory usage)
         !      is initially 2, and rel_index (variable relative index,
         !      or our starting position) is initially 0.
+        !      
         !   -> We flush the buffer. Since we flushed our buffer,
         !      var_usage is reset to 0, and rel_index is now 2 since
         !      we stored 2 elements.
+        !      
         !   -> If we add 3 elements, we get a var_usage of 3 (for 3
         !      elements stored), and rel_index stays the same (2).
+        !      
         !   -> When we finally flush or write, this time we know to
         !      start at element number 3 (rel_index), and we know to
         !      write 3 elements from there (var_usage).
+        !      
         !   -> We now have a total of 5 elements! Indicies 1-2 were
         !      stored with the flush, and indicies 3-5 were stored
         !      afterwards - all thanks to buffer flushing!
@@ -1017,6 +1073,11 @@ module ncdw_chaninfo
         ! not filled to the nchans dimension, it could either result in
         ! an error (if strict_check is TRUE), or a warning (if
         ! strict_check is FALSE).
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption!
         ! 
         ! Args:
         !     flush_data_only (logical, optional): whether to only flush
@@ -1137,10 +1198,13 @@ module ncdw_chaninfo
                                 ! Make sure we have variable data to write in the first place!
                                 ! 
                                 ! If we do, we essentially:
+                                !      
                                 !   -> Find the right type to save to.
+                                !      
                                 !   -> If we are NOT storing a string, we just store a subsection
                                 !      of our variable storage array at (1 + rel_index) in the
                                 !      NetCDF variable.
+                                !      
                                 !   -> If we are storing a string, we create our own array to
                                 !      store all of our strings in to standardize the length
                                 !      (e.g. a 3, 4, and 5 character string is expanded to
@@ -1148,6 +1212,7 @@ module ncdw_chaninfo
                                 !      to store all strings at once and match the NetCDF bounds.
                                 !      Once done, the array is sent through the NetCDF API for
                                 !      data storage. We deallocate the array once we're done!
+                                ! 
                                 if (diag_chaninfo_store%var_usage(curdatindex) > 0) then
                                     if (data_type == NLAYER_BYTE) then
 #ifdef _DEBUG_MEM_
@@ -1274,7 +1339,55 @@ module ncdw_chaninfo
             
         end subroutine nc_diag_chaninfo_write_data
         
-        ! Set strict checking
+        ! Set the strict mode for chaninfo variables.
+        ! 
+        ! This sets the mode that determines how strict chaninfo's
+        ! variable consistency checks will be.
+        ! 
+        ! During the final data write (nc_diag_chaninfo_write_data,
+        ! without the buffering flag), chaninfo will check to see if all
+        ! of the variables are filled, e.g. all variables have been
+        ! stored up to nchans dimension.
+        ! 
+        ! If there are any variables that are not completely filled to
+        ! the nchans dimension, one of the following may occur:
+        ! 
+        !   -> If strict mode is enabled, a consistency check error will
+        !      occur and the program will exit.
+        !      
+        !   -> If strict mode is disabled, this will only result in a
+        !      consistency check warning. After the warning is
+        !      displayed, normal operation will occur, including data
+        !      writing. For values that are not in the variable (up to
+        !      the nchans dimension), missing values will be placed.
+        ! 
+        ! By default, strict mode is disabled.
+        ! 
+        ! Since the strict mode is bound to the chaninfo type, it can
+        ! only be set when a file is open and when diag_chaninfo_store
+        ! is initialized. (It should be initialized if a file is open!)
+        ! 
+        ! If there isn't a file open / diag_chaninfo_store isn't
+        ! initialized, an error will occur.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption!
+        ! 
+        ! Args:
+        !     enable_strict (logical): boolean indicating whether to
+        !         enable strict mode or not. If set to TRUE, strict mode
+        !         will be enabled. Otherwise, it will be disabled.
+        !     
+        ! Raises:
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     See the called subroutines' documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_set_strict(enable_strict)
             logical, intent(in) :: enable_strict
             
@@ -1285,7 +1398,33 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_set_strict
         
-        ! Preallocate variable name/type/etc. storage.
+        ! Preallocate variable metadata storage (names, types, etc.).
+        ! 
+        ! This preallocates variable metadata storage for a given number
+        ! of variables.
+        ! 
+        ! If properly defined, this can speed up chaninfo variable
+        ! creation since reallocation will (hopefully) not be necessary
+        ! for variable metadata storage, since it was preallocated here.
+        ! 
+        ! Variable metadata includes storing the variables' names,
+        ! types, indicies, usage counts, etc. The metadata pre-allocated
+        ! here is essentially the variable indexed arrays within our
+        ! specific storage type!
+        ! 
+        ! Args:
+        !     num_of_addl_vars (integer(i_llong)): the number of
+        !         additional variables to preallocate metadata storage
+        !         for.
+        !     
+        ! Raises:
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_prealloc_vars(num_of_addl_vars)
             integer(i_llong), intent(in)           :: num_of_addl_vars
 #ifdef ENABLE_ACTION_MSGS
@@ -1297,6 +1436,18 @@ module ncdw_chaninfo
             end if
 #endif
             if (init_done .AND. allocated(diag_chaninfo_store)) then
+                ! For all variable metadata fields:
+                !   -> Check if the field is allocated.
+                !   -> If not, allocate it with the default initial
+                !      size, plus the number of additional variables
+                !      specified in the argument.
+                !   -> If it's allocated, check to see if the total
+                !      number of variables exceeds our field's allocated
+                !      size.
+                !   -> If the size is exceeded, reallocate the field
+                !      with the number of additional variables specified
+                !      in the argument.
+                ! 
                 if (allocated(diag_chaninfo_store%names)) then
                     if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
                         call nc_diag_realloc(diag_chaninfo_store%names, num_of_addl_vars)
@@ -1362,7 +1513,40 @@ module ncdw_chaninfo
             endif
         end subroutine nc_diag_chaninfo_prealloc_vars
         
-        ! Preallocate actual variable data storage
+        ! Preallocate actual variable data storage - the data itself.
+        ! 
+        ! This preallocates the variable data storage for a given
+        ! variable type, and a given number of data elements or slots.
+        ! 
+        ! If properly defined, this can speed up chaninfo variable
+        ! data insertion since reallocation will (hopefully) not be
+        ! necessary for variable data storage, since it was preallocated
+        ! here.
+        ! 
+        ! For example, if you have 10 float chaninfo variables, and
+        ! nchans is 20, you can call:
+        ! 
+        !   nc_diag_chaninfo_prealloc_vars_storage(NLAYER_FLOAT, 200)
+        ! 
+        ! Assuming that no other float chaninfo variables get added,
+        ! no reallocations should occur, therefore speeding up the
+        ! variable data insertion process!
+        ! 
+        ! Args:
+        !     nclayer_type (integer(i_byte)): the type of variable to
+        !         preallocate data elements/slots for.
+        !     num_of_addl_slots (integer(i_llong)): the number of
+        !         additional variable data elements/slots to
+        !         preallocate.
+        !     
+        ! Raises:
+        !     If the variable type is invalid, this will result in an
+        !     error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_prealloc_vars_storage(nclayer_type, num_of_addl_slots)
             integer(i_byte), intent(in)           :: nclayer_type
             integer(i_llong), intent(in)          :: num_of_addl_slots
@@ -1375,7 +1559,11 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Find the type specified, and attempt to pre-allocate.
+            ! Note that FALSE is specified as an argument to ensure that
+            ! the actual variable data storage usage count isn't
+            ! incremented, since we're just preallocating here.
+            ! 
             if (nclayer_type == NLAYER_BYTE) then
                 call nc_diag_chaninfo_resize_byte(num_of_addl_slots, .FALSE.)
             else if (nclayer_type == NLAYER_SHORT) then
@@ -1393,6 +1581,36 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_prealloc_vars_storage
         
+        ! Expand variable metadata storage (names, types, etc.) for one
+        ! single variable.
+        ! 
+        ! This ensures that there is enough variable metadata storage to
+        ! add a single variable. If there isn't enough storage, it will
+        ! reallocate as necessary. See this module's header for more
+        ! information about how memory allocation works for variable
+        ! metadata storage.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption!
+        ! 
+        ! Args:
+        !     num_of_addl_vars (integer(i_llong)): the number of
+        !         additional variables to preallocate metadata storage
+        !         for.
+        !     
+        ! Raises:
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_expand
             integer(i_llong) :: addl_fields
             ! Did we realloc at all?
@@ -1402,6 +1620,18 @@ module ncdw_chaninfo
             if (init_done .AND. allocated(diag_chaninfo_store)) then
                 addl_fields = 1 + (NLAYER_DEFAULT_ENT * (NLAYER_MULTI_BASE ** diag_chaninfo_store%alloc_multi))
                 if (diag_chaninfo_store%nchans /= -1) then
+                    
+                    ! For all variable metadata fields:
+                    !   -> Check if the field is allocated.
+                    !   -> If not, allocate it with the default initial
+                    !      size, and initialize it with blank values!
+                    !   -> If it's allocated, check to see if the total
+                    !      number of variables exceeds our field's
+                    !      allocated size.
+                    !   -> If the size is exceeded, reallocate the
+                    !      field, and indicate that a reallocation has
+                    !      occurred.
+                    ! 
                     if (allocated(diag_chaninfo_store%names)) then
                         if (diag_chaninfo_store%total >= size(diag_chaninfo_store%names)) then
                             call nc_diag_realloc(diag_chaninfo_store%names, addl_fields)
@@ -1470,6 +1700,9 @@ module ncdw_chaninfo
                         diag_chaninfo_store%rel_indexes = 0
                     end if
                     
+                    ! If reallocation occurred, increment our multiplier
+                    ! to allocate more and speed things up in the
+                    ! future!
                     if (meta_realloc) then
                         diag_chaninfo_store%alloc_multi = diag_chaninfo_store%alloc_multi + 1
                     end if
@@ -1481,8 +1714,56 @@ module ncdw_chaninfo
             end if
         end subroutine nc_diag_chaninfo_expand
         
-        ! nc_diag_chaninfo - input integer(i_byte)
-        ! Corresponding NetCDF4 type: byte
+        ! Add a single scalar byte integer to the given chaninfo
+        ! variable.
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (integer(i_byte)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_byte(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_byte), intent(in)     :: chaninfo_value
@@ -1497,7 +1778,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -1508,11 +1789,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -1529,7 +1807,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -1540,6 +1820,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_BYTE
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_byte(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -1557,12 +1839,16 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
@@ -1574,8 +1860,56 @@ module ncdw_chaninfo
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_byte
         
-        ! nc_diag_chaninfo - input integer(i_short)
-        ! Corresponding NetCDF4 type: short
+        ! Add a single scalar short integer to the given chaninfo
+        ! variable.
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (integer(i_short)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_short(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_short), intent(in)    :: chaninfo_value
@@ -1590,7 +1924,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -1601,11 +1935,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -1622,7 +1953,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -1633,6 +1966,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_SHORT
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_short(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -1650,12 +1985,16 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
@@ -1667,8 +2006,56 @@ module ncdw_chaninfo
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_short
         
-        ! nc_diag_chaninfo - input integer(i_long)
-        ! Corresponding NetCDF4 type: int (old: long)
+        ! Add a single scalar long integer to the given chaninfo
+        ! variable. (This is NOT a NetCDF "long", just a NetCDF "int".)
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (integer(i_long)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_long(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             integer(i_long), intent(in)     :: chaninfo_value
@@ -1683,7 +2070,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -1694,11 +2081,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -1722,7 +2106,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -1733,6 +2119,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_LONG
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_long(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -1750,7 +2138,10 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
 #ifdef _DEBUG_MEM_
@@ -1760,6 +2151,7 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
@@ -1786,8 +2178,55 @@ module ncdw_chaninfo
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_long
         
-        ! nc_diag_chaninfo - input real(r_single)
-        ! Corresponding NetCDF4 type: float (or real)
+        ! Add a single scalar float to the given chaninfo variable.
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (real(r_single)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_rsingle(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             real(r_single), intent(in)      :: chaninfo_value
@@ -1802,7 +2241,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -1813,11 +2252,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -1841,7 +2277,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -1852,6 +2290,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_FLOAT
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_rsingle(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -1869,12 +2309,16 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
@@ -1901,8 +2345,55 @@ module ncdw_chaninfo
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_rsingle
         
-        ! nc_diag_chaninfo - input real(r_double)
-        ! Corresponding NetCDF4 type: double
+        ! Add a single scalar double to the given chaninfo variable.
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (real(r_double)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_rdouble(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             real(r_double), intent(in)      :: chaninfo_value
@@ -1917,7 +2408,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -1928,11 +2419,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -1949,7 +2437,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -1960,6 +2450,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_DOUBLE
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_rdouble(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -1977,12 +2469,16 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
                 endif
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
@@ -1994,8 +2490,57 @@ module ncdw_chaninfo
                     + (diag_chaninfo_store%var_usage(var_index) - 1)) = chaninfo_value
         end subroutine nc_diag_chaninfo_rdouble
 
-        ! nc_diag_chaninfo - input character(len=*)
-        ! Corresponding NetCDF4 type: string? char?
+        ! Add a single scalar string to the given chaninfo variable.
+        ! (This uses the NetCDF char type, stored internally as a 2D
+        ! array of characters.)
+        ! 
+        ! This adds a single value to the specified chaninfo variable.
+        ! 
+        ! If the variable does not already exist, it will be created,
+        ! and the value will be inserted as the variable's first
+        ! element.
+        ! 
+        ! Otherwise, the value will be inserted to the next empty spot.
+        ! 
+        ! Values are inserted in the order of the calls made. As such,
+        ! this subroutine is best designed to be used in a loop, where
+        ! for every channel iteration, a value is added using this
+        ! subroutine.
+        ! 
+        ! This is an internal subroutine, and is NOT meant to be called
+        ! outside of nc_diag_write. Calling this subroutine in your
+        ! program may result in unexpected behavior and/or data
+        ! corruption! (You should use the generic nc_diag_chaninfo
+        ! instead!)
+        ! 
+        ! Args:
+        !     chaninfo_name (character(len=*)): the chaninfo variable
+        !         to store to.
+        !     chaninfo_value (character(len=*)): the value to store.
+        !     
+        ! Raises:
+        !     If the data has already been locked, this will result in 
+        !     an error.
+        !     
+        !     If definitions have already been locked, and a new
+        !     variable is being created, this will result in an error.
+        !     
+        !     If the variable is already full (e.g. it has nchans number
+        !     of elements), this will result in an error.
+        !     
+        !     The following errors will trigger indirectly from other
+        !     subroutines called here:
+        !     
+        !     If nchans has not been set yet, this will result in an
+        !     error.
+        !     
+        !     If there is no file open (or the file is already closed),
+        !     this will result in an error.
+        !     
+        !     Other errors may result from invalid data storage, NetCDF
+        !     errors, or even a bug. See the called subroutines'
+        !     documentation for details.
+        ! 
         subroutine nc_diag_chaninfo_string(chaninfo_name, chaninfo_value)
             character(len=*), intent(in)    :: chaninfo_name
             character(len=*), intent(in)    :: chaninfo_value
@@ -2010,7 +2555,7 @@ module ncdw_chaninfo
                 call nclayer_actionm(trim(action_str))
             end if
 #endif
-            
+            ! Make sure that data hasn't been locked
             if (diag_chaninfo_store%data_lock) then
                 call nclayer_error("Can't add new data - data have already been written and locked!")
             end if
@@ -2021,11 +2566,8 @@ module ncdw_chaninfo
             ! Default to -1
             var_index = -1
             
-            ! [ 'asdf', 'ghjk', 'zxcv' ]
-            ! [   BYTE,  FLOAT,   BYTE ]
-            ! [      1,      1,      2 ]
-            
-            ! find the index first!
+            ! Attempt to match the variable name + fetch the variable
+            ! index first!
             do i = 1, diag_chaninfo_store%total
                 if (diag_chaninfo_store%names(i) == chaninfo_name) then
                     var_rel_index = diag_chaninfo_store%var_rel_pos(i)
@@ -2042,7 +2584,9 @@ module ncdw_chaninfo
                     call nclayer_error("Can't add new variable - definitions have already been written and locked!")
                 end if
                 
-                ! Expand things first!
+                ! Expand variable metadata first!
+                ! Make sure we have enough variable metadata storage
+                ! (and if not, reallocate!)
                 call nc_diag_chaninfo_expand
                 
                 ! Add to the total!
@@ -2053,6 +2597,8 @@ module ncdw_chaninfo
                 diag_chaninfo_store%types(diag_chaninfo_store%total) = NLAYER_STRING
                 
                 ! We just need to add one entry...
+                ! Call resize subroutine to ensure we have enough space
+                ! (and if not, realloc!)
                 call nc_diag_chaninfo_resize_string(int8(diag_chaninfo_store%nchans))
                 
                 ! Now add a relative position... based on the next position!
@@ -2070,7 +2616,10 @@ module ncdw_chaninfo
                 ! Set var_index to the total
                 var_index = diag_chaninfo_store%total
             else
-                ! entry already exists!
+                ! Variable already exists!
+                
+                ! Check to make sure we can fit more data!
+                ! (# data < nchans)
                 if (diag_chaninfo_store%var_usage(var_index) + &
                     diag_chaninfo_store%rel_indexes(var_index) >= diag_chaninfo_store%nchans) then
                     call nclayer_error("Can't add new data - data added is exceeding nchan! Data must fit within nchan constraint.")
@@ -2081,6 +2630,7 @@ module ncdw_chaninfo
                     (len_trim(chaninfo_value) > diag_chaninfo_store%max_str_lens(var_index))) &
                     call nclayer_error("Cannot expand variable string length after locking variable definitions!")
                 
+                ! Increment current variable count
                 diag_chaninfo_store%var_usage(var_index) = &
                     diag_chaninfo_store%var_usage(var_index) + 1
             end if
