@@ -37,92 +37,93 @@ module ncdw_chaninfo
     !   -> because everything is fixed, we can store variables block
     !      by block!
     !  
-    !  Because Fortran is a strongly typed language, we can't do silly
-    !  tricks in C, like allocating some memory to a void pointer and
-    !  just storing our byte, short, int, long, float, or double numeric
-    !  data there, and later casting it back...
-    !  
-    !  (e.g. void **data_ref; data_ref = malloc(sizeof(void *) * 1000);
-    !        float *f = malloc(sizeof(float)); *f = 1.2345;
-    !        data_ref[0] = f; ...)
-    !  
-    !  No frets - we can work around this issue with some derived types
-    !  and arrays! We create an array for each type we want to support.
-    !  Since we're using kinds.F90, we support the following types:
-    !    i_byte, i_short, i_long, r_single, r_double
-    !  
-    !  The derived type used, diag_chaninfo, has these variables to help
-    !  us keep track of everything:
-    !  
-    !  -> ci_* - these arrays have the types listed above, plus string
-    !     support! These arrays are simply arrays that we throw our data
-    !     in. However, don't mistaken "throw in" with "disorganized" -
-    !     chaninfo uses a very structured format for these variables!
-    !     Keep reading to find out how we structure it...
-    !     
-    !  -> nchans - the number of channels to use. Remember that chaninfo
-    !     variables have dimensions 1 x nchans - basically, we need to
-    !     store nchans values. We'll need this a LOT to do consistency
-    !     checks, and to keep track of everything!
-    !     
-    !  -> names - all of the chaninfo variable names! We'll be using
-    !     this array to store and lookup chaninfo variables, as well as
-    !     storing them!
-    !     
-    !  -> types - all of the chaninfo variable types! These are byte
-    !     integers that get compared to our NLAYER_* type constants
-    !     (see: ncdw_types.F90).
-    !     
-    !  -> var_usage - the amount of entries we've stored in our chaninfo
-    !     variable! For instance, if we called
-    !     nc_diag_chaninfo("myvar", 1) three times, for that particular
-    !     var_usage(i), we would have an entry of 3.
-    !     
-    !  -> var_rel_pos - the star of the show! This is an abbreviation
-    !     of "variable relative positioning". Recall that we store
-    !     our variable data in ci_* specific type arrays. We know
-    !     the nchans amount, and we know the type. This variable stores
-    !     the "block" that our data is in within the type array.
-    !     
-    !     Therefore, we can use the equation to find our starting
-    !     position: 1 + [(REL_VAL - 1) * nchans]
-    !     
-    !     For instance, if var_rel_pos(1) for variable names(1) = "bla"
-    !     is set to 2, nchans is 10, and the type is NLAYER_FLOAT, we
-    !     can deduce that in ci_rsingle, our data can be found starting
-    !     at 1 + (1 * 10) = 11. This makes sense, as seen with our mini
-    !     diagram below:
-    !     
-    !     ci_rsingle:
-    !       /                    ci_rsingle index                   \
-    !      1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
-    !     [ x, x, x, x, x, x, x, x, x, x, y, y, y, y, y, y, y, y, y, y ]
-    !       \                    ci_rsingle array                   /
-    !     
-    !     Indeed, our second block does start at index 11!
-    !     As a bonus, since our data is in blocks, things can be super
-    !     fast since we're just cutting our big array into small ones!
-    !     
-    !  -> acount_v: Finally, we have dynamic allocation. We have in our
-    !     type a variable called acount_v. This tells us how many
-    !     variables are stored in each type. Using the same equation
-    !     above, and combining with var_usage, we can figure out where
-    !     to put our data!
-    !     
-    !     Assume var_usage(i) = 2, block starts at index 11 with the
-    !     equation above.
-    !     
-    !     Again, with our fun little diagram:
-    !     
-    !     ci_rsingle:
-    !       /                    ci_rsingle index                   \
-    !      1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
-    !     [ x, x, x, x, x, x, x, x, x, x, y, y, Y, y, y, y, y, y, y, y ]
-    !      [ BLOCK 1 SEEK = 1->10->11  ][var_u=2|---block 2 area 11->20]
-    !       \                    ci_rsingle array                   /
-    !     
-    !     The capital Y marks the place we store our data!
+    !   Because Fortran is a strongly typed language, we can't do silly
+    !   tricks in C, like allocating some memory to a void pointer and
+    !   just storing our byte, short, int, long, float, or double
+    !   numeric data there, and later casting it back...
     !   
+    !   (e.g. void **data_ref; data_ref = malloc(sizeof(void *) * 1000);
+    !         float *f = malloc(sizeof(float)); *f = 1.2345;
+    !         data_ref[0] = f; ...)
+    !  
+    !   No frets - we can work around this issue with some derived types
+    !   and arrays! We create an array for each type we want to support.
+    !   Since we're using kinds.F90, we support the following types:
+    !     i_byte, i_short, i_long, r_single, r_double
+    !  
+    !   The derived type used, diag_chaninfo, has these variables to
+    !   help us keep track of everything:
+    !  
+    !   -> ci_* - these arrays have the types listed above, plus string
+    !      support! These arrays are simply arrays that we throw our
+    !      data in. However, don't mistaken "throw in" with
+    !      "disorganized" - chaninfo uses a very structured format for
+    !      these variables! Keep reading to find out how we structure
+    !      it...
+    !      
+    !   -> nchans - the number of channels to use. Remember that
+    !      chaninfo variables have dimensions 1 x nchans - basically, we
+    !      need to store nchans values. We'll need this a LOT to do
+    !      consistency checks, and to keep track of everything!
+    !      
+    !   -> names - all of the chaninfo variable names! We'll be using
+    !      this array to store and lookup chaninfo variables, as well as
+    !      storing them!
+    !      
+    !   -> types - all of the chaninfo variable types! These are byte
+    !      integers that get compared to our NLAYER_* type constants
+    !      (see: ncdw_types.F90).
+    !      
+    !   -> var_usage - the amount of entries we've stored in our 
+    !      chaninfo variable! For instance, if we called
+    !      nc_diag_chaninfo("myvar", 1) three times, for that particular
+    !      var_usage(i), we would have an entry of 3.
+    !      
+    !   -> var_rel_pos - the star of the show! This is an abbreviation
+    !      of "variable relative positioning". Recall that we store
+    !      our variable data in ci_* specific type arrays. We know
+    !      the nchans amount, and we know the type. This variable stores
+    !      the "block" that our data is in within the type array.
+    !      
+    !      Therefore, we can use the equation to find our starting
+    !      position: 1 + [(REL_VAL - 1) * nchans]
+    !      
+    !      For instance, if var_rel_pos(1) for variable names(1) = "bla"
+    !      is set to 2, nchans is 10, and the type is NLAYER_FLOAT, we
+    !      can deduce that in ci_rsingle, our data can be found starting
+    !      at 1 + (1 * 10) = 11. This makes sense, as seen with our mini
+    !      diagram below:
+    !      
+    !      ci_rsingle:
+    !        /                    ci_rsingle index                   \
+    !       1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+    !      [ x, x, x, x, x, x, x, x, x, x, y, y, y, y, y, y, y, y, y, y]
+    !        \                    ci_rsingle array                   /
+    !      
+    !      Indeed, our second block does start at index 11!
+    !      As a bonus, since our data is in blocks, things can be super
+    !      fast since we're just cutting our big array into small ones!
+    !      
+    !   -> acount_v: Finally, we have dynamic allocation. We have in our
+    !      type a variable called acount_v. This tells us how many
+    !      variables are stored in each type. Using the same equation
+    !      above, and combining with var_usage, we can figure out where
+    !      to put our data!
+    !      
+    !      Assume var_usage(i) = 2, block starts at index 11 with the
+    !      equation above.
+    !      
+    !      Again, with our fun little diagram:
+    !      
+    !      ci_rsingle:
+    !        /                    ci_rsingle index                   \
+    !       1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+    !      [ x, x, x, x, x, x, x, x, x, x, y, y, Y, y, y, y, y, y, y, y]
+    !      [ BLOCK 1 SEEK = 1->10->11   ][var_u=2|--block 2 area 11->20]
+    !        \                    ci_rsingle array                   /
+    !      
+    !      The capital Y marks the place we store our data!
+    !    
     !   For the non-data variables (e.g. variable names, types, etc.),
     !   they are indexed by variable insertion order. This allows for
     !   easy lookup by looking up the variable name, and using the
