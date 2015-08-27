@@ -201,3 +201,9 @@ added to this list, regardless of whether it already exists or not.
 ### ncdw_ciresize.F90
  -> sanity check - ciresize should check file open + init for all
     subroutines!
+    
+### ncdw_climsg.F90
+ -> either make every debug statement use nclayer_debug, or remove it
+    completely!
+    
+### 

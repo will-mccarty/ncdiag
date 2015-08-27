@@ -70,23 +70,28 @@ module ncdw_climsg
     logical :: nclayer_enable_action = .FALSE.
     
     contains
-        ! Display a given error message.
+        ! Display a given error message, and exit.
         ! 
-        ! ---
+        ! Display a specified error message, and exit.
+        ! 
+        ! If ANSI colors are enabled at compile time, the entire message
+        ! will be printed in red.
+        ! 
+        ! If error tracebacks are enabled, this will attempt to generate
+        ! a traceback of the error before terminating.
         ! 
         ! Args:
-        !     err (character(len=*)): the number of entries
-        !         to make enough space for.
+        !     err (character(len=*)): the error to display.
         !     
         ! Raises:
-        !     The following errors will trigger indirectly from other
-        !     subroutines called here:
+        !     This is the error subroutine that exits, so it is
+        !     basically... an error itself. So indeed, this WILL result
+        !     in an error, no matter what!
         !     
-        !     ---
-        !     
-        !     Other errors may result from invalid data storage, NetCDF
-        !     errors, or even a bug. See the called subroutines'
-        !     documentation for details.
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
         ! 
         subroutine nclayer_error(err)
             character(len=*), intent(in) :: err
@@ -109,6 +114,23 @@ module ncdw_climsg
 #endif
         end subroutine nclayer_error
         
+        ! Display a given warning message.
+        ! 
+        ! Display a specified warning message.
+        ! 
+        ! If ANSI colors are enabled at compile time, the entire message
+        ! will be printed in yellow or orange, depending on how your
+        ! terminal displays colors.
+        ! 
+        ! Args:
+        !     warn (character(len=*)): the warning to display.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nclayer_warning(warn)
             character(len=*), intent(in) :: warn
 #ifdef ANSI_TERM_COLORS
@@ -120,6 +142,27 @@ module ncdw_climsg
 #endif
         end subroutine nclayer_warning
         
+        ! Set whether to display action messages or not.
+        ! 
+        ! This sets the flag on whether to display action messages or
+        ! not.
+        ! 
+        ! If the provided argument is TRUE, action messages will be
+        ! displayed. Otherwise, they will be hidden, even if action
+        ! message calls are made.
+        ! 
+        ! Args:
+        !     action_on_off (logical): boolean indicating whether to
+        !         display action messages or not. If TRUE, action
+        !         messages will be displayed. Otherwise, they will be
+        !         hidden.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nc_set_action_display(action_on_off)
             logical :: action_on_off
 #ifdef ENABLE_ACTION_MSGS
@@ -134,6 +177,34 @@ module ncdw_climsg
         end subroutine nc_set_action_display
         
 #ifdef ENABLE_ACTION_MSGS
+        ! Display a given action message.
+        ! 
+        ! Display a specified action message.
+        ! 
+        ! The messages displayed here are intended to be debug messages
+        ! indicating the subroutine that was called, along with the
+        ! arguments provided for the subroutine, if any.
+        ! (Hence, the "action" message.)
+        ! 
+        ! An example of such a message:
+        !   nc_set_action_display(action_on_off = T)
+        ! 
+        ! Although other kinds of messages can be printed via action
+        ! messages, it's strongly recommended to only print subroutine
+        ! and/or function calls here.
+        ! 
+        ! If ANSI colors are enabled at compile time, the entire message
+        ! will be printed in cyan (light blue).
+        ! 
+        ! Args:
+        !     act (character(len=*)): the action message to display.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nclayer_actionm(act)
             character(len=*), intent(in) :: act
             if (nclayer_enable_action) &
@@ -147,6 +218,27 @@ module ncdw_climsg
         end subroutine nclayer_actionm
 #endif
         
+        ! Set whether to display informational messages or not.
+        ! 
+        ! This sets the flag on whether to display information messages
+        ! or not.
+        ! 
+        ! If the provided argument is TRUE, informational messages will
+        ! be displayed. Otherwise, they will be hidden, even if info
+        ! message calls are made.
+        ! 
+        ! Args:
+        !     info_on_off (logical): boolean indicating whether to
+        !         display informational messages or not. If TRUE,
+        !         informational messages will be displayed. Otherwise,
+        !         they will be hidden.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nc_set_info_display(info_on_off)
             logical :: info_on_off
 #ifdef ENABLE_ACTION_MSGS
@@ -160,6 +252,23 @@ module ncdw_climsg
             nclayer_enable_info = info_on_off
         end subroutine nc_set_info_display
         
+        ! Display a given information message.
+        ! 
+        ! Display a specified information message.
+        ! 
+        ! If ANSI colors are enabled at compile time, the entire message
+        ! will be printed in blue.
+        ! 
+        ! Args:
+        !     ifo (character(len=*)): the information message to
+        !         display.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nclayer_info(ifo)
             character(len=*), intent(in) :: ifo
             if (nclayer_enable_info) &
@@ -173,17 +282,51 @@ module ncdw_climsg
         end subroutine nclayer_info
         
 #ifdef _DEBUG_MEM_
+        ! Display a given debug message.
+        ! 
+        ! Display a specified debug message. This subroutine is only
+        ! enabled when _DEBUG_MEM_ is defined at compile time.
+        ! Otherwise, this subroutine will not exist.
+        ! 
+        ! Therefore, any calls to this subroutine must have the
+        ! '#ifdef _DEBUG_MEM_' and #endif surrounding it.
+        ! 
+        ! Args:
+        !     dbg (character(len=*)): the debug message to display.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, or even a bug.
+        !     These errors are likely to crash the program in unexpected
+        !     ways...
+        ! 
         subroutine nclayer_debug(dbg)
             character(len=*), intent(in) :: dbg
             write(*, "(A, A)") "D: ", dbg
         end subroutine nclayer_debug
 #endif
         
+        ! Check whether a NetCDF operation completed successfully or
+        ! not, and if not, display the corresponding error message.
+        ! 
+        ! Given the NetCDF error code integer, determine whether the
+        ! corresponding NetCDF operation succeeded or not. If it failed,
+        ! display the corresponding error message and exit.
+        ! 
+        ! Args:
+        !     status (integer(i_long)): NetCDF error code to check.
+        !     
+        ! Raises:
+        !     Although unlikely, other errors may indirectly occur.
+        !     They may be general storage errors, NetCDF errors, or even
+        !     a bug. See the called subroutines' documentation for
+        !     details.
+        ! 
         subroutine nclayer_check(status)
-          integer(i_long), intent(in) :: status
-          
-          if(status /= nf90_noerr) then 
-            call nclayer_error(trim(nf90_strerror(status)))
-          end if
+            integer(i_long), intent(in) :: status
+            
+            if(status /= nf90_noerr) then 
+                call nclayer_error(trim(nf90_strerror(status)))
+            end if
         end subroutine nclayer_check
 end module ncdw_climsg
