@@ -49,7 +49,7 @@ module ncdw_chaninfo
     !   No frets - we can work around this issue with some derived types
     !   and arrays! We create an array for each type we want to support.
     !   Since we're using kinds.F90, we support the following types:
-    !     i_byte, i_short, i_long, r_single, r_double
+    !     i_byte, i_short, i_long, r_single, r_double, character(len=*)
     !  
     !   The derived type used, diag_chaninfo, has these variables to
     !   help us keep track of everything:
