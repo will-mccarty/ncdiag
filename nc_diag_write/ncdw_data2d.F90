@@ -1,4 +1,171 @@
+! nc_diag_write - NetCDF Layer Diag Writing Module
+! Copyright 2015 Albert Huang - SSAI/NASA for NASA GSFC GMAO (610.1).
+! 
+! Licensed under the Apache License, Version 2.0 (the "License");
+! you may not use this file except in compliance with the License.
+! You may obtain a copy of the License at
+! 
+!   http://www.apache.org/licenses/LICENSE-2.0
+! 
+! Unless required by applicable law or agreed to in writing, software
+! distributed under the License is distributed on an "AS IS" BASIS,
+! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+! implied. See the License for the specific language governing
+! permissions and limitations under the License.
+! 
+! data2d module - ncdw_data2d
+!
 module ncdw_data2d
+    ! Module that provides chaninfo variable storage support.
+    ! 
+    ! This module has all of the subroutines needed to store chaninfo
+    ! data. It includes the chaninfo storing subroutine
+    ! (nc_diag_chaninfo), subroutines for controlling chaninfo data
+    ! (dimension setting, loading definitions, saving definitions,
+    ! saving data, etc.), and preallocation subroutines.
+    ! 
+    ! Background:
+    !   chaninfo is a fixed storage variable, with dimensions of
+    !   1 x nchans, where nchans is a known integer.
+    !   
+    !   Because we can know nchans, we can constrain the dimensions and
+    !   make a few assumptions:
+    !   
+    !   -> nchans won't change for the duration of the file being open;
+    !   -> nchans will be the same for all chaninfo variables, for any
+    !      type involved;
+    !   -> because everything is fixed, we can store variables block
+    !      by block!
+    !  
+    !  Because Fortran is a strongly typed language, we can't do silly
+    !  tricks in C, like allocating some memory to a void pointer and
+    !  just storing our byte, short, int, long, float, or double numeric
+    !  data there, and later casting it back...
+    !  
+    !  (e.g. void **data_ref; data_ref = malloc(sizeof(void *) * 1000);
+    !        float *f = malloc(sizeof(float)); *f = 1.2345;
+    !        data_ref[0] = f; ...)
+    !  
+    !  No frets - we can work around this issue with some derived types
+    !  and arrays! We create an array for each type we want to support.
+    !  Since we're using kinds.F90, we support the following types:
+    !    i_byte, i_short, i_long, r_single, r_double
+    !  
+    !  The derived type used, diag_chaninfo, has these variables to help
+    !  us keep track of everything:
+    !  
+    !  -> ci_* - these arrays have the types listed above, plus string
+    !     support! These arrays are simply arrays that we throw our data
+    !     in. However, don't mistaken "throw in" with "disorganized" -
+    !     chaninfo uses a very structured format for these variables!
+    !     Keep reading to find out how we structure it...
+    !     
+    !  -> nchans - the number of channels to use. Remember that chaninfo
+    !     variables have dimensions 1 x nchans - basically, we need to
+    !     store nchans values. We'll need this a LOT to do consistency
+    !     checks, and to keep track of everything!
+    !     
+    !  -> names - all of the chaninfo variable names! We'll be using
+    !     this array to store and lookup chaninfo variables, as well as
+    !     storing them!
+    !     
+    !  -> types - all of the chaninfo variable types! These are byte
+    !     integers that get compared to our NLAYER_* type constants
+    !     (see: ncdw_types.F90).
+    !     
+    !  -> var_usage - the amount of entries we've stored in our chaninfo
+    !     variable! For instance, if we called
+    !     nc_diag_chaninfo("myvar", 1) three times, for that particular
+    !     var_usage(i), we would have an entry of 3.
+    !     
+    !  -> var_rel_pos - the star of the show! This is an abbreviation
+    !     of "variable relative positioning". Recall that we store
+    !     our variable data in ci_* specific type arrays. We know
+    !     the nchans amount, and we know the type. This variable stores
+    !     the "block" that our data is in within the type array.
+    !     
+    !     Therefore, we can use the equation to find our starting
+    !     position: 1 + [(REL_VAL - 1) * nchans]
+    !     
+    !     For instance, if var_rel_pos(1) for variable names(1) = "bla"
+    !     is set to 2, nchans is 10, and the type is NLAYER_FLOAT, we
+    !     can deduce that in ci_rsingle, our data can be found starting
+    !     at 1 + (1 * 10) = 11. This makes sense, as seen with our mini
+    !     diagram below:
+    !     
+    !     ci_rsingle:
+    !       /                    ci_rsingle index                   \
+    !      1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+    !     [ x, x, x, x, x, x, x, x, x, x, y, y, y, y, y, y, y, y, y, y ]
+    !       \                    ci_rsingle array                   /
+    !     
+    !     Indeed, our second block does start at index 11!
+    !     As a bonus, since our data is in blocks, things can be super
+    !     fast since we're just cutting our big array into small ones!
+    !     
+    !  -> acount_v: Finally, we have dynamic allocation. We have in our
+    !     type a variable called acount_v. This tells us how many
+    !     variables are stored in each type. Using the same equation
+    !     above, and combining with var_usage, we can figure out where
+    !     to put our data!
+    !     
+    !     Assume var_usage(i) = 2, block starts at index 11 with the
+    !     equation above.
+    !     
+    !     Again, with our fun little diagram:
+    !     
+    !     ci_rsingle:
+    !       /                    ci_rsingle index                   \
+    !      1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+    !     [ x, x, x, x, x, x, x, x, x, x, y, y, Y, y, y, y, y, y, y, y ]
+    !      [ BLOCK 1 SEEK = 1->10->11  ][var_u=2|---block 2 area 11->20]
+    !       \                    ci_rsingle array                   /
+    !     
+    !     The capital Y marks the place we store our data!
+    !   
+    !   For the non-data variables (e.g. variable names, types, etc.),
+    !   they are indexed by variable insertion order. This allows for
+    !   easy lookup by looking up the variable name, and using the
+    !   resulting index for fetching other information.
+    !   
+    !   Example:
+    !     names:       [ 'asdf', 'ghjk', 'zxcv' ]
+    !     types:       [   BYTE,  FLOAT,   BYTE ]
+    !     var_rel_pos: [      1,      1,      2 ]
+    !     
+    !     Lookup: "ghjk", result index = 2
+    !     
+    !     Therefore, the "ghjk" variable type is types(2) = FLOAT, and
+    !     the var_rel_pos for "ghjk" variable is var_rel_pos(2) = 1.
+    !   
+    !   These variables are allocated and reallocated, as needed.
+    !   
+    !   For the variable metadata fields (variable names, types,
+    !   relative indicies, etc.), these are reallocated incrementally
+    !   when a new variable is added.
+    !   
+    !   For the data storage fields, these are reallocated incrementally
+    !   when new data is added.
+    !   
+    !   Initial allocation and subsequent reallocation is done by
+    !   chunks. Allocating one element and/or reallocating and adding
+    !   just one element is inefficient, since it's likely that much
+    !   more data (and variables) will be added. Thus, allocation and
+    !   reallocation is done by (re-)allocating exponentially increasing
+    !   chunk sizes. See nc_diag_chaninfo_allocmulti help for more
+    !   details.
+    !   
+    !   Because (re-)allocation is done in chunks, we keep a count of
+    !   how much of the memory we're using so that we know when it's
+    !   time to (re-)allocate. Once we need to (re-)allocate, we
+    !   perform it, and then update our total memory counter to keep
+    !   track of the memory already allocated.
+    !   
+    !   With all of these variables (and a few more state variables),
+    !   we can reliably store our chaninfo data quickly and
+    !   efficiently!
+    ! 
+    
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
     use ncdw_state, only: init_done, append_only, ncid, &

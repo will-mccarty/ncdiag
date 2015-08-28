@@ -1,4 +1,129 @@
+! nc_diag_write - NetCDF Layer Diag Writing Module
+! Copyright 2015 Albert Huang - SSAI/NASA for NASA GSFC GMAO (610.1).
+! 
+! Licensed under the Apache License, Version 2.0 (the "License");
+! you may not use this file except in compliance with the License.
+! You may obtain a copy of the License at
+! 
+!   http://www.apache.org/licenses/LICENSE-2.0
+! 
+! Unless required by applicable law or agreed to in writing, software
+! distributed under the License is distributed on an "AS IS" BASIS,
+! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+! implied. See the License for the specific language governing
+! permissions and limitations under the License.
+! 
+! metadata module - ncdw_metadata
+!
 module ncdw_metadata
+    ! Module that provides metadata variable storage support.
+    ! 
+    ! This module has all of the subroutines needed to store metadata
+    ! data. It includes the metadata storing subroutine
+    ! (nc_diag_chaninfo), subroutines for controlling chaninfo data
+    ! (loading definitions, saving definitions, saving data, etc.),
+    ! and preallocation subroutines.
+    ! 
+    ! Background:
+    !   metadata is an unlimited storage variable, with dimensions of
+    !   1 x nobs, where nobs is an unlimited dimension. With unlimited
+    !   dimensions in this variable type, an unlimited amount of
+    !   metadata data can be stored in metadata variables.
+    !   
+    !   Unlike chaninfo, we can NOT make any assumptions, since the
+    !   dimensions are now unlimited instead of fixed. This time, the
+    !   variables will have to be stored differently!
+    !   
+    !   At the time of development, there were two ideas of approaching
+    !   this new type:
+    !   
+    !   -> Same variable metadata storage, but now storing data inside
+    !      a derived type array instead of in a giant variable data
+    !      storage. The derived type array is now filled with the
+    !      various type arrays. Only one type array is allocated and
+    !      filled so that the array itself has the complete data, and
+    !      the array can be written out directly to NetCDF.
+    !      
+    !   -> Same variable metadata storage, same variable data storage,
+    !      but with an addition of a derived type containing an array
+    !      of indicies referring to the location where the variable's
+    !      data is stored.
+    !   
+    !   In the end, the array of indicies option was chosen. This was
+    !   due to these reasons:
+    !   
+    !   -> Although writing the data would be rather quick (since the
+    !      data is already in a vector), several factors would make
+    !      the costs outweight this benefit. In particular...
+    !      
+    !   -> Writing to the array would require more time, since it has
+    !      to seek to the allocatable array, then seek to the position,
+    !      and then write. This is due to the many other non-allocated
+    !      types in the derived type.
+    !      
+    !   -> Reallocation would occur more often, since the arrays are
+    !      allocated by variable, and not allocated by type. Instead of
+    !      reallocating 6 times, it would reallocate (# of variables)
+    !      times, assuming all variables are appended to equally.
+    !      
+    !   -> More counters (specifically, (# of variables) amount of
+    !      counters) will have to be used to keep track of the total
+    !      and the amount of data used for the allocatable arrays,
+    !      making reallocation even more costly.
+    !      
+    !   -> With regards to the indicies option, appending and writing
+    !      times are equal. They essentially boil down to store index,
+    !      store value vs read index, read value.
+    !      
+    !   -> The indicies array is stored in a derived type, but since
+    !      it is the sole element within the derived type, the array
+    !      access is much quicker.
+    !      
+    !   -> Finally, the indicies array still uses the 6 type variable
+    !      data array storage, which just uses 6*2 counters and only
+    !      a maximum of 6 reallocations, which is much more efficient.
+    !   
+    !   That said, we can therefore apply this method to our metadata
+    !   data storage!
+    !   
+    !   Like with chaninfo, we support the following types:
+    !     i_byte, i_short, i_long, r_single, r_double, character(len=*)
+    !   
+    !   Again, we store everything within a derived type, diag_metadata:
+    !   
+    !   -> m_* - these arrays store the variable data for the types
+    !      listed above. This time, we organize the metadata using
+    !      array indicies for each variable, as mentionned above. More
+    !      details about the storage method to follow...
+    !      
+    !   -> names - all of the metadata variable names! We'll be using
+    !      this array to store and lookup metadata variables, as well as
+    !      storing them!
+    !      
+    !   -> types - all of the metadata variable types! These are byte
+    !      integers that get compared to our NLAYER_* type constants
+    !      (see: ncdw_types.F90).
+    !      
+    !      
+    !      
+    !   -> stor_i_arr - for metadata, this is the star of the show! This
+    !      is an abbreviation for "storage index array". This is the
+    !      implementation of our indicies array idea. Since this is a
+    !      array of "diag_md_iarr" derived types, let's peek at the
+    !      derived type itself:
+    !      
+    !      -> index_arr - the array of indicies. This stores all of the
+    !         variable data storage indicies, which indicate where our
+    !         data is stored within the variable type-specific data
+    !         storage.
+    !         
+    !      -> icount - the number of indicies stored within this derived
+    !         type.
+    !         
+    !      -> isize - the current indicies array size. Used for
+    !         reallocation when adding more elements.
+    ! 
+    
     use kinds, only: i_byte, i_short, i_long, i_llong, r_single, &
         r_double
     use ncdw_state, only: init_done, ncid, append_only, &
