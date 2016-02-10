@@ -281,7 +281,7 @@ module ncdw_metadata
                             call nclayer_error("NetCDF4 type invalid!")
                         end if
                         
-                        print *, trim(tmp_var_name), "rel index", rel_index
+!                        print *, trim(tmp_var_name), "rel index", rel_index
                         
                         ! Now add a relative position... based on the next position!
                         
@@ -291,8 +291,8 @@ module ncdw_metadata
                         ! Set variable ID! Note that var_index here is the actual variable ID.
                         diag_metadata_store%var_ids(diag_metadata_store%total) = var_index
                         
-                        print *, var_index
-                        print *, diag_metadata_store%var_ids(diag_metadata_store%total)
+!                        print *, var_index
+!                        print *, diag_metadata_store%var_ids(diag_metadata_store%total)
                     end if
                 end if
                 
