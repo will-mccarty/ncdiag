@@ -1,12 +1,12 @@
 # NetCDF Diag Writing Layer
-# Makefile library configuration for building with nc_diag
+# GNUmakefile library configuration for building with nc_diag
 # --------------------------------------------------------------------
 # Do NOT modify this file. Everything has been set up automatically
 # for you! Modifying this file may break things!
 # --------------------------------------------------------------------
 # Usage:
-#     To use this file, simply include it within your Makefile:
-#         include /path/to/nc_diag/Makefile.config
+#     To use this file, simply include it within your GNUmakefile:
+#         include /path/to/nc_diag/GNUmakefile.config
 #     
 #     Then use the nc_diag specific build variables:
 #         $(F90) [your stuff here] $(NCDW_FLAGS)
@@ -58,13 +58,13 @@
 # start using nc_diag! Changing anything below WILL cause
 # problems!
 # 
-# If you're really stuck, try looking at the Makefile in tests/ - we
-# include this Makefile.libconfig and set things up according to the
+# If you're really stuck, try looking at the GNUmakefile in tests/ - we
+# include this GNUmakefile.libconfig and set things up according to the
 # steps above!
 # --------------------------------------------------------------------
 # 
 
-# First, use a trick to get the included (Makefile.libconfig) path:
+# First, use a trick to get the included (GNUmakefile.libconfig) path:
 # Check if we are using an absolute path - aka we have a slash.
 # If we don't, process with relative path...
 
@@ -94,7 +94,7 @@ NCDW_LIB_PATH=$(NCDW_PATH)/$(NCDW_LIB_FILE)
 # Define nc_diag library dependencies, so that any changes
 # can prompt a re-build:
 NCDW_LIB_DEPS=$(NCDW_PATH)/*.f90 $(NCDW_PATH)/*.F90 \
-    $(NCDW_PATH)/Makefile $(NCDW_PATH)/Makefile.config
+    $(NCDW_PATH)/GNUmakefile $(NCDW_PATH)/GNUmakefile.config
 
 # Define the build command necessary to build this library:
 NCDW_BUILD_CMD=make -C $(NCDW_PATH) $(NCDW_LIB_FILE)

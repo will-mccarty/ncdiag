@@ -1,5 +1,5 @@
 # Include build configuration:
-include Makefile.config
+include GNUmakefile.config
 
 NC_DIAG_READ_OBJS+= \
     kinds.o \
@@ -16,7 +16,7 @@ NC_DIAG_READ_OBJS+= \
     ncdr_attrs_fetch.o \
     ncdr_global_attrs_fetch.o
 
-NC_DIAG_READ_DEPS+=Makefile \
+NC_DIAG_READ_DEPS+=GNUmakefile \
     $(NC_DIAG_READ_OBJS)
 
 .PHONY: all clean tests check
@@ -34,7 +34,7 @@ libnc_diag_read.a: nc_diag_read.o $(NC_DIAG_READ_DEPS)
 	$(NCDR_MAKE_QUIET)ar rcs libnc_diag_read.a nc_diag_read.o $(NC_DIAG_READ_OBJS)
 	$(NCDR_MAKE_FANCY_BIG_END)
 
-kinds.o: Makefile Makefile.config Makefile.libconfig kinds.F90
+kinds.o: GNUmakefile GNUmakefile.config GNUmakefile.libconfig kinds.F90
 	$(NCDR_MAKE_FANCY_BEGIN)
 	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) -c kinds.F90 $(NCDR_CONFIG_FLAGS)
 	$(NCDR_MAKE_FANCY_END)
@@ -133,7 +133,7 @@ ncdr_realloc_mod.o: ncdr_realloc_mod.F90 kinds.o ncdr_types.o
 		-c ncdr_realloc_mod.F90
 	$(NCDR_MAKE_FANCY_END)
 
-netcdf_unlimdims.o: netcdf_unlimdims.F90 Makefile
+netcdf_unlimdims.o: netcdf_unlimdims.F90 GNUmakefile
 	$(NCDR_MAKE_FANCY_BEGIN)
 	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) $(NCDR_CONFIG_FLAGS) \
 		-c netcdf_unlimdims.F90 \

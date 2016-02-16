@@ -1,7 +1,7 @@
 # Include build configuration:
-include Makefile.config
+include GNUmakefile.config
 
-FSON_DEPS+=nc_diag_fson/Makefile \
+FSON_DEPS+=nc_diag_fson/GNUmakefile \
     nc_diag_fson/src/nc_diag_fson.f90 \
     nc_diag_fson/src/ncdf_path_m.f90 \
     nc_diag_fson/src/ncdf_string_m.f90 \
@@ -13,7 +13,7 @@ FSON_OBJS+= \
     nc_diag_fson/build/ncdf_string_m.o \
     nc_diag_fson/build/ncdf_value_m.o
 
-NC_DIAG_RES_DEPS+=Makefile \
+NC_DIAG_RES_DEPS+=GNUmakefile \
     ncdres_climsg.o
 
 NC_DIAG_RES_OBJS+= \
@@ -42,7 +42,7 @@ nc_diag_res.o: nc_diag_res.f90 nc_diag_fson/lib/libnc_diag_fson.a $(NC_DIAG_RES_
 		-Inc_diag_fson/lib -Lnc_diag_fson/lib -lnc_diag_fson
 	$(NCDRES_MAKE_FANCY_END)
 
-ncdres_climsg.o: ncdres_climsg.F90 Makefile.config Makefile.libconfig
+ncdres_climsg.o: ncdres_climsg.F90 GNUmakefile.config GNUmakefile.libconfig
 	$(NCDRES_MAKE_FANCY_BEGIN)
 	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
 		-c ncdres_climsg.F90

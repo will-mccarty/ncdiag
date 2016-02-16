@@ -1,5 +1,5 @@
-include ../Makefile.config
-include ../Makefile.libconfig
+include ../GNUmakefile.config
+include ../GNUmakefile.libconfig
 
 NCDW_TESTS=test_netcdf_layer.x \
     test_nclayer_allcov.x \

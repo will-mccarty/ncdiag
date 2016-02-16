@@ -1,6 +1,6 @@
 # This file has been set up to build with nc_diag_res.
 # Do NOT change this file!
-include ../Makefile.config
+include ../GNUmakefile.config
 
 SRC=src
 DIST=lib

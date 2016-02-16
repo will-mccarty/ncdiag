@@ -1,12 +1,12 @@
 # NetCDF Diag Library (nc_diag_write + nc_diag_read + nc_diag_res)
-# Makefile library configuration for building with nc_diag
+# GNUmakefile library configuration for building with nc_diag
 # --------------------------------------------------------------------
 # Do NOT modify this file. Everything has been set up automatically
 # for you! Modifying this file may break things!
 # --------------------------------------------------------------------
 # Usage:
-#     To use this file, simply include it within your Makefile:
-#         include /path/to/nc_diag/Makefile.config
+#     To use this file, simply include it within your GNUmakefile:
+#         include /path/to/nc_diag/GNUmakefile.config
 #     
 #     Then use the nc_diag specific build variables:
 #         $(F90) [your stuff here] $(NC_DIAG_FLAGS)
@@ -58,15 +58,15 @@
 # start using nc_diag! Changing anything below WILL cause
 # problems!
 # 
-# If you're really stuck, try looking at the Makefiles in each of the
+# If you're really stuck, try looking at the GNUmakefile in each of the
 # nc_diag_*/tests/ folders - we include each component's respective
-# Makefile.libconfig and set things up according to the steps above!
+# GNUmakefile.libconfig and set things up according to the steps above!
 # (Of course, you will be using the nc_diag library, NOT the independent
 # nc_diag_* libraries!)
 # --------------------------------------------------------------------
 # 
 
-# First, use a trick to get the included (Makefile.libconfig) path:
+# First, use a trick to get the included (GNUmakefile.libconfig) path:
 # Check if we are using an absolute path - aka we have a slash.
 # If we don't, process with relative path...
 
@@ -96,7 +96,7 @@ NC_DIAG_LIB_PATH=$(NC_DIAG_PATH)/$(NC_DIAG_LIB_FILE)
 # Define nc_diag library dependencies, so that any changes
 # can prompt a re-build:
 NC_DIAG_LIB_DEPS=$(NC_DIAG_PATH)/*.f90 $(NC_DIAG_PATH)/*.F90 \
-    $(NC_DIAG_PATH)/Makefile $(NC_DIAG_PATH)/Makefile.config
+    $(NC_DIAG_PATH)/GNUmakefile $(NC_DIAG_PATH)/GNUmakefile.config
 
 # Define the build command necessary to build this library:
 NC_DIAG_BUILD_CMD=make -C $(NC_DIAG_PATH) $(NC_DIAG_LIB_FILE)

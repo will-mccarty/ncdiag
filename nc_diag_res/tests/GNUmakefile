@@ -1,5 +1,5 @@
-include ../Makefile.config
-include ../Makefile.libconfig
+include ../GNUmakefile.config
+include ../GNUmakefile.libconfig
 
 NC_DIAG_RES_TESTS=test_ncdres_simple.x test_ncdres_invalid.x
 NC_DIAG_RES_TESTS_FAIL=test_ncdres_fopen_crash.x \

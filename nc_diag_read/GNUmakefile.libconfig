@@ -1,12 +1,12 @@
 # NetCDF Diag Reader
-# Makefile library configuration for building with nc_diag_read
+# GNUmakefile library configuration for building with nc_diag_read
 # --------------------------------------------------------------------
 # Do NOT modify this file. Everything has been set up automatically
 # for you! Modifying this file may break things!
 # --------------------------------------------------------------------
 # Usage:
-#     To use this file, simply include it within your Makefile:
-#         include /path/to/nc_diag_read/Makefile.config
+#     To use this file, simply include it within your GNUmakefile:
+#         include /path/to/nc_diag_read/GNUmakefile.config
 #     
 #     Then use the nc_diag_read specific build variables:
 #         $(F90) [your stuff here] $(NC_DIAG_READ_FLAGS)
@@ -58,13 +58,13 @@
 # start using nc_diag_read! Changing anything below WILL cause
 # problems!
 # 
-# If you're really stuck, try looking at the Makefile in tests/ - we
-# include this Makefile.libconfig and set things up according to the
+# If you're really stuck, try looking at the GNUmakefile in tests/ - we
+# include this GNUmakefile.libconfig and set things up according to the
 # steps above!
 # --------------------------------------------------------------------
 # 
 
-# First, use a trick to get the included (Makefile.libconfig) path:
+# First, use a trick to get the included (GNUmakefile.libconfig) path:
 # Check if we are using an absolute path - aka we have a slash.
 # If we don't, process with relative path...
 
@@ -94,7 +94,7 @@ NCDR_LIB_PATH=$(NCDR_PATH)/$(NCDR_LIB_FILE)
 # Define nc_diag_read library dependencies, so that any changes
 # can prompt a re-build:
 NCDR_LIB_DEPS=$(NCDR_PATH)/*.f90 $(NCDR_PATH)/*.F90 \
-    $(NCDR_PATH)/Makefile $(NCDR_PATH)/Makefile.config
+    $(NCDR_PATH)/GNUmakefile $(NCDR_PATH)/GNUmakefile.config
 
 # Define the build command necessary to build this library:
 NCDR_BUILD_CMD=make -C $(NCDR_PATH) $(NCDR_LIB_FILE)

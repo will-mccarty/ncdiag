@@ -1,5 +1,5 @@
 # Include build configuration
-include Makefile.config
+include GNUmakefile.config
 
 NC_DIAG_WRITE_OBJS+= \
     ncdw_climsg.o \
@@ -12,7 +12,7 @@ NC_DIAG_WRITE_OBJS+= \
     ncdw_strarrutils.o \
     ncdw_varattr.o
 
-NC_DIAG_WRITE_DEPS+=Makefile \
+NC_DIAG_WRITE_DEPS+=GNUmakefile \
     $(NC_DIAG_WRITE_OBJS)
 
 NCDW_VAR_DEPS+= kinds.o \
@@ -43,7 +43,7 @@ libnc_diag_write.a: nc_diag_write_mod.o $(NC_DIAG_WRITE_DEPS)
 	$(NCDW_MAKE_QUIET)ar rcs libnc_diag_write.a nc_diag_write_mod.o $(NC_DIAG_WRITE_OBJS)
 	$(NCDW_MAKE_FANCY_BIG_END)
 
-kinds.o: kinds.F90 Makefile Makefile.config Makefile.libconfig
+kinds.o: kinds.F90 GNUmakefile GNUmakefile.config GNUmakefile.libconfig
 	$(NCDW_MAKE_FANCY_BEGIN)
 	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) -c kinds.F90 $(NCDW_CONFIG_FLAGS)
 	$(NCDW_MAKE_FANCY_END)

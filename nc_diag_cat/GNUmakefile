@@ -1,5 +1,5 @@
 # Include build configuration
-include Makefile.config
+include GNUmakefile.config
 
 NC_DIAG_CAT_OBJS+=\
     ncdc_realloc.o ncdc_state.o ncdc_climsg.o ncdc_types.o \

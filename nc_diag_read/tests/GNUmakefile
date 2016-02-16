@@ -1,5 +1,5 @@
-include ../Makefile.config
-include ../Makefile.libconfig
+include ../GNUmakefile.config
+include ../GNUmakefile.libconfig
 
 NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
     test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
