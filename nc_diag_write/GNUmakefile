@@ -1,123 +1,95 @@
-# Include build configuration
-include GNUmakefile.config
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 09Jun2003  da Silva  First crack. 
+#
 
-NC_DIAG_WRITE_OBJS+= \
-    ncdw_climsg.o \
-    ncdw_chaninfo.o ncdw_ciresize.o \
-    ncdw_data2d.o ncdw_dresize.o \
-    ncdw_lheader.o \
-    ncdw_metadata.o ncdw_mresize.o \
-    ncdw_realloc.o \
-    ncdw_types.o ncdw_state.o \
-    ncdw_strarrutils.o \
-    ncdw_varattr.o
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
 
-NC_DIAG_WRITE_DEPS+=GNUmakefile \
-    $(NC_DIAG_WRITE_OBJS)
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+  include $(ESMADIR)/Config/GMAO_base.mk  # Generic stuff
 
-NCDW_VAR_DEPS+= kinds.o \
-    ncdw_climsg.o \
-    ncdw_types.o ncdw_state.o \
-    ncdw_realloc.o \
-    ncdw_strarrutils.o \
-    ncdw_varattr.o
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
 
-NCDW_VAR_RESIZE_DEPS+= kinds.o \
-    ncdw_state.o \
-    ncdw_types.o \
-    ncdw_climsg.o \
-    ncdw_realloc.o
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
 
-.PHONY: all tests check clean
+THIS := $(shell basename `pwd`)
+LIB  = lib$(THIS).a
 
-all: libnc_diag_write.a tests
+esma_install install: $(LIB)
+	$(MKDIR) $(ESMALIB) $(ESMAINC)/$(THIS)
+	$(CP) -p *.a            $(ESMALIB)
+	$(CP) -p *.mod          $(ESMAINC)/$(THIS)
 
-tests:
-	make -C tests
+esma_clean clean:
+	-$(RM) *~ *.[aox] *.mod *.x
 
-check:
-	make -C tests check
+esma_distclean distclean:
+	-$(RM) *~ *.[aoxd] *.mod *.x
 
-libnc_diag_write.a: nc_diag_write_mod.o $(NC_DIAG_WRITE_DEPS)
-	$(NCDW_MAKE_FANCY_BIG_BEGIN)
-	$(NCDW_MAKE_QUIET)ar rcs libnc_diag_write.a nc_diag_write_mod.o $(NC_DIAG_WRITE_OBJS)
-	$(NCDW_MAKE_FANCY_BIG_END)
+esma_doc doc:
+	@$(PROTEX) $(PROTEX_FLAGS) *GridComp*.[fF]* > $(ESMADOC)/$(THIS).tex
 
-kinds.o: kinds.F90 GNUmakefile GNUmakefile.config GNUmakefile.libconfig
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) -c kinds.F90 $(NCDW_CONFIG_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
 
-nc_diag_write_mod.o: nc_diag_write_mod.F90 kinds.o $(NC_DIAG_WRITE_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c nc_diag_write_mod.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
 
-ncdw_chaninfo.o: ncdw_chaninfo.F90 $(NCDW_VAR_DEPS) ncdw_ciresize.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_chaninfo.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
 
-ncdw_ciresize.o: ncdw_ciresize.F90 $(NCDW_VAR_RESIZE_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_ciresize.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+SRCS := kinds.F90 nc_diag_write_mod.F90 ncdw_chaninfo.F90 ncdw_ciresize.F90 \
+        ncdw_climsg.F90 ncdw_data2d.F90 ncdw_dresize.F90 ncdw_lheader.F90 \
+        ncdw_metadata.F90 ncdw_mresize.F90 ncdw_realloc.F90 ncdw_state.f90 \
+        ncdw_strarrutils.F90 ncdw_types.F90 ncdw_varattr.F90
 
-ncdw_climsg.o: ncdw_climsg.F90 kinds.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_climsg.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+OBJS := $(addsuffix .o, $(basename $(SRCS))) 
+DEPS := $(addsuffix .d, $(basename $(SRCS))) 
 
-ncdw_state.o: ncdw_state.f90 ncdw_types.o kinds.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_state.f90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+INC_DIRS = . $(INC_GMAO_SHARED)
+MOD_DIRS = . $(INC_DIRS) $(INC_ESMF) \
+             $(foreach dir,$(SUBDIRS),$(ESMAINC)/$(dir))
 
-ncdw_types.o: ncdw_types.F90 kinds.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_types.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+USER_FDEFS  = $(D)_REAL8_ $(D)ERROR_TRACEBACK $(D)ENABLE_ACTION_MSGS
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir))
 
-ncdw_strarrutils.o: ncdw_strarrutils.F90
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) -c ncdw_strarrutils.F90
-	$(NCDW_MAKE_FANCY_END)
+#FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
 
-ncdw_varattr.o: ncdw_varattr.F90 $(NCDW_VAR_RESIZE_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_varattr.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+vpath % $(MOD_DIRS)
 
-ncdw_metadata.o: ncdw_metadata.F90 $(NCDW_VAR_DEPS) ncdw_mresize.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_metadata.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+$(LIB) lib : $(OBJS)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
 
-ncdw_mresize.o: ncdw_mresize.F90 $(NCDW_VAR_RESIZE_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_mresize.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
 
-ncdw_data2d.o: ncdw_data2d.F90 ncdw_dresize.o $(NCDW_VAR_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_data2d.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
 
-ncdw_dresize.o: ncdw_dresize.F90 $(NCDW_VAR_RESIZE_DEPS)
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_dresize.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+#.
 
-ncdw_realloc.o: ncdw_realloc.F90 ncdw_climsg.o kinds.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_realloc.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
 
-ncdw_lheader.o: ncdw_lheader.F90 ncdw_state.o ncdw_climsg.o kinds.o
-	$(NCDW_MAKE_FANCY_BEGIN)
-	$(NCDW_MAKE_QUIET)$(NCDW_FORT90C) $(NCDW_F90FLAGS) $(NCDW_CONFIG_FLAGS) -c ncdw_lheader.F90 $(NCDW_NETCDF_FLAGS)
-	$(NCDW_MAKE_FANCY_END)
+  -include $(ESMADIR)/Config/ESMA_post.mk  # ESMA additional targets, macros
 
-clean:
-	rm -f *.mod *.x *.o *.a gmon.out
-	make -C tests clean

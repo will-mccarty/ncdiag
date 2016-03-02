@@ -314,13 +314,7 @@ module ncdc_realloc
 #ifdef ERROR_TRACEBACK
             integer(i_long)              :: div0
 #endif
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m" // &
-                            " **   ERROR: " // err // &
-                            CHAR(27) // "[0m"
-#else
             write(*, "(A)") " **   ERROR: " // err
-#endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to concatenate NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"

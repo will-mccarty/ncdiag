@@ -1,207 +1,96 @@
-include ../GNUmakefile.config
-include ../GNUmakefile.libconfig
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 09Jun2003  da Silva  First crack. 
+#
 
-NC_DIAG_READ_TESTS=test_ncdr_get.x test_ncdr_get_arda.x \
-    test_ncdr_get_ardg.x test_ncdr_get_ardag.x \
-    test_ncdr_get_id.x test_ncdr_get_id_arda.x \
-    test_ncdr_get_id_ardg.x test_ncdr_get_id_ardag.x \
-    test_ncdr_get_pushpop.x \
-    test_ncdr_dims.x \
-    test_ncdr_vars.x \
-    test_ncdr_attrs.x \
-    test_ncdr_global_attrs.x
-
-NC_DIAG_READ_TESTS_FAIL=errs/err_ncdr_invalid_file.x \
-    errs/err_ncdr_invalid_ncdr_id_dim.x \
-    errs/err_ncdr_alloc_dimnames.x \
-    errs/err_ncdr_alloc_varnames.x
-
-# Coverage build flags
-ifndef COVERAGE
-    COVERAGE=0
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
 endif
 
-ifeq ($(COVERAGE), 1)
-    NCDR_F90FLAGS+=-prof-gen=srcpos
-    STATIC_COMPILE=1
-endif
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+  include $(ESMADIR)/Config/GMAO_base.mk  # Generic stuff
 
-# Static compilation flags
-ifndef STATIC_COMPILE
-    STATIC_COMPILE=0
-endif
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
 
-ifeq ($(STATIC_COMPILE), 1)
-    NC_DIAG_READ_FLAGS=-I.. ../nc_diag_read.F90 ../ncdr_*.f90 ../ncdr_*.F90 ../netcdf_unlimdims.F90
-endif
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
 
-.PHONY: all clean check precoverage coverage
+THIS := $(shell basename `pwd`)
+LIB  = lib$(THIS).a
 
-all: $(NC_DIAG_READ_TESTS) $(NC_DIAG_READ_TESTS_FAIL)
+TARGETS = esma_install esma_clean esma_distclean esma_doc \
+          install clean distclean doc
 
-check: $(NC_DIAG_READ_TESTS) $(NC_DIAG_READ_TESTS_FAIL)
-	@echo "Running regular tests..."
-	@$(foreach ncdr_test,$(NC_DIAG_READ_TESTS),echo "Running: $(ncdr_test)";./$(ncdr_test) || exit 1;echo "Pass: $(ncdr_test)";)
-	@echo "Running tests that should fail..."
-	@$(foreach ncdr_test,$(NC_DIAG_READ_TESTS_FAIL),echo "Running FAIL test: $(ncdr_test)";./$(ncdr_test) && exit 1 || true;echo "Pass: $(ncdr_test)";)
+esma_install install: $(LIB)
+	$(MKDIR) $(ESMALIB) $(ESMAINC)/$(THIS)
+	$(CP) -p *.a            $(ESMALIB)
+	$(CP) -p *.mod          $(ESMAINC)/$(THIS)
 
-test_ncdr_attrs.x: test_ncdr_attrs.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS)\
-		test_ncdr_attrs.f90 -o test_ncdr_attrs.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+esma_clean clean:
+	-$(RM) *~ *.[aox] *.mod *.x
 
-test_ncdr_global_attrs.x: test_ncdr_global_attrs.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS)\
-		test_ncdr_global_attrs.f90 -o test_ncdr_global_attrs.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+esma_distclean distclean:
+	-$(RM) *~ *.[aoxd] *.mod *.x
 
-test_ncdr_dims.x: test_ncdr_dims.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS)\
-		test_ncdr_dims.f90 -o test_ncdr_dims.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+esma_doc doc:
+	@echo "Target $@ not yet implemented in $(THIS)"
 
-test_ncdr_vars.x: test_ncdr_vars.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_vars.f90 -o test_ncdr_vars.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
 
-test_ncdr_get.x: test_ncdr_get.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get.f90 -o test_ncdr_get.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
 
-test_ncdr_get_pushpop.x: test_ncdr_get_pushpop.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_pushpop.f90 -o test_ncdr_get_pushpop.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
 
-test_ncdr_get_arda.x: test_ncdr_get_arda.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_arda.f90 -o test_ncdr_get_arda.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+SRCS := kinds.F90 nc_diag_read.F90 ncdr_alloc_assert.f90 ncdr_attrs.f90 ncdr_attrs_fetch.f90 \
+        ncdr_check.f90 ncdr_climsg.F90 ncdr_dims.f90 ncdr_global_attrs.f90 ncdr_global_attrs_fetch.f90 \
+        ncdr_realloc_mod.F90 ncdr_state.f90 ncdr_types.f90 ncdr_vars.f90 ncdr_vars_fetch.f90 netcdf_unlimdims.F90
+OBJS := $(addsuffix .o, $(basename $(SRCS))) 
+DEPS := $(addsuffix .d, $(basename $(SRCS))) 
 
-test_ncdr_get_ardg.x: test_ncdr_get_ardg.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_ardg.f90 -o test_ncdr_get_ardg.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+INC_DIRS = . $(INC_GMAO_SHARED)
+MOD_DIRS = . $(INC_DIRS) $(INC_ESMF) \
+             $(foreach dir,$(SUBDIRS),$(ESMAINC)/$(dir))
 
-test_ncdr_get_ardag.x: test_ncdr_get_ardag.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_ardag.f90 -o test_ncdr_get_ardag.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+USER_FDEFS  = $(D)_REAL8_ $(D)ANSI_TERM_COLORS $(D)ERROR_TRACEBACK
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir))
 
-test_ncdr_get_id.x: test_ncdr_get_id.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_id.f90 -o test_ncdr_get_id.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+#FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
 
-test_ncdr_get_id_arda.x: test_ncdr_get_id_arda.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_id_arda.f90 -o test_ncdr_get_id_arda.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+vpath % errs $(MOD_DIRS)
 
-test_ncdr_get_id_ardg.x: test_ncdr_get_id_ardg.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_id_ardg.f90 -o test_ncdr_get_id_ardg.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+$(LIB) lib : $(OBJS)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
 
-test_ncdr_get_id_ardag.x: test_ncdr_get_id_ardag.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		test_ncdr_get_id_ardag.f90 -o test_ncdr_get_id_ardag.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
 
-errs/err_ncdr_invalid_file.x: errs/err_ncdr_invalid_file.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		errs/err_ncdr_invalid_file.f90 -o errs/err_ncdr_invalid_file.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
 
-errs/err_ncdr_invalid_ncdr_id_dim.x: errs/err_ncdr_invalid_ncdr_id_dim.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		errs/err_ncdr_invalid_ncdr_id_dim.f90 -o errs/err_ncdr_invalid_ncdr_id_dim.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+#.
 
-errs/err_ncdr_alloc_dimnames.x: errs/err_ncdr_alloc_dimnames.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		errs/err_ncdr_alloc_dimnames.f90 -o errs/err_ncdr_alloc_dimnames.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
 
-errs/err_ncdr_alloc_varnames.x: errs/err_ncdr_alloc_varnames.f90 $(NCDR_LIB_PATH)
-	$(NCDR_MAKE_FANCY_BEGIN)
-	$(NCDR_MAKE_QUIET)$(NCDR_FORT90C) $(NCDR_F90FLAGS) \
-		errs/err_ncdr_alloc_varnames.f90 -o errs/err_ncdr_alloc_varnames.x \
-		$(NC_DIAG_READ_FLAGS) \
-		$(NCDR_NETCDF_FLAGS)
-	$(NCDR_MAKE_FANCY_END)
+  -include $(ESMADIR)/Config/ESMA_post.mk  # ESMA additional targets, macros
 
-$(NCDR_LIB_PATH): $(NCDR_LIB_DEPS)
-	@echo " *** nc_diag_read library not built yet (or outdated)."
-	@echo " *** (Re-)building it now..."
-	$(NCDR_BUILD_CMD)
-
-precoverage:
-	@[ ! "$$COVERAGE" = "1" ] && \
-		echo "ERROR: COVERAGE must be set to 1 to set build flags and use" && \
-		echo "       use coverage tools." && exit 1 || true
-	@[ ! -f ~/launch_browser ] && \
-		echo "ERROR: You must have a script called launch_browser in your" && \
-		echo "       home directory to display code coverage results. It" && \
-		echo "       should accept a file as an argument to display the" && \
-		echo "       code coverage result page." && exit 1 || true
-
-coverage: precoverage clean check
-	profmerge
-	codecov -srcroot ..
-	~/launch_browser CODE_COVERAGE.HTML &
-	rm -f *.mod *.o
-
-clean:
-	rm -f *.mod *.x *.o err/*.x err/*.mod err/*.o
-	rm -rf pgopti.* CodeCoverage CODE_COVERAGE.HTML *.dyn

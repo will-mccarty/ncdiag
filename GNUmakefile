@@ -1,34 +1,83 @@
-NC_DIAG_LIBS+= \
-    nc_diag_write/libnc_diag_write.a \
-    nc_diag_read/libnc_diag_read.a \
-    nc_diag_res/libnc_diag_res.a
+#
+# recursive makefile for ESMA.
+#
 
-NC_DIAG_EXECS+= \
-    nc_diag_cat/nc_diag_cat.x
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
 
-all: $(NC_DIAG_LIBS) $(NC_DIAG_EXECS)
 
-libnc_diag.a: $(NC_DIAG_LIBS)
-	rm -rf tmp_nc_libs
-	mkdir -p tmp_nc_libs
-	cd tmp_nc_libs && $(foreach nc_lib_ar,$(NC_DIAG_LIBS),ar x ../$(nc_lib_ar);)
-	ar rcs libnc_diag.a tmp_nc_libs/*.o
-	rm -rf tmp_nc_libs
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+  include $(ESMADIR)/Config/GMAO_base.mk  # Generic stuff
 
-nc_diag_write/libnc_diag_write.a:
-	make -C nc_diag_write libnc_diag_write.a
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
 
-nc_diag_cat/nc_diag_cat.x:
-	make -C nc_diag_cat nc_diag_cat.x
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
 
-nc_diag_read/libnc_diag_read.a:
-	make -C nc_diag_read libnc_diag_read.a
+#                  --------------------------------
+#                   Recurse Make in Sub-directories
+#                  --------------------------------
 
-nc_diag_res/libnc_diag_res.a:
-	make -C nc_diag_res libnc_diag_res.a
+#ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat  nc_diag_res nc_diag_attr
+ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat
 
-clean:
-	make -C nc_diag_write clean
-	make -C nc_diag_cat clean
-	make -C nc_diag_read clean
-	make -C nc_diag_res clean
+SUBDIRS = $(wildcard $(ALLDIRS) )
+
+TARGETS = esma_install esma_clean esma_distclean esma_doc \
+          install clean distclean doc
+
+export ESMADIR BASEDIR ARCH SITE
+
+$(TARGETS): 
+	@ t=$@; argv="$(SUBDIRS)" ;\
+	  for d in $$argv; do			 \
+	    ( cd $$d				;\
+	      echo ""; echo Making $$t in `pwd`          ;\
+	      $(MAKE) -e $$t ) \
+	  done
+	$(MAKE) local_$@
+
+local_esma_install local_install: $(LIB)
+	@echo No local install in here
+
+local_esma_clean local_clean:
+	-$(RM) *~ *.[aox] *.mod *.x
+ 
+local_esma_distclean local_distclean:
+	-$(RM) *~ *.[aoxd] *.mod *.x
+
+local_esma_doc local_doc:
+	@echo "Target $@ not yet implemented in $(THIS)"
+
+
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
+
+#              ------------------------------------------
+#              Package Dependencies for Parallel Install
+#              ------------------------------------------
+
+nc_diag_cat_install : nc_diag_write_install
+
+  -include $(ESMADIR)/Config/ESMA_post.mk  # ESMA additional targets, macros
+
+#.

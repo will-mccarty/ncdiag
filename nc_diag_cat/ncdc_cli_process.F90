@@ -9,13 +9,7 @@ module ncdc_cli_process
             character(len=*), intent(in), optional :: err
             
             if (present(err)) then
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[31m" // &
-                            " ** ERROR: " // err // &
-                            CHAR(27) // "[0m"
-#else
                 write(*, "(A)") " ** ERROR: " // err
-#endif
             end if
             
             call get_command_argument(0, prgm_name)

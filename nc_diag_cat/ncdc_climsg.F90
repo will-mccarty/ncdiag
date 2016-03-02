@@ -35,16 +35,10 @@ module ncdc_climsg
 #else
                 write(*, "(A)") &
 #endif
-#ifdef ANSI_TERM_COLORS
-                            CHAR(27) // "[31m" // &
-#endif
 #ifdef USE_MPI
                             "[PROC ", cur_proc, "]" // &
 #endif
-                            " **   ERROR: " // err // &
-#ifdef ANSI_TERM_COLORS
-                            CHAR(27) // "[0m"
-#endif
+                            " **   ERROR: " // err 
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to concatenate NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
@@ -55,6 +49,7 @@ module ncdc_climsg
             write(*, "(A)") "    compiler flags enabled!)"
             stop 1
 #else
+            write(*,"(A)")  " ** Failed to concatenate NetCDF4."
             stop " ** Failed to concatenate NetCDF4."
 #endif
         end subroutine ncdc_error
@@ -67,16 +62,10 @@ module ncdc_climsg
 #else
                 write(*, "(A)") &
 #endif
-#ifdef ANSI_TERM_COLORS
-                            CHAR(27) // "[33m" // &
-#endif
 #ifdef USE_MPI
                             "[PROC ", cur_proc, "]" // &
 #endif
-                            " ** WARNING: " // warn // &
-#ifdef ANSI_TERM_COLORS
-                            CHAR(27) // "[0m"
-#endif
+                            " ** WARNING: " // warn 
         end subroutine ncdc_warning
         
         subroutine ncdc_info(ifo)
@@ -87,16 +76,10 @@ module ncdc_climsg
 #else
                 write(*, "(A)") &
 #endif
-#ifdef ANSI_TERM_COLORS
-                                CHAR(27) // "[34m" // &
-#endif
 #ifdef USE_MPI
                                 "[PROC ", cur_proc, "]" // &
 #endif
-                                " **    INFO: " // ifo // &
-#ifdef ANSI_TERM_COLORS
-                                CHAR(27) // "[0m"
-#endif
+                                " **    INFO: " // ifo  
         end subroutine ncdc_info
         
 #ifdef _DEBUG_MEM_

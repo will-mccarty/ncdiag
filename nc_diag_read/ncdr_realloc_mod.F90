@@ -321,13 +321,7 @@ module ncdr_realloc_mod
 #ifdef ERROR_TRACEBACK
             integer                      :: div0
 #endif
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m" // &
-                            " **   ERROR: " // err // &
-                            CHAR(27) // "[0m"
-#else
             write(*, "(A)") " **   ERROR: " // err
-#endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to process data/write NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"

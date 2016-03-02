@@ -1,87 +1,95 @@
-# Include build configuration
-include GNUmakefile.config
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 09Jun2003  da Silva  First crack. 
+#
 
-NC_DIAG_CAT_OBJS+=\
-    ncdc_realloc.o ncdc_state.o ncdc_climsg.o ncdc_types.o \
-    ncdc_cli_process.o \
-    ncdc_dims.o ncdc_vars.o \
-    ncdc_metadata.o \
-    netcdf_unlimdims.o
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
 
-NC_DIAG_CAT_DEPS+=Makefile \
-    $(NC_DIAG_CAT_OBJS)
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+  include $(ESMADIR)/Config/GMAO_base.mk  # Generic stuff
 
-all: nc_diag_cat.x test_nc_unlimdims.x
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
 
-kinds.o: kinds.F90 Makefile Makefile.config
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) $(NCDC_CONFIG_FLAGS) -c kinds.F90
-	$(NCDC_MAKE_FANCY_END)
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
 
-ncdc_types.o: ncdc_types.f90 kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_types.f90
-	$(NCDC_MAKE_FANCY_END)
+THIS := $(shell basename `pwd`)
+LIB  = lib$(THIS).a
 
-ncdc_climsg.o: ncdc_climsg.F90 ncdc_state.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_climsg.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
+esma_install install: $(LIB)
+	$(MKDIR) $(ESMALIB) $(ESMAINC)/$(THIS)
+	$(CP) -p *.a            $(ESMALIB)
+	$(CP) -p *.mod          $(ESMAINC)/$(THIS)
 
-ncdc_cli_process.o: ncdc_cli_process.F90 ncdc_state.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_cli_process.F90
-	$(NCDC_MAKE_FANCY_END)
+esma_clean clean:
+	-$(RM) *~ *.[aox] *.mod *.x
 
-ncdc_realloc.o: ncdc_realloc.F90 ncdc_types.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_realloc.F90
-	$(NCDC_MAKE_FANCY_END)
+esma_distclean distclean:
+	-$(RM) *~ *.[aoxd] *.mod *.x
 
-ncdc_state.o: ncdc_state.F90 ncdc_types.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_state.F90
-	$(NCDC_MAKE_FANCY_END)
+esma_doc doc:
+	@$(PROTEX) $(PROTEX_FLAGS) *GridComp*.[fF]* > $(ESMADOC)/$(THIS).tex
 
-ncdc_dims.o: ncdc_dims.F90 ncdc_state.o ncdc_realloc.o ncdc_climsg.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_dims.F90
-	$(NCDC_MAKE_FANCY_END)
 
-ncdc_vars.o: ncdc_vars.F90 ncdc_state.o ncdc_dims.o ncdc_realloc.o ncdc_climsg.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_vars.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
 
-ncdc_metadata.o: ncdc_metadata.F90 ncdc_state.o ncdc_dims.o ncdc_vars.o ncdc_types.o ncdc_climsg.o ncdc_cli_process.o netcdf_unlimdims.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_metadata.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
 
-ncdc_data.o: ncdc_data.F90 ncdc_state.o ncdc_climsg.o ncdc_cli_process.o ncdc_dims.o ncdc_vars.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_data.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
+SRCS := gen_diff_size_netcdf.f90 kinds.F90 ncdc_climsg.F90 ncdc_cli_process.F90 \
+        ncdc_data_MPI.F90 \
+		  ncdc_dims.F90 ncdc_metadata.F90 ncdc_realloc.F90 ncdc_state.F90 \
+        ncdc_types.f90 ncdc_vars.F90 nc_diag_cat.F90 netcdf_unlimdims.F90 test_nc_unlimdims.F90
 
-ncdc_data_MPI.o: ncdc_data_MPI.F90 ncdc_state.o ncdc_dims.o ncdc_vars.o ncdc_climsg.o ncdc_cli_process.o kinds.o
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c ncdc_data_MPI.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
+OBJS := $(addsuffix .o, $(basename $(SRCS))) 
+DEPS := $(addsuffix .d, $(basename $(SRCS))) 
 
-nc_diag_cat.x: nc_diag_cat.F90 $(NC_DIAG_CAT_DEPS)
-	$(NCDC_MAKE_FANCY_BIG_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) nc_diag_cat.F90 $(NC_DIAG_CAT_OBJS) $(NCDC_NETCDF_FLAGS) -o nc_diag_cat.x
-	$(NCDC_MAKE_FANCY_BIG_END)
+INC_DIRS = . $(INC_GMAO_SHARED) $(ESMAINC)/nc_diag_write
+MOD_DIRS = . $(INC_DIRS) $(INC_ESMF) \
+             $(foreach dir,$(SUBDIRS),$(ESMAINC)/$(dir))
 
-test_nc_unlimdims.x: test_nc_unlimdims.F90 netcdf_unlimdims.o ncdc_state.o ncdc_climsg.o
-	$(NCDC_MAKE_FANCY_BIG_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) test_nc_unlimdims.F90 ncdc_climsg.o ncdc_state.o netcdf_unlimdims.o $(NCDC_NETCDF_FLAGS) -o test_nc_unlimdims.x
-	$(NCDC_MAKE_FANCY_BIG_END)
+USER_FDEFS  = $(D)_REAL8_ $(D)ERROR_TRACEBACK $(D)QUIET $(D)USE_MPI
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir))
 
-netcdf_unlimdims.o: netcdf_unlimdims.F90 Makefile
-	$(NCDC_MAKE_FANCY_BEGIN)
-	$(NCDC_MAKE_QUIET)$(NCDC_FORT90C) $(NCDC_F90FLAGS) $(NCDC_CONFIG_FLAGS) -c netcdf_unlimdims.F90 $(NCDC_NETCDF_FLAGS)
-	$(NCDC_MAKE_FANCY_END)
+#FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
 
-clean:
-	rm -f *.mod *.x *.o
+vpath % $(MOD_DIRS)
+
+$(LIB) lib : $(OBJS)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
+
+
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
+
+#.
+
+
+  -include $(ESMADIR)/Config/ESMA_post.mk  # ESMA additional targets, macros
+
