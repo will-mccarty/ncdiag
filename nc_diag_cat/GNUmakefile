@@ -38,10 +38,13 @@ esma_help help:
 THIS := $(shell basename `pwd`)
 LIB  = lib$(THIS).a
 
-esma_install install: $(LIB)
+BINS = test_nc_unlimdims.x nc_diag_cat.x
+
+esma_install install: $(LIB) $(BINS)
 	$(MKDIR) $(ESMALIB) $(ESMAINC)/$(THIS)
-	$(CP) -p *.a            $(ESMALIB)
-	$(CP) -p *.mod          $(ESMAINC)/$(THIS)
+	$(CP) -p *.a        $(ESMALIB)
+	$(CP) -p *.mod      $(ESMAINC)/$(THIS)
+	$(CP) -p $(BINS)    $(ESMABIN)
 
 esma_clean clean:
 	-$(RM) *~ *.[aox] *.mod *.x
@@ -57,14 +60,16 @@ esma_doc doc:
 #                  User Defined Targets
 #                  --------------------
 
-
 SRCS := gen_diff_size_netcdf.f90 kinds.F90 ncdc_climsg.F90 ncdc_cli_process.F90 \
         ncdc_data_MPI.F90 \
-		  ncdc_dims.F90 ncdc_metadata.F90 ncdc_realloc.F90 ncdc_state.F90 \
-        ncdc_types.f90 ncdc_vars.F90 nc_diag_cat.F90 netcdf_unlimdims.F90 test_nc_unlimdims.F90
+        ncdc_dims.F90 ncdc_metadata.F90 ncdc_realloc.F90 ncdc_state.F90 \
+        ncdc_types.f90 ncdc_vars.F90 netcdf_unlimdims.F90
 
 OBJS := $(addsuffix .o, $(basename $(SRCS))) 
-DEPS := $(addsuffix .d, $(basename $(SRCS))) 
+DEPS := $(addsuffix .d, $(basename $(SRCS))) \
+        $(addsuffix .d, $(basename $(BINS))) 
+
+LIBS  = $(LIB) $(LIB_SDF) $(LIB_MPI) $(LIB_SYS)
 
 INC_DIRS = . $(INC_GMAO_SHARED) $(ESMAINC)/nc_diag_write
 MOD_DIRS = . $(INC_DIRS) $(INC_ESMF) \
@@ -81,6 +86,11 @@ vpath % $(MOD_DIRS)
 $(LIB) lib : $(OBJS)
 	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
 
+test_nc_unlimdims.x : test_nc_unlimdims.o $(LIB)
+	$(LD) -o $@ $+ $(LDFLAGS) $(LIB) $(LIB_SDF) $(LIB_MPI) $(LIB_SYS)
+
+nc_diag_cat.x : nc_diag_cat.o $(LIB)
+	$(LD) -o $@ $+ $(LDFLAGS) $(LIB) $(LIB_SDF) $(LIB_MPI) $(LIB_SYS)
 
 # Hack to prevent remaking dep files during cleaning
 # --------------------------------------------------
