@@ -13,13 +13,7 @@ module ncdres_climsg
 #ifdef ERROR_TRACEBACK
             integer                      :: div0
 #endif
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[31m" // &
-                            " **   ERROR: " // err // &
-                            CHAR(27) // "[0m"
-#else
             write(*, "(A)") " **   ERROR: " // err
-#endif
 #ifdef ERROR_TRACEBACK
             write(*, "(A)") " ** Failed to read NetCDF4."
             write(*, "(A)") "    (Traceback requested, triggering div0 error...)"
@@ -37,13 +31,7 @@ module ncdres_climsg
         
         subroutine ncdres_warning(warn)
             character(len=*), intent(in) :: warn
-#ifdef ANSI_TERM_COLORS
-            write(*, "(A)") CHAR(27) // "[33m" // &
-                            " ** WARNING: " // warn // &
-                            CHAR(27) // "[0m"
-#else
             write(*, "(A)") " ** WARNING: " // warn
-#endif
         end subroutine ncdres_warning
         
         subroutine ncdres_set_info_display(info_on_off)
@@ -54,13 +42,7 @@ module ncdres_climsg
         subroutine ncdres_info(ifo)
             character(len=*), intent(in) :: ifo
             if (ncdres_enable_info) &
-#ifdef ANSI_TERM_COLORS
-                write(*, "(A)") CHAR(27) // "[34m" // &
-                                " **    INFO: " // ifo // &
-                                CHAR(27) // "[0m"
-#else
                 write(*, "(A)") " **    INFO: " // ifo
-#endif
         end subroutine ncdres_info
         
 #ifdef _DEBUG_MEM_

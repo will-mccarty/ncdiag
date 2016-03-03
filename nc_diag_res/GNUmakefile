@@ -1,57 +1,93 @@
-# Include build configuration:
-include GNUmakefile.config
+#
+# Makefile for ESMA components.
+#
+# REVISION HISTORY:
+#
+# 09Jun2003  da Silva  First crack. 
+#
 
-FSON_DEPS+=nc_diag_fson/GNUmakefile \
-    nc_diag_fson/src/nc_diag_fson.f90 \
-    nc_diag_fson/src/ncdf_path_m.f90 \
-    nc_diag_fson/src/ncdf_string_m.f90 \
-    nc_diag_fson/src/ncdf_value_m.f90
+# Make sure ESMADIR is defined
+# ----------------------------
+ifndef ESMADIR
+       ESMADIR := $(PWD)/../..
+endif
 
-FSON_OBJS+= \
-    nc_diag_fson/build/nc_diag_fson.o \
-    nc_diag_fson/build/ncdf_path_m.o \
-    nc_diag_fson/build/ncdf_string_m.o \
-    nc_diag_fson/build/ncdf_value_m.o
+# Compilation rules, flags, etc
+# -----------------------------
+  include $(ESMADIR)/Config/ESMA_base.mk  # Generic stuff
+  include $(ESMADIR)/Config/ESMA_arch.mk  # System dependencies
+  include $(ESMADIR)/Config/GMAO_base.mk  # Generic stuff
 
-NC_DIAG_RES_DEPS+=GNUmakefile \
-    ncdres_climsg.o
+#                  ---------------------
+#                  Standard ESMA Targets
+#                  ---------------------
 
-NC_DIAG_RES_OBJS+= \
-    $(NC_DIAG_RES_DEPS) \
-    nc_diag_res.o
+esma_help help:
+	@echo "Standard ESMA targets:"
+	@echo "% make esma_install    (builds and install under ESMADIR)"
+	@echo "% make esma_clean      (removes deliverables: *.[aox], etc)"
+	@echo "% make esma_distclean  (leaves in the same state as cvs co)"
+	@echo "% make esma_doc        (generates PDF, installs under ESMADIR)"
+	@echo "% make esma_help       (this message)"
+	@echo "Environment:"
+	@echo "      ESMADIR = $(ESMADIR)"
+	@echo "      BASEDIR = $(BASEDIR)"
+	@echo "         ARCH = $(ARCH)"
+	@echo "         SITE = $(SITE)"
 
-.PHONY: all clean tests check
+THIS := $(shell basename `pwd`)
+LIB  = lib$(THIS).a
 
-all: libnc_diag_res.a nc_diag_res.o tests
+esma_install install: $(LIB)
+	$(MKDIR) $(ESMALIB) $(ESMAINC)/$(THIS)
+	$(CP) -p *.a            $(ESMALIB)
+	$(CP) -p *.mod          $(ESMAINC)/$(THIS)
 
-tests:
-	make -C tests
+esma_clean clean:
+	-$(RM) *~ *.[aox] *.mod *.x
 
-check:
-	make -C tests check
+esma_distclean distclean:
+	-$(RM) *~ *.[aoxd] *.mod *.x
 
-libnc_diag_res.a: $(NC_DIAG_RES_OBJS)
-	$(NCDRES_MAKE_FANCY_BIG_BEGIN)
-	$(NCDRES_MAKE_QUIET)ar rcs libnc_diag_res.a $(NC_DIAG_RES_OBJS) $(FSON_OBJS)
-	$(NCDRES_MAKE_FANCY_BIG_END)
+esma_doc doc:
+	@$(PROTEX) $(PROTEX_FLAGS) *GridComp*.[fF]* > $(ESMADOC)/$(THIS).tex
 
-nc_diag_res.o: nc_diag_res.f90 nc_diag_fson/lib/libnc_diag_fson.a $(NC_DIAG_RES_DEPS)
-	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
-		-c nc_diag_res.f90 \
-		-Inc_diag_fson/lib -Lnc_diag_fson/lib -lnc_diag_fson
-	$(NCDRES_MAKE_FANCY_END)
 
-ncdres_climsg.o: ncdres_climsg.F90 GNUmakefile.config GNUmakefile.libconfig
-	$(NCDRES_MAKE_FANCY_BEGIN)
-	$(NCDRES_MAKE_QUIET)$(NCDRES_FORT90C) $(NCDRES_F90FLAGS) $(NCDRES_CONFIG_FLAGS) \
-		-c ncdres_climsg.F90
-	$(NCDRES_MAKE_FANCY_END)
+#                  --------------------
+#                  User Defined Targets
+#                  --------------------
 
-nc_diag_fson/lib/libnc_diag_fson.a: $(FSON_DEPS)
-	make -C nc_diag_fson lib
 
-clean:
-	rm -f *.mod *.x *.o *.a
-	make -C nc_diag_fson clean clobber
-	make -C tests clean
+SRCS := nc_diag_res.f90 ncdres_climsg.F90 \
+        nc_diag_fson.f90 ncdf_value_m.f90 ncdf_string_m.f90 ncdf_path_m.f90
+
+OBJS := $(addsuffix .o, $(basename $(SRCS))) 
+DEPS := $(addsuffix .d, $(basename $(SRCS))) 
+
+INC_DIRS = . $(INC_GMAO_SHARED)
+MOD_DIRS = . $(INC_DIRS) $(INC_ESMF) \
+             $(foreach dir,$(SUBDIRS),$(ESMAINC)/$(dir))
+
+USER_FDEFS  = 
+USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
+USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir))
+
+FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
+
+vpath % nc_diag_fson/src $(MOD_DIRS)
+
+$(LIB) lib : $(OBJS)
+	$(AR) $(AR_FLAGS) $(LIB) $(OBJS)
+
+
+# Hack to prevent remaking dep files during cleaning
+# --------------------------------------------------
+  ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
+    -include $(DEPS)
+  endif
+
+#.
+
+
+  -include $(ESMADIR)/Config/ESMA_post.mk  # ESMA additional targets, macros
+

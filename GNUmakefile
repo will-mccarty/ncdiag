@@ -36,8 +36,8 @@ esma_help help:
 #                   Recurse Make in Sub-directories
 #                  --------------------------------
 
-#ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat  nc_diag_res nc_diag_attr
-ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat
+#ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat nc_diag_res nc_diag_attr
+ALLDIRS = nc_diag_write nc_diag_read nc_diag_cat nc_diag_res
 
 SUBDIRS = $(wildcard $(ALLDIRS) )
 

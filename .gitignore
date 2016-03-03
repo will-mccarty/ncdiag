@@ -30,3 +30,6 @@
 
 # Performance analysis files
 analysis.txt
+
+# Dependency files
+*.d

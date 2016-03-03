@@ -79,7 +79,7 @@ USER_FDEFS  = $(D)_REAL8_ $(D)ERROR_TRACEBACK $(D)QUIET $(D)USE_MPI
 USER_FINCS  = $(foreach dir,$(INC_DIRS),$(I)$(dir)) 
 USER_FMODS  = $(foreach dir,$(MOD_DIRS),$(M)$(dir))
 
-#FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
+FREAL = $(FREAL4) # for now, require 32 bit reals (R4)
 
 vpath % $(MOD_DIRS)
 
