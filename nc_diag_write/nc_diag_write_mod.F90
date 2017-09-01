@@ -327,9 +327,6 @@ module nc_diag_write_mod
                     
                     ! Set the append flag
                     append_only = .TRUE.
-                    
-                    ! Warn about append mode!
-                    call nclayer_warning("NetCDF file opened in append mode - definitions will be locked.")
                 else
                     ! Create the file from scratch!
                     

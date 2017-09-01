@@ -207,3 +207,6 @@ added to this list, regardless of whether it already exists or not.
     completely!
     
 ### 
+#
+- need to eliminate redundancy all around - code repetition (kinds, others)
+  this code needs to rely on a base util library
